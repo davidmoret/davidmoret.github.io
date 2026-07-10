@@ -26,8 +26,10 @@ export async function screenHome(_params, outlet) {
 
       <div class="section-head">
         <h2 class="section-head__title">Séances</h2>
-        <button class="btn btn--ghost" id="import-btn">Importer</button>
-        <input id="import" class="sr-only" type="file" accept=".md,.txt,.markdown,text/markdown,text/plain,*/*">
+        <label class="btn btn--ghost import-btn">
+          Importer
+          <input id="import" class="import-btn__input" type="file" accept=".md,.txt,.markdown,text/markdown,text/plain,*/*">
+        </label>
       </div>
 
       <ul class="card-list">
@@ -53,8 +55,6 @@ export async function screenHome(_params, outlet) {
   });
 
   const input = outlet.querySelector('#import');
-  const btn = outlet.querySelector('#import-btn');
-  btn.addEventListener('click', () => input.click());
   input.addEventListener('change', async () => {
     const file = input.files && input.files[0];
     if (!file) return;
@@ -92,8 +92,8 @@ function cardHtml(s) {
     <div class="card__body">
       <h3 class="card__title">${escapeHtml(s.title)}</h3>
       <p class="card__meta">${escapeHtml(meta)}</p>
-      ${s.description ? `<p class="card__desc">${escapeHtml(s.description)}</p>` : ''}`
-    + `</div>
+      ${s.description ? `<p class="card__desc">${escapeHtml(s.description)}</p>` : ''}
+    </div>
     <span class="card__go" aria-hidden="true">▶</span>
   </li>`;
 }

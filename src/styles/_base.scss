@@ -23,17 +23,6 @@ code {
   border-radius: var(--radius-sm);
 }
 
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  border: 0;
-}
-
 .screen {
   max-width: 720px;
   margin: 0 auto;
@@ -96,6 +85,22 @@ code {
 
   &:active { transform: translateY(1px); }
   &:disabled { opacity: 0.5; }
+}
+
+// Bouton import : l'input file est superposé invisible sur le label
+// (pas hidden/clip/display:none — ces méthodes empêchent le change event
+// sur Chrome Android après sélection d'un fichier).
+.import-btn {
+  position: relative;
+  overflow: hidden;
+
+  &__input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    font-size: 0;
+    cursor: pointer;
+  }
 }
 
 .chip {

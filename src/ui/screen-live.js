@@ -85,6 +85,7 @@ export async function screenLive({ slug }, outlet) {
   };
 
   let sessionStarted = false;
+  let saved = false;
   let breathTimers = [];
 
   function isHrSection() {
@@ -92,8 +93,6 @@ export async function screenLive({ slug }, outlet) {
     return s && s.target.type === 'hr';
   }
 
-  // Breath pacer : cycle 4s inspire / 6s expire géré par deux timers
-  // qui se ré-arment mutuellement.
   function startBreathCycle() {
     stopBreathCycle();
     setBreathPhase('inhale');
@@ -208,6 +207,8 @@ export async function screenLive({ slug }, outlet) {
   }
 
   async function finishAndSave() {
+    if (saved) return;
+    saved = true;
     sim.stop();
     recorder.stop();
     stopBreathCycle();

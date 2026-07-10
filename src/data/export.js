@@ -22,7 +22,10 @@ export async function shareSummary(entry) {
       return;
     } catch (e) {
       if (e && e.name === 'AbortError') return;
+      alert(`share text failed: ${e?.name} — ${e?.message}\nshare exists: ${!!navigator.share}`);
     }
+  } else {
+    alert('navigator.share does not exist');
   }
   downloadFile(json, baseName(entry));
 }

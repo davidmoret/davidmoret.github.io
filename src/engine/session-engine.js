@@ -5,7 +5,8 @@
 // Événements émis à l'abonné : 'start' | 'tick' | 'pause' | 'resume'
 //   | 'section-change' (manuel) | 'section-auto' (cible atteinte) | 'finished'.
 
-const UI_EMIT_MS = 100; // fréquence max de rafraîchissement UI pendant le run
+const UI_EMIT_MS = 100;
+const HR_DEBOUNCE_MS = 3000;
 
 export function createSessionEngine(session) {
   const sections = session.sections;
@@ -18,6 +19,10 @@ export function createSessionEngine(session) {
     sectionDist: 0,
     distAtSectionStart: null,
     lastDist: null,
+    currentHr: null,
+    maxHr: 0,
+    hrThreshold: null,
+    hrBelowSince: null,
   };
   let ticker = null;
   let lastTs = 0;
@@ -37,6 +42,7 @@ export function createSessionEngine(session) {
       sectionMs: state.sectionMs,
       sectionDist: state.sectionDist,
       progress: sectionProgress(s),
+      hrThreshold: state.hrThreshold,
     };
   }
 
@@ -44,7 +50,8 @@ export function createSessionEngine(session) {
     if (!s) return 0;
     if (s.target.type === 'duration') return clamp01(state.sectionMs / (s.target.value * 1000));
     if (s.target.type === 'distance') return clamp01(state.sectionDist / s.target.value);
-    return 0; // manuelle : pas de progression automatique
+    if (s.target.type === 'hr' && s.target.cap) return clamp01(state.sectionMs / (s.target.cap * 1000));
+    return 0;
   }
 
   function emit(type) {
@@ -52,26 +59,57 @@ export function createSessionEngine(session) {
     for (const fn of listeners) fn(type, snap);
   }
 
-  // Boucle unique : `tick` est le seul à ré-armer le requestAnimationFrame.
   function tick(ts) {
     if (state.status !== 'running') return;
     const dt = lastTs ? ts - lastTs : 0;
     lastTs = ts;
     state.globalMs += dt;
     state.sectionMs += dt;
-    checkSectionEnd();                       // peut faire avancer / terminer
-    if (state.status !== 'running') return;  // terminé pendant l'avance → stop
+    checkSectionEnd();
+    if (state.status !== 'running') return;
     if (ts - lastEmit >= UI_EMIT_MS) { lastEmit = ts; emit('tick'); }
     ticker = requestAnimationFrame(tick);
+  }
+
+  function resolveHrThreshold(s) {
+    if (s.target.mode === 'dynamic') return Math.max(0, state.maxHr - s.target.delta);
+    if (s.target.mode === 'fixed') return s.target.value;
+    return null;
   }
 
   function checkSectionEnd() {
     const s = section();
     if (!s) return;
-    const reached =
-      (s.target.type === 'duration' && state.sectionMs >= s.target.value * 1000) ||
-      (s.target.type === 'distance' && state.sectionDist >= s.target.value);
-    if (reached) advance(1, true);
+
+    // Cible durée
+    if (s.target.type === 'duration' && state.sectionMs >= s.target.value * 1000) {
+      advance(1, true); return;
+    }
+
+    // Cible distance
+    if (s.target.type === 'distance' && state.sectionDist >= s.target.value) {
+      advance(1, true); return;
+    }
+
+    // Cible FC : fin si FC ≤ seuil pendant HR_DEBOUNCE_MS continues
+    if (s.target.type === 'hr') {
+      const threshold = state.hrThreshold;
+      const hr = state.currentHr;
+      // Plafond de sécurité (cap durée)
+      if (s.target.cap && state.sectionMs >= s.target.cap * 1000) {
+        advance(1, true); return;
+      }
+      if (threshold != null && hr != null) {
+        if (hr <= threshold) {
+          if (state.hrBelowSince == null) state.hrBelowSince = state.globalMs;
+          if (state.globalMs - state.hrBelowSince >= HR_DEBOUNCE_MS) {
+            advance(1, true); return;
+          }
+        } else {
+          state.hrBelowSince = null;
+        }
+      }
+    }
   }
 
   function enterSection(i) {
@@ -79,6 +117,13 @@ export function createSessionEngine(session) {
     state.sectionMs = 0;
     state.distAtSectionStart = state.lastDist;
     state.sectionDist = 0;
+    state.hrBelowSince = null;
+    const s = section();
+    if (s && s.target.type === 'hr') {
+      state.hrThreshold = resolveHrThreshold(s);
+    } else {
+      state.hrThreshold = null;
+    }
   }
 
   function advance(dir, auto = false) {
@@ -87,8 +132,6 @@ export function createSessionEngine(session) {
     if (target < 0) return;
     enterSection(target);
     emit(auto ? 'section-auto' : 'section-change');
-    // Pas de re-scheduling ici : si on tourne, la boucle `tick` est déjà vivante
-    // (avance manuelle) ou reprend juste après (avance auto, depuis `tick`).
   }
 
   function start() {
@@ -124,12 +167,18 @@ export function createSessionEngine(session) {
     emit('finished');
   }
 
-  // Alimenté par le bus de métriques : distance cumulée de l'appareil.
   function pushDistance(distCumul) {
     if (distCumul == null) return;
     if (state.distAtSectionStart == null) state.distAtSectionStart = distCumul;
     state.lastDist = distCumul;
     state.sectionDist = Math.max(0, distCumul - state.distAtSectionStart);
+    if (state.status === 'running') checkSectionEnd();
+  }
+
+  function pushHr(hr) {
+    if (hr == null) return;
+    state.currentHr = hr;
+    if (hr > state.maxHr) state.maxHr = hr;
     if (state.status === 'running') checkSectionEnd();
   }
 
@@ -141,6 +190,7 @@ export function createSessionEngine(session) {
     next: () => advance(1, false),
     prev: () => advance(-1, false),
     pushDistance,
+    pushHr,
     snapshot,
     subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); },
     get status() { return state.status; },

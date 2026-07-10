@@ -73,6 +73,163 @@
   }
 }
 
+// ── Mode récupération (section target.type === 'hr') ──────────────────────
+
+.live[data-recovery] {
+  .hero,
+  .tiles,
+  .sources,
+  .modes {
+    display: none;
+  }
+}
+
+.recovery {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-5);
+  text-align: center;
+
+  .live[data-recovery] & {
+    display: flex;
+  }
+
+  &__hr-val {
+    font-size: clamp(3.5rem, 22vw, 7rem);
+    font-weight: 800;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+
+    &[data-state='above'] { color: var(--c-err); }
+    &[data-state='below'] { color: var(--c-accent); }
+  }
+
+  &__hr-label {
+    color: var(--c-muted);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: calc(var(--sp-2) * -1);
+  }
+
+  // Jauge FC horizontale : fond → seuil → objectif
+  &__gauge {
+    width: 100%;
+    max-width: 320px;
+    position: relative;
+    height: 12px;
+    background: var(--c-panel-2);
+    border-radius: 999px;
+    overflow: visible;
+  }
+
+  &__gauge-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.4s ease-out, background 0.4s ease-out;
+  }
+
+  &__gauge-mark {
+    position: absolute;
+    top: -4px;
+    bottom: -4px;
+    width: 2px;
+    background: var(--c-txt);
+    border-radius: 1px;
+    opacity: 0.7;
+  }
+
+  &__gauge-label {
+    position: absolute;
+    bottom: -18px;
+    transform: translateX(-50%);
+    font-size: 0.7rem;
+    color: var(--c-muted);
+  }
+
+  // Breath pacer : cercle qui pulse 4s inspire / 6s expire
+  &__breath {
+    position: relative;
+    width: clamp(140px, 38vw, 220px);
+    height: clamp(140px, 38vw, 220px);
+  }
+
+  &__breath-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(63, 185, 80, 0.15), transparent 70%);
+    border: 2px solid var(--c-accent);
+    opacity: 0.6;
+    animation: breath 10s ease-in-out infinite;
+  }
+
+  &__breath-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--c-accent);
+    animation: breath-text 10s step-end infinite;
+  }
+
+  &__no-hr {
+    font-size: 0.85rem;
+    color: var(--c-warn);
+    background: var(--c-panel);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-sm);
+    padding: var(--sp-2) var(--sp-3);
+  }
+
+  &__skip {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--c-txt);
+    background: var(--c-panel-2);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius);
+    padding: var(--sp-4) var(--sp-6);
+    cursor: pointer;
+    touch-action: manipulation;
+
+    &:active { transform: translateY(1px); }
+  }
+}
+
+// 4s inspire (0→40%), 6s expire (40→100%)
+@keyframes breath {
+  0%   { transform: scale(0.45); opacity: 0.4; }
+  40%  { transform: scale(1);    opacity: 0.8; }
+  100% { transform: scale(0.45); opacity: 0.4; }
+}
+
+// Texte alterné : "Inspire" de 0 à 40%, "Expire" de 40 à 100%
+@keyframes breath-text {
+  0%   { content: "Inspire"; }
+  40%  { content: "Expire"; }
+}
+
+// Fallback JS-driven pour le texte (CSS content dans @keyframes ne marche pas partout)
+.recovery__breath-text {
+  &::after { content: "Inspire"; }
+}
+
+.live[data-recovery-phase='exhale'] .recovery__breath-text::after {
+  content: "Expire";
+}
+
+// ── Fin mode récup ───────────────────────────────────────────────────────
+
 .sources {
   display: grid;
   grid-template-columns: 1fr 1fr auto;

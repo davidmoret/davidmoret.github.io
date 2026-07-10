@@ -1,7 +1,7 @@
 // Markdown → objet Session. Parsing volontairement tolérant (cf. PROJET.md §4).
 //
 // Session = frontmatter (métadonnées) + liste de sections.
-// Chaque section a une cible de fin : durée, distance, ou manuelle.
+// Chaque section a une cible de fin : durée, distance, hr, ou manuelle.
 
 const DISPLAY_MODES = ['perf', 'cardio', 'complet', 'zen'];
 
@@ -38,7 +38,6 @@ function parseZone(v) {
 }
 
 function parseSections(body) {
-  // Chaque `##` démarre une section ; le fragment avant le premier `##` est ignoré.
   const blocks = body.split(/^##\s+/m).slice(1);
   return blocks.map((block) => {
     const [head, ...rest] = block.split(/\r?\n/);
@@ -49,10 +48,17 @@ function parseSections(body) {
     }
     const duree = parseDuration(props.duree);
     const distance = parseDistance(props.distance);
+    const cibleFc = parseHrTarget(props.cible_fc);
     let target;
-    if (duree != null) target = { type: 'duration', value: duree };
-    else if (distance != null) target = { type: 'distance', value: distance };
-    else target = { type: 'manual', value: null };
+    if (cibleFc) {
+      target = { type: 'hr', ...cibleFc, cap: duree };
+    } else if (duree != null) {
+      target = { type: 'duration', value: duree };
+    } else if (distance != null) {
+      target = { type: 'distance', value: distance };
+    } else {
+      target = { type: 'manual', value: null };
+    }
     return {
       name: head.trim(),
       duree,
@@ -63,6 +69,17 @@ function parseSections(body) {
       target,
     };
   });
+}
+
+// "max-40" → { mode: 'dynamic', delta: 40 }
+// "100"    → { mode: 'fixed', value: 100 }
+function parseHrTarget(v) {
+  if (!v) return null;
+  const dyn = v.match(/^max-(\d+)$/i);
+  if (dyn) return { mode: 'dynamic', delta: Number(dyn[1]) };
+  const num = Number(v);
+  if (!isNaN(num) && num > 0) return { mode: 'fixed', value: num };
+  return null;
 }
 
 // "m:ss" / "mm:ss" → secondes ; "Nmin" / "Ns" tolérés.

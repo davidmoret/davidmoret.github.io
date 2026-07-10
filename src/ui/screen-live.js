@@ -2,9 +2,8 @@
 // contrôles gros doigts, indicateur de zone FC. 4 modes (perf/cardio/complet/zen)
 // changeables à la volée (cf. PROJET.md §6.1).
 //
-// Sources de données : capteurs BLE réels (rameur FTMS + FC Polar) branchés via
-// des boutons « Connecter » explicites, OU le simulateur (mode démo, repli sans
-// matériel). Toutes poussent dans le même bus normalisé.
+// Quand la section courante a une cible hr (retour au calme), l'UI bascule
+// en mode récup : breath pacer + jauge FC + skip manuel.
 import { getDefinition, putHistory } from '../data/store.js';
 import { buildSummary } from '../stats/summary.js';
 import { createMetricBus } from '../ble/normalizer.js';
@@ -23,7 +22,6 @@ const MODES = ['perf', 'cardio', 'complet', 'zen'];
 
 const LONG_PRESS_MS = 1500;
 
-// Quelles métriques afficher par mode. `hero: null` → grille égale (mode complet).
 const LAYOUT = {
   perf:    { hero: 'pace', tiles: ['spm', 'hr', 'sdist'] },
   cardio:  { hero: 'hr',   tiles: ['pace', 'spm', 'dist'] },
@@ -31,7 +29,6 @@ const LAYOUT = {
   zen:     { hero: 'stime', tiles: ['pace'] },
 };
 
-// Descripteurs de métriques : (m = dernières métriques, s = snapshot engine).
 const METRIC = {
   pace:  (m) => ({ k: '/500m', v: fmtPace(m.pace) }),
   hr:    (m) => ({ k: 'fc', v: m.hr ?? '—', u: 'bpm' }),
@@ -78,9 +75,81 @@ export async function screenLive({ slug }, outlet) {
     demo: outlet.querySelector('[data-demo]'),
     dotRower: outlet.querySelector('[data-dot-rower]'),
     dotHr: outlet.querySelector('[data-dot-hr]'),
+    recovery: outlet.querySelector('[data-recovery]'),
+    recoveryHrVal: outlet.querySelector('[data-recovery-hr]'),
+    recoveryGaugeFill: outlet.querySelector('[data-recovery-gauge-fill]'),
+    recoveryGaugeMark: outlet.querySelector('[data-recovery-gauge-mark]'),
+    recoveryGaugeLabel: outlet.querySelector('[data-recovery-gauge-label]'),
+    recoveryNoHr: outlet.querySelector('[data-recovery-no-hr]'),
+    recoverySkip: outlet.querySelector('[data-recovery-skip]'),
   };
 
   let sessionStarted = false;
+  let breathTimers = [];
+
+  function isHrSection() {
+    const s = engine.snapshot().section;
+    return s && s.target.type === 'hr';
+  }
+
+  // Breath pacer : cycle 4s inspire / 6s expire géré par deux timers
+  // qui se ré-arment mutuellement.
+  function startBreathCycle() {
+    stopBreathCycle();
+    setBreathPhase('inhale');
+  }
+
+  function setBreathPhase(phase) {
+    els.root.dataset.recoveryPhase = phase;
+    const ms = phase === 'inhale' ? 4000 : 6000;
+    const next = phase === 'inhale' ? 'exhale' : 'inhale';
+    const id = setTimeout(() => setBreathPhase(next), ms);
+    breathTimers.push(id);
+  }
+
+  function stopBreathCycle() {
+    for (const id of breathTimers) clearTimeout(id);
+    breathTimers = [];
+    delete els.root.dataset.recoveryPhase;
+  }
+
+  function renderRecovery() {
+    const m = bus.latest;
+    const s = engine.snapshot();
+    const threshold = s.hrThreshold;
+    const hr = m.hr;
+    const hasHr = hr != null;
+
+    els.recoveryHrVal.textContent = hasHr ? hr : '—';
+    els.recoveryHrVal.dataset.state = hasHr && threshold != null && hr <= threshold ? 'below' : 'above';
+    els.recoveryNoHr.hidden = hasHr;
+
+    const gaugeMax = (threshold || 180) + 40;
+    if (threshold != null) {
+      const pct = Math.min(100, Math.max(0, (threshold / gaugeMax) * 100));
+      els.recoveryGaugeMark.style.left = `${pct}%`;
+      els.recoveryGaugeLabel.style.left = `${pct}%`;
+      els.recoveryGaugeLabel.textContent = threshold;
+    }
+    if (hasHr) {
+      const hrPct = Math.min(100, Math.max(0, (hr / gaugeMax) * 100));
+      els.recoveryGaugeFill.style.width = `${hrPct}%`;
+      els.recoveryGaugeFill.style.background =
+        threshold != null && hr <= threshold ? 'var(--c-accent)' : 'var(--c-err)';
+    } else {
+      els.recoveryGaugeFill.style.width = '0%';
+    }
+  }
+
+  function updateRecoveryMode() {
+    if (isHrSection()) {
+      els.root.dataset.recovery = '';
+      startBreathCycle();
+    } else {
+      delete els.root.dataset.recovery;
+      stopBreathCycle();
+    }
+  }
 
   function render() {
     const m = bus.latest;
@@ -92,6 +161,11 @@ export async function screenLive({ slug }, outlet) {
     els.next.textContent = s.status === 'finished' ? 'terminé'
       : s.next ? `→ ${s.next.name}` : 'dernière section';
     els.progress.style.transform = `scaleX(${s.progress || 0})`;
+
+    if (isHrSection()) {
+      renderRecovery();
+      return;
+    }
 
     const cfg = LAYOUT[mode];
     if (cfg.hero === null) {
@@ -136,6 +210,7 @@ export async function screenLive({ slug }, outlet) {
   async function finishAndSave() {
     sim.stop();
     recorder.stop();
+    stopBreathCycle();
     releaseWakeLock();
     const snap = engine.snapshot();
     if (engine.status !== 'finished') engine.finish();
@@ -200,7 +275,8 @@ export async function screenLive({ slug }, outlet) {
     else if (st === 'paused') { engine.resume(); recorder.resume(); acquireWakeLock(); if (demo) sim.start(); }
   });
 
-  // --- Confirmation avant quitter ----------------------------------------
+  els.recoverySkip.addEventListener('click', () => engine.next());
+
   els.quit.addEventListener('click', () => {
     if (sessionStarted && engine.status !== 'finished') {
       if (!confirm('Quitter la séance ? Les données seront sauvegardées.')) return;
@@ -210,7 +286,7 @@ export async function screenLive({ slug }, outlet) {
     }
   });
 
-  // --- Wake Lock (écran allumé pendant l'effort) -------------------------
+  // --- Wake Lock ---------------------------------------------------------
   let wakeLock = null;
   async function acquireWakeLock() {
     if (!('wakeLock' in navigator) || wakeLock) return;
@@ -263,10 +339,18 @@ export async function screenLive({ slug }, outlet) {
   if (demo) setDemo(true);
 
   // --- Moteur / boucle ---------------------------------------------------
-  const unsubBus = bus.subscribe((m) => { engine.pushDistance(m.dist); render(); });
+  const unsubBus = bus.subscribe((m) => {
+    engine.pushDistance(m.dist);
+    engine.pushHr(m.hr);
+    render();
+  });
   const unsubEngine = engine.subscribe((type) => {
-    if (type === 'section-auto' || type === 'section-change') cue();
-    if (type === 'finished') { finishAndSave(); return; }
+    if (type === 'section-auto' || type === 'section-change') {
+      cue();
+      sim.setRecoveryMode(isHrSection());
+      updateRecoveryMode();
+    }
+    if (type === 'finished') { stopBreathCycle(); finishAndSave(); return; }
     render();
   });
 
@@ -279,6 +363,7 @@ export async function screenLive({ slug }, outlet) {
   return {
     cleanup() {
       clearTimeout(longPressTimer);
+      stopBreathCycle();
       unsubBus();
       unsubEngine();
       document.removeEventListener('visibilitychange', onVisibility);
@@ -326,6 +411,22 @@ function template() {
       <span class="hero__key" data-hero-key></span>
     </div>
     <div class="tiles" data-tiles></div>
+
+    <div class="recovery" data-recovery>
+      <div class="recovery__hr-val" data-recovery-hr>—</div>
+      <div class="recovery__hr-label">bpm</div>
+      <div class="recovery__gauge">
+        <div class="recovery__gauge-fill" data-recovery-gauge-fill></div>
+        <div class="recovery__gauge-mark" data-recovery-gauge-mark></div>
+        <div class="recovery__gauge-label" data-recovery-gauge-label></div>
+      </div>
+      <div class="recovery__breath">
+        <div class="recovery__breath-ring"></div>
+        <div class="recovery__breath-text"></div>
+      </div>
+      <div class="recovery__no-hr" data-recovery-no-hr hidden>Connecte ta ceinture FC pour l'auto-fin</div>
+      <button class="recovery__skip" data-recovery-skip>Terminer</button>
+    </div>
 
     <div class="controls">
       <button class="controls__btn" data-prev aria-label="Section précédente">◀</button>

@@ -1,6 +1,6 @@
 // Export d'une séance jouée : .json (résumé complet) → Web Share API
-// (je choisis Proton Drive dans le menu Android).
-// Fallback hors mobile : téléchargement.
+// (choix de l'app cible : Proton Drive, Files, etc.).
+// Fallback : téléchargement dans Downloads.
 import { fmtDuration, fmtDist } from '../ui/format.js';
 
 export function buildJson(entry) {
@@ -13,10 +13,14 @@ function baseName(entry) {
 
 export async function shareSummary(entry) {
   const base = baseName(entry);
-  const file = new File([buildJson(entry)], `${base}.json`, { type: 'application/json' });
+  // text/plain est mieux supporté par canShare/share que application/json
+  const file = new File([buildJson(entry)], `${base}.json`, { type: 'text/plain' });
 
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+  if (navigator.share) {
     try {
+      if (navigator.canShare && !navigator.canShare({ files: [file] })) {
+        throw new Error('canShare false');
+      }
       await navigator.share({ files: [file], title: entry.session_title });
       return;
     } catch (e) {

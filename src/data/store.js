@@ -1,9 +1,10 @@
 // Persistance runtime (IndexedDB).
 //   definitions : séances importées (parsées depuis le .md), clé = slug.
 //   history     : une entrée JSON par séance jouée (résumé + timeline), clé = id.
+//   profile     : profil utilisateur (âge, FCmax, FCrepos), clé = 'me'.
 
 const DB_NAME = 'ram';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 function openDb() {
   return new Promise((resolve, reject) => {
@@ -12,6 +13,7 @@ function openDb() {
       const db = req.result;
       if (!db.objectStoreNames.contains('definitions')) db.createObjectStore('definitions', { keyPath: 'slug' });
       if (!db.objectStoreNames.contains('history')) db.createObjectStore('history', { keyPath: 'id' });
+      if (!db.objectStoreNames.contains('profile')) db.createObjectStore('profile');
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);

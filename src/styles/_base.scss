@@ -37,7 +37,7 @@ code {
   max-width: 720px;
   margin: 0 auto;
 
-  &__title { font-size: 1.4rem; }
+  &__title { font-size: 1.4rem; flex: 1; }
   &__sub { color: var(--c-muted); font-size: 0.85rem; }
 
   &__back {
@@ -48,6 +48,18 @@ code {
     line-height: 1;
     padding: 0 var(--sp-2) 0 0;
     cursor: pointer;
+  }
+
+  &__action {
+    background: none;
+    border: 0;
+    color: var(--c-muted);
+    font-size: 1.4rem;
+    line-height: 1;
+    padding: var(--sp-2);
+    cursor: pointer;
+
+    &:active { color: var(--c-txt); }
   }
 }
 
@@ -131,4 +143,51 @@ code {
   margin: var(--sp-5) 0 var(--sp-3);
 
   &__title { font-size: 1.05rem; }
+}
+
+// ── Profil ───────────────────────────────────────────────────────────────
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.profile-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+
+  &__label {
+    font-size: 0.9rem;
+    font-weight: 600;
+
+    small { font-weight: 400; color: var(--c-muted); }
+  }
+
+  &__input {
+    background: var(--c-panel);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-sm);
+    color: var(--c-txt);
+    font-size: 1.1rem;
+    padding: var(--sp-3);
+    font-variant-numeric: tabular-nums;
+
+    &:focus { outline: none; border-color: var(--c-accent-2); }
+    &::placeholder { color: var(--c-muted); }
+  }
+
+  &__hint {
+    font-size: 0.75rem;
+    color: var(--c-muted);
+  }
+}
+
+.profile-ok {
+  display: block;
+  text-align: center;
+  color: var(--c-accent);
+  font-weight: 600;
+  padding: var(--sp-3);
 }

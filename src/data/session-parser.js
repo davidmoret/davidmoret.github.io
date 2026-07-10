@@ -71,10 +71,16 @@ function parseSections(body) {
   });
 }
 
-// "max-40" → { mode: 'dynamic', delta: 40 }
-// "100"    → { mode: 'fixed', value: 100 }
+// "max-40"          → { mode: 'dynamic', delta: 40 }
+// "100"             → { mode: 'fixed', value: 100 }
+// "55%"             → { mode: 'pct', pct: 55 }
+// "karvonen-50%"    → { mode: 'karvonen', pct: 50 }
 function parseHrTarget(v) {
   if (!v) return null;
+  const karvonen = v.match(/^karvonen-(\d+)%$/i);
+  if (karvonen) return { mode: 'karvonen', pct: Number(karvonen[1]) };
+  const pct = v.match(/^(\d+)%$/);
+  if (pct) return { mode: 'pct', pct: Number(pct[1]) };
   const dyn = v.match(/^max-(\d+)$/i);
   if (dyn) return { mode: 'dynamic', delta: Number(dyn[1]) };
   const num = Number(v);

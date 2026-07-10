@@ -45,7 +45,7 @@ export async function screenDetail({ slug }, outlet) {
 function stepHtml(x) {
   const target = x.target.type === 'duration' ? fmtDuration(x.target.value)
     : x.target.type === 'distance' ? fmtDist(x.target.value)
-    : x.target.type === 'hr' ? `FC cible${x.target.cap ? ` (max ${fmtDuration(x.target.cap)})` : ''}`
+    : x.target.type === 'hr' ? fmtHrTarget(x.target)
     : 'manuelle';
   const extra = [x.cadence && `cadence ${x.cadence}`, x.intensite].filter(Boolean).join(' · ');
   return `<li class="step">
@@ -56,4 +56,12 @@ function stepHtml(x) {
     </div>
     <span class="step__target">${escapeHtml(target)}</span>
   </li>`;
+}
+
+function fmtHrTarget(t) {
+  if (t.mode === 'dynamic') return `FC cible max−${t.delta}${t.cap ? ` (max ${fmtDuration(t.cap)})` : ''}`;
+  if (t.mode === 'fixed') return `FC cible ${t.value} bpm${t.cap ? ` (max ${fmtDuration(t.cap)})` : ''}`;
+  if (t.mode === 'pct') return `FC cible ${t.pct}%${t.cap ? ` (max ${fmtDuration(t.cap)})` : ''}`;
+  if (t.mode === 'karvonen') return `FC cible Karvonen ${t.pct}%${t.cap ? ` (max ${fmtDuration(t.cap)})` : ''}`;
+  return 'FC cible';
 }

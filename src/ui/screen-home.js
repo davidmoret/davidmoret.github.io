@@ -14,7 +14,7 @@ export async function screenHome(_params, outlet) {
   outlet.innerHTML = `
     <header class="app-bar">
       <h1 class="app-bar__title">rame rame</h1>
-      <span class="app-bar__sub">Rowing Assistant</span>
+      <button class="app-bar__action" data-profile aria-label="Profil">⚙</button>
     </header>
     <main class="screen">
       <section class="stats" aria-label="Statistiques globales">
@@ -49,6 +49,7 @@ export async function screenHome(_params, outlet) {
       <footer class="app-version">${__APP_VERSION__}</footer>
     </main>`;
 
+  outlet.querySelector('[data-profile]').addEventListener('click', () => go('/profile'));
   outlet.querySelectorAll('[data-slug]').forEach((el) => {
     el.addEventListener('click', () => go(`/session/${el.dataset.slug}`));
   });

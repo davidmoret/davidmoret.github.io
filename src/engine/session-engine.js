@@ -5,10 +5,12 @@
 // Événements émis à l'abonné : 'start' | 'tick' | 'pause' | 'resume'
 //   | 'section-change' (manuel) | 'section-auto' (cible atteinte) | 'finished'.
 
+import { hrMax, karvonenBase } from '../data/profile.js';
+
 const UI_EMIT_MS = 100;
 const HR_DEBOUNCE_MS = 3000;
 
-export function createSessionEngine(session) {
+export function createSessionEngine(session, profile = null) {
   const sections = session.sections;
   const listeners = new Set();
   const state = {
@@ -74,6 +76,15 @@ export function createSessionEngine(session) {
   function resolveHrThreshold(s) {
     if (s.target.mode === 'dynamic') return Math.max(0, state.maxHr - s.target.delta);
     if (s.target.mode === 'fixed') return s.target.value;
+    if (s.target.mode === 'pct') {
+      const max = hrMax(profile);
+      return max ? Math.round(max * s.target.pct / 100) : null;
+    }
+    if (s.target.mode === 'karvonen') {
+      const base = karvonenBase(profile);
+      if (!base) return null;
+      return Math.round(base.hrRest + base.reserve * s.target.pct / 100);
+    }
     return null;
   }
 

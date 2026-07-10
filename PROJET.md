@@ -47,7 +47,8 @@ ram/
 │  ├─ main.js                # bootstrap + routeur simple
 │  ├─ data/
 │  │  ├─ session-parser.js   # Markdown → objet Session
-│  │  ├─ store.js            # IndexedDB (définitions + historique)
+│  │  ├─ store.js            # IndexedDB (définitions + historique + profil)
+│  │  ├─ profile.js          # profil utilisateur (âge, FCmax, FCrepos)
 │  │  └─ export.js           # export .md/.json via Web Share API, import fichier
 │  ├─ ble/
 │  │  ├─ heart.js            # Polar — BLE Heart Rate standard (0x180D)
@@ -56,14 +57,16 @@ ram/
 │  │  └─ simulator.js        # source factice (mode démo / récup)
 │  ├─ engine/
 │  │  ├─ session-engine.js   # machine à états (idle/running/paused) + chrono + cible hr
-│  │  └─ recorder.js         # échantillonnage timeline (métriques + FC)
+│  │  └─ recorder.js         # échantillonnage timeline (métriques + FC) + HRR
 │  ├─ stats/
-│  │  └─ aggregate.js        # stats globales à partir de l'historique JSON
+│  │  ├─ aggregate.js        # stats globales à partir de l'historique JSON
+│  │  └─ summary.js          # résumé post-séance + calcul HRR
 │  ├─ ui/
 │  │  ├─ screen-home.js      # listing séances + stats globales
 │  │  ├─ screen-detail.js    # aperçu d'une séance avant lancement
 │  │  ├─ screen-live.js      # écran séance en cours (+ mode récup)
-│  │  └─ screen-summary.js   # résumé post-séance
+│  │  ├─ screen-summary.js   # résumé post-séance (+ bloc HRR)
+│  │  └─ screen-profile.js   # profil utilisateur (âge, FCmax, FCrepos)
 │  └─ styles/
 │     ├─ main.scss
 │     └─ _*.scss             # BEM, kebab-case
@@ -118,8 +121,13 @@ display: perf                 # perf | cardio | complet | zen — défaut: perf
 
 **Règles de parsing (simples et tolérantes) :**
 - Chaque `##` = une nouvelle section (le titre = nom affiché).
-- Clés reconnues : `duree` (`m:ss`), `distance` (`Nm`/`Nkm`), `cadence`, `intensite`, `note`, `cible_fc` (`max-40` ou valeur fixe).
-- `cible_fc` définit une cible `hr` (fin auto quand FC ≤ seuil). `duree` devient plafond de sécurité.
+- Clés reconnues : `duree` (`m:ss`), `distance` (`Nm`/`Nkm`), `cadence`, `intensite`, `note`, `cible_fc`.
+- `cible_fc` définit une cible `hr` (fin auto quand FC ≤ seuil). Syntaxes supportées :
+  - `max-40` → dynamique (FCmax séance − 40)
+  - `100` → fixe (100 bpm)
+  - `55%` → pourcentage de FCmax (requiert profil)
+  - `karvonen-50%` → pourcentage de la réserve Karvonen (requiert profil + FCrepos)
+- `duree` sur une section `hr` devient plafond de sécurité.
 - Sans `cible_fc`, `duree` **ou** `distance` définit la condition de fin ; sans les deux → section **manuelle**.
 
 ---
@@ -133,14 +141,15 @@ Contrôles demandés :
 - **Revenir en arrière** : `section précédente` (rejouer une section) et `section suivante`.
 - **Fin auto de section** : quand la cible (durée/distance/hr) est atteinte → passage auto (avec petit signal sonore/vibration).
 - **Cible hr** : fin quand FC ≤ seuil pendant 3 s continues (anti-rebond). Seuil figé à l'entrée dans la section. Plafond `duree` en sécurité.
+- **Profil** : le moteur accepte un profil utilisateur optionnel pour résoudre les cibles en % (FCmax, Karvonen).
 
-Le **recorder** échantillonne (ex. 1 Hz) : timestamp, section, FC, cadence (spm), puissance (W), distance, allure (/500m). Cette timeline est stockée avec le résumé de séance → permet un graphe post-séance et les stats.
+Le **recorder** échantillonne (ex. 1 Hz) : timestamp, section, FC, cadence (spm), puissance (W), distance, allure (/500m). Il enregistre aussi le timestamp d'entrée dans chaque section (pour le calcul HRR). Cette timeline est stockée avec le résumé de séance → permet un graphe post-séance et les stats.
 
 ---
 
 ## 6. Écrans (UI)
 
-1. **Accueil** — liste des séances dispo (depuis `sessions/`) + **stats globales** (nb séances, distance totale, temps total, FC moy…). Bouton « Importer une séance ».
+1. **Accueil** — liste des séances dispo (depuis `sessions/`) + **stats globales** (nb séances, distance totale, temps total, FC moy…). Bouton « Importer une séance ». Bouton ⚙ vers le profil.
 2. **Détail séance** — aperçu des sections, durée/distance estimée, bouton **« Démarrer »** (déclenche l'appairage BLE).
 3. **Live** — le cœur de l'app (voir §6.1 pour les modes d'affichage) :
    - **1 métrique “héro”** en géant + **3-4 tuiles secondaires**.
@@ -149,7 +158,8 @@ Le **recorder** échantillonne (ex. 1 Hz) : timestamp, section, FC, cadence (spm
    - Contrôles gros doigts : **Pause**, **◀ Précédent**, **Suivant ▶**.
    - Indicateur de **zone FC** (couleur) si `target_hr_zone` défini.
    - **Mode récup** automatique quand la section a une cible `hr` (voir §6.2).
-4. **Résumé post-séance** — totaux, FC moy/max, allure moy, mini-graphe, boutons **« Exporter (.md + .json) »** → partage Proton.
+4. **Résumé post-séance** — totaux, FC moy/max, allure moy, **bloc HRR**, mini-graphe, boutons **« Exporter (.md + .json) »** → partage Proton.
+5. **Profil** — âge, FCmax (optionnel, prioritaire sur 220−âge), FCrepos (optionnel, débloque Karvonen). Stocké dans IndexedDB store `profile`.
 
 **Contraintes UX rameur** (mains moites, effort, écran de loin) : grandes zones tactiles, gros chiffres, fort contraste, thème sombre par défaut, **Wake Lock** (écran ne s'éteint pas).
 
@@ -191,7 +201,8 @@ Quand la section courante a `target.type === 'hr'`, l'écran Live bascule automa
 
 - **Runtime** : IndexedDB
   - `definitions` : séances importées (parsées depuis le .md).
-  - `history` : une entrée JSON par séance jouée (résumé + timeline).
+  - `history` : une entrée JSON par séance jouée (résumé + timeline + HRR).
+  - `profile` : profil utilisateur (âge, FCmax, FCrepos), clé unique `'me'`.
 - **Export** (bouton) : génère `.json` (résumé complet) + `.md` lisible (compte-rendu) → **Web Share API** → je choisis **Proton Drive** dans le menu Android.
 - **Import** : `<input type="file">` pour charger un `.md` de séance édité à la main (depuis Proton).
 - **Format historique JSON** (par séance) :
@@ -206,7 +217,8 @@ Quand la section courante a `target.type === 'hr'`, l'écran Live bascule automa
   "pace_avg_500m": "2:21",
   "spm_avg": 25,
   "sections": [ { "name": "Échauffement", "duration_s": 300, "distance_m": 780 } ],
-  "samples": [ { "t": 1, "hr": 110, "spm": 22, "w": 90, "dist": 4, "pace": 145 } ]
+  "samples": [ { "t": 1, "hr": 110, "spm": 22, "w": 90, "dist": 4, "pace": 145 } ],
+  "hrr": { "hrStart": 168, "hrr60": 42, "hrr120": 56 }
 }
 ```
 
@@ -229,8 +241,6 @@ Quand la section courante a `target.type === 'hr'`, l'écran Live bascule automa
 - **Auto-lap** par section : stats détaillées par intervalle.
 - **Export .FIT ou .TCX** plus tard, pour pousser vers Strava/Garmin si envie (sans compromettre la privacy : export manuel).
 - **Comparaison** d'une même séance dans le temps (progression allure/FC).
-- **Seuil personnalisé** : mini-profil (âge → FCmax = 220−âge, ou FCmax saisie) → débloque `55%` / Karvonen.
-- **Heart Rate Recovery** dans le résumé (FC au début de la récup → temps pour repasser sous le seuil).
 
 ---
 
@@ -239,6 +249,8 @@ Quand la section courante a `target.type === 'hr'`, l'écran Live bascule automa
 - ✅ Fin de section par **temps, distance ou hr** : validé.
 - ✅ Écran Live : **métrique héro + secondaires**, 4 modes + mode récup auto.
 - ✅ **Lot 0–5** : tous implémentés.
+- ✅ **Lot C — Seuil personnalisé** : profil optionnel (âge/FCmax/FCrepos) → cibles `55%` et `karvonen-50%`.
+- ✅ **Lot D — HRR dans le résumé** : HRR₁ (+60s) et HRR₂ (+120s) calculés et affichés.
 
 ---
 
@@ -272,10 +284,11 @@ Quand la section courante a `target.type === 'hr'`, l'écran Live bascule automa
 ### Implémentation
 
 - **Lot A — Moteur** ✅
-  - `session-parser.js` : `cible_fc:` → cible `hr` (dynamique `max-N` ou fixe).
+  - `session-parser.js` : `cible_fc:` → cible `hr` (dynamique `max-N`, fixe, `%`, `karvonen-N%`).
     `duree` → `cap` quand la cible est `hr`.
   - `session-engine.js` : `pushHr()`, tracking `maxHr`/`currentHr`, cible `hr`
     dans `checkSectionEnd`, anti-rebond 3 s, seuil figé à l'entrée de section.
+    Accepte un `profile` pour résoudre les cibles `%` et `karvonen`.
   - `simulator.js` : `setRecoveryMode()` — FC décroît, rameur à l'arrêt.
 
 - **Lot B — Écran récup** ✅
@@ -284,5 +297,23 @@ Quand la section courante a `target.type === 'hr'`, l'écran Live bascule automa
   - Breath pacer : `@keyframes breath` (4s/6s), phase texte via `data-recovery-phase`.
   - Mode dégradé sans ceinture FC : avertissement affiché, plafond durée + skip.
 
-- **Lot C — Seuil personnalisé** *(optionnel, plus tard)*
-- **Lot D — Heart Rate Recovery dans le résumé** *(optionnel, plus tard)*
+- **Lot C — Seuil personnalisé** ✅
+  - `data/profile.js` : store IndexedDB `profile` (clé `'me'`), helpers `hrMax()`,
+    `karvonenBase()`.
+  - `session-parser.js` : `cible_fc: 55%` → `{ mode: 'pct', pct: 55 }`,
+    `cible_fc: karvonen-50%` → `{ mode: 'karvonen', pct: 50 }`.
+  - `session-engine.js` : `resolveHrThreshold()` résout `%` via FCmax et
+    `karvonen` via la réserve (FCmax − FCrepos). Retourne `null` si profil
+    incomplet → seul le plafond durée s'applique.
+  - `ui/screen-profile.js` : formulaire âge / FCmax / FCrepos, route `/profile`.
+  - Lien ⚙ sur l'accueil vers le profil.
+  - `store.js` : DB_VERSION → 2, ajout store `profile`.
+
+- **Lot D — Heart Rate Recovery** ✅
+  - `recorder.js` : `markSectionEntry(index, globalMs)` appelé au démarrage
+    et à chaque changement de section.
+  - `summary.js` : `computeHRR()` — identifie la 1re section `hr`, prend FC
+    à l'entrée, calcule Δ FC à +60s (HRR₁) et +120s (HRR₂).
+  - `screen-summary.js` : bloc `.hrr` avec HRR 1 min, HRR 2 min, FC début
+    récup, et interprétation (excellent ≥ 40, bon ≥ 25, moyen ≥ 12, faible < 12).
+  - Format JSON étendu : champ `hrr: { hrStart, hrr60, hrr120 }`.

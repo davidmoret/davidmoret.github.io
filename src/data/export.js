@@ -1,5 +1,4 @@
-// Export d'une séance jouée : .json (résumé complet) → Web Share API
-// (choix de l'app cible : Proton Drive, Files, etc.).
+// Export d'une séance jouée : .json → Web Share API (choix de l'app cible).
 // Fallback : téléchargement dans Downloads.
 import { fmtDuration, fmtDist } from '../ui/format.js';
 
@@ -13,21 +12,16 @@ function baseName(entry) {
 
 export async function shareSummary(entry) {
   const base = baseName(entry);
-  // text/plain est mieux supporté par canShare/share que application/json
   const file = new File([buildJson(entry)], `${base}.json`, { type: 'text/plain' });
 
-  if (navigator.share) {
-    try {
-      if (navigator.canShare && !navigator.canShare({ files: [file] })) {
-        throw new Error('canShare false');
-      }
-      await navigator.share({ files: [file], title: entry.session_title });
-      return;
-    } catch (e) {
-      if (e && e.name === 'AbortError') return;
-    }
+  try {
+    await navigator.share({ files: [file], title: entry.session_title });
+  } catch (e) {
+    // AbortError = l'utilisateur a fermé le share sheet, ne rien faire
+    if (e && e.name === 'AbortError') return;
+    // Sinon (pas supporté, pas HTTPS…) → fallback download
+    downloadFile(file);
   }
-  downloadFile(file);
 }
 
 function downloadFile(file) {

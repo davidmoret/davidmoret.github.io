@@ -55,17 +55,19 @@ export async function screenHome(_params, outlet) {
   });
 
   const input = outlet.querySelector('#import');
-  input.addEventListener('change', async () => {
+  input.addEventListener('change', () => {
     const file = input.files && input.files[0];
     if (!file) return;
-    try {
-      const text = await file.text();
-      const session = parseSession(text);
-      await putDefinition(session);
-      go(`/session/${session.slug}`);
-    } catch (e) {
-      console.error('Import échoué :', e);
-    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const session = parseSession(reader.result);
+        putDefinition(session).then(() => go(`/session/${session.slug}`));
+      } catch (e) {
+        console.error('Import échoué :', e);
+      }
+    };
+    reader.readAsText(file);
   });
 }
 

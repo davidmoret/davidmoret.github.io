@@ -11,23 +11,28 @@ function baseName(entry) {
 }
 
 export async function shareSummary(entry) {
-  const base = baseName(entry);
-  const file = new File([buildJson(entry)], `${base}.json`, { type: 'text/plain' });
+  const json = buildJson(entry);
 
-  try {
-    await navigator.share({ files: [file], title: entry.session_title });
-  } catch (e) {
-    if (e && e.name === 'AbortError') return;
-    alert(`share failed: ${e?.name} — ${e?.message}`);
-    downloadFile(file);
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: entry.session_title,
+        text: json,
+      });
+      return;
+    } catch (e) {
+      if (e && e.name === 'AbortError') return;
+    }
   }
+  downloadFile(json, baseName(entry));
 }
 
-function downloadFile(file) {
-  const url = URL.createObjectURL(file);
+function downloadFile(json, base) {
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = file.name;
+  a.download = `${base}.json`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }

@@ -1,6 +1,6 @@
 // Écran Résumé post-séance : totaux, FC moy/max, allure moy, mini-graphes
-// (FC + allure), découpe par section, bouton Exporter (.md + .json → Proton).
-import { getHistoryEntry } from '../data/store.js';
+// (FC + allure), découpe par section, bouton Exporter + Supprimer.
+import { getHistoryEntry, deleteHistory } from '../data/store.js';
 import { shareSummary } from '../data/export.js';
 import { fmtDuration, fmtDist, escapeHtml } from './format.js';
 import { go } from './router.js';
@@ -41,11 +41,19 @@ export async function screenSummary({ id }, outlet) {
         </li>`).join('')}
       </ul>
 
-      <button class="btn btn--primary btn--block" data-export>Exporter (.md + .json)</button>
+      <div class="summary-actions">
+        <button class="btn btn--primary btn--block" data-export>Exporter (.json)</button>
+        <button class="btn btn--ghost btn--block" data-delete>Supprimer</button>
+      </div>
     </main>`;
 
   outlet.querySelector('[data-home]').addEventListener('click', () => go('/'));
   outlet.querySelector('[data-export]').addEventListener('click', () => shareSummary(entry));
+  outlet.querySelector('[data-delete]').addEventListener('click', async () => {
+    if (!confirm("Supprimer cette séance de l\u2019historique ?")) return;
+    await deleteHistory(entry.id);
+    go('/');
+  });
 }
 
 function stat(value, key) {
@@ -67,7 +75,6 @@ function sparkBlock(title, samples, key, color, invert = false) {
   </div>`;
 }
 
-// Renvoie une suite de points "x,y" (viewBox 100×30) ou '' si pas de données.
 function sparkline(samples, key, invert) {
   const pts = samples.map((s) => s[key]).filter((v) => v != null);
   if (pts.length < 2) return '';
@@ -77,9 +84,9 @@ function sparkline(samples, key, invert) {
   const n = pts.length;
   return pts.map((v, i) => {
     const x = (i / (n - 1)) * 100;
-    let norm = (v - min) / span;        // 0 (min) → 1 (max)
-    if (invert) norm = 1 - norm;        // allure : petit = mieux → en haut
-    const y = 29 - norm * 28;           // marge 1px
+    let norm = (v - min) / span;
+    if (invert) norm = 1 - norm;
+    const y = 29 - norm * 28;
     return `${x.toFixed(1)},${y.toFixed(1)}`;
   }).join(' ');
 }

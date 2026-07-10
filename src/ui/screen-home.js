@@ -1,5 +1,5 @@
 // Écran Accueil : stats globales + listing des séances. Bouton Importer (.md).
-import { getDefinitions, getHistory, putDefinition } from '../data/store.js';
+import { getDefinitions, getHistory, putDefinition, deleteHistory } from '../data/store.js';
 import { aggregate } from '../stats/aggregate.js';
 import { parseSession } from '../data/session-parser.js';
 import { fmtDuration, fmtDist, escapeHtml } from './format.js';
@@ -51,7 +51,18 @@ export async function screenHome(_params, outlet) {
     el.addEventListener('click', () => go(`/session/${el.dataset.slug}`));
   });
   outlet.querySelectorAll('[data-history]').forEach((el) => {
-    el.addEventListener('click', () => go(`/summary/${encodeURIComponent(el.dataset.history)}`));
+    el.addEventListener('click', (e) => {
+      if (e.target.closest('[data-history-delete]')) return;
+      go(`/summary/${encodeURIComponent(el.dataset.history)}`);
+    });
+  });
+  outlet.querySelectorAll('[data-history-delete]').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (!confirm("Supprimer cette séance de l\u2019historique ?")) return;
+      await deleteHistory(btn.dataset.historyDelete);
+      screenHome(_params, outlet);
+    });
   });
 
   const input = outlet.querySelector('#import');
@@ -83,8 +94,11 @@ function historyHtml(h) {
   const meta = [fmtDist(h.distance_m), fmtDuration(h.duration_s), h.hr.avg ? `${h.hr.avg} bpm` : null]
     .filter(Boolean).join(' · ');
   return `<li class="history__item" data-history="${escapeHtml(h.id)}" role="button" tabindex="0">
-    <span class="history__title">${escapeHtml(h.session_title)}</span>
-    <span class="history__meta">${escapeHtml(date)} — ${escapeHtml(meta)}</span>
+    <div class="history__body">
+      <span class="history__title">${escapeHtml(h.session_title)}</span>
+      <span class="history__meta">${escapeHtml(date)} — ${escapeHtml(meta)}</span>
+    </div>
+    <button class="history__del" data-history-delete="${escapeHtml(h.id)}" aria-label="Supprimer">✕</button>
   </li>`;
 }
 

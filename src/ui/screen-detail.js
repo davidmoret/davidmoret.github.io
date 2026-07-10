@@ -1,5 +1,5 @@
-// Écran Détail : aperçu des sections + estimation, bouton Démarrer → Live.
-import { getDefinition } from '../data/store.js';
+// Écran Détail : aperçu des sections + estimation, bouton Démarrer + Supprimer.
+import { getDefinition, deleteDefinition } from '../data/store.js';
 import { fmtDuration, fmtDist, escapeHtml } from './format.js';
 import { go } from './router.js';
 
@@ -27,16 +27,25 @@ export async function screenDetail({ slug }, outlet) {
         ${s.targetHrZone ? `<span class="chip">FC ${s.targetHrZone[0]}–${s.targetHrZone[1]}</span>` : ''}
       </div>
       <ol class="steps">${s.sections.map(stepHtml).join('')}</ol>
-      <button class="btn btn--primary btn--block" data-start>Démarrer</button>
+      <div class="detail-actions">
+        <button class="btn btn--primary btn--block" data-start>Démarrer</button>
+        <button class="btn btn--ghost btn--block" data-delete>Supprimer cette séance</button>
+      </div>
     </main>`;
 
   outlet.querySelector('[data-back]').addEventListener('click', () => go('/'));
   outlet.querySelector('[data-start]').addEventListener('click', () => go(`/live/${slug}`));
+  outlet.querySelector('[data-delete]').addEventListener('click', async () => {
+    if (!confirm("Supprimer cette séance ?")) return;
+    await deleteDefinition(slug);
+    go('/');
+  });
 }
 
 function stepHtml(x) {
   const target = x.target.type === 'duration' ? fmtDuration(x.target.value)
     : x.target.type === 'distance' ? fmtDist(x.target.value)
+    : x.target.type === 'hr' ? `FC cible${x.target.cap ? ` (max ${fmtDuration(x.target.cap)})` : ''}`
     : 'manuelle';
   const extra = [x.cadence && `cadence ${x.cadence}`, x.intensite].filter(Boolean).join(' · ');
   return `<li class="step">

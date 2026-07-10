@@ -17,9 +17,8 @@ export async function shareSummary(entry) {
   try {
     await navigator.share({ files: [file], title: entry.session_title });
   } catch (e) {
-    // AbortError = l'utilisateur a fermé le share sheet, ne rien faire
     if (e && e.name === 'AbortError') return;
-    // Sinon (pas supporté, pas HTTPS…) → fallback download
+    alert(`share failed: ${e?.name} — ${e?.message}`);
     downloadFile(file);
   }
 }

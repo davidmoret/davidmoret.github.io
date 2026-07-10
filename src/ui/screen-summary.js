@@ -1,5 +1,5 @@
 // Écran Résumé post-séance : totaux, FC moy/max, allure moy, mini-graphes
-// (FC + allure), découpe par section, bouton Exporter + Supprimer.
+// (FC + allure), découpe par section, HRR, bouton Exporter + Supprimer.
 import { getHistoryEntry, deleteHistory } from '../data/store.js';
 import { shareSummary } from '../data/export.js';
 import { fmtDuration, fmtDist, escapeHtml } from './format.js';
@@ -29,6 +29,8 @@ export async function screenSummary({ id }, outlet) {
         ${stat(entry.hr.avg ?? '—', 'fc moy')}
         ${stat(entry.hr.max ?? '—', 'fc max')}
       </section>
+
+      ${hrrBlock(entry.hrr)}
 
       ${sparkBlock('Fréquence cardiaque', entry.samples, 'hr', 'var(--c-err)')}
       ${sparkBlock('Allure /500m', entry.samples, 'pace', 'var(--c-accent-2)', true)}
@@ -61,6 +63,41 @@ function stat(value, key) {
     <span class="stats__val">${escapeHtml(value)}</span>
     <span class="stats__key">${key}</span>
   </div>`;
+}
+
+function hrrBlock(hrr) {
+  if (!hrr) return '';
+  const hrr60 = hrr.hrr60 != null ? `${hrr.hrr60} bpm` : '—';
+  const hrr120 = hrr.hrr120 != null ? `${hrr.hrr120} bpm` : '—';
+  const quality60 = hrrQuality(hrr.hrr60);
+  const quality120 = hrrQuality(hrr.hrr120);
+  return `
+    <section class="hrr">
+      <div class="hrr__title">Récupération cardiaque</div>
+      <div class="hrr__grid">
+        <div class="hrr__item">
+          <span class="hrr__val">${hrr60}</span>
+          <span class="hrr__key">HRR 1 min${quality60 ? ` · ${quality60}` : ''}</span>
+        </div>
+        <div class="hrr__item">
+          <span class="hrr__val">${hrr120}</span>
+          <span class="hrr__key">HRR 2 min${quality120 ? ` · ${quality120}` : ''}</span>
+        </div>
+        <div class="hrr__item">
+          <span class="hrr__val">${hrr.hrStart ?? '—'} bpm</span>
+          <span class="hrr__key">FC au début récup</span>
+        </div>
+      </div>
+    </section>`;
+}
+
+// Interprétation médicale simplifiée du HRR
+function hrrQuality(val) {
+  if (val == null) return '';
+  if (val >= 40) return 'excellent';
+  if (val >= 25) return 'bon';
+  if (val >= 12) return 'moyen';
+  return 'faible';
 }
 
 function sparkBlock(title, samples, key, color, invert = false) {

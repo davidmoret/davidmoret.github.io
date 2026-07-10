@@ -1,9 +1,12 @@
 // Échantillonne la timeline à 1 Hz (métriques + section courante) pendant la
-// séance. La timeline sert au graphe post-séance et aux stats (Lot 4).
+// séance. La timeline sert au graphe post-séance, aux stats et au calcul HRR.
 // L'horodatage `t` suit le chrono ACTIF de l'engine (pauses exclues).
 export function createRecorder(engine, bus) {
   const samples = [];
   let timer = null;
+
+  // Timestamps d'entrée dans chaque section (pour HRR)
+  const sectionEntryTs = {};
 
   function sample() {
     const snap = engine.snapshot();
@@ -25,5 +28,7 @@ export function createRecorder(engine, bus) {
     resume() { if (!timer) timer = setInterval(sample, 1000); },
     stop() { clearInterval(timer); timer = null; },
     get samples() { return samples; },
+    markSectionEntry(index, globalMs) { sectionEntryTs[index] = Math.round(globalMs / 1000); },
+    get sectionEntryTs() { return sectionEntryTs; },
   };
 }

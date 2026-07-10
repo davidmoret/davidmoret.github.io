@@ -5,6 +5,46 @@
   margin-bottom: var(--sp-4);
 }
 
+.hrr {
+  background: var(--c-panel);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  padding: var(--sp-3) var(--sp-4);
+  margin-bottom: var(--sp-2);
+
+  &__title {
+    font-size: 0.72rem;
+    color: var(--c-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: var(--sp-2);
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--sp-2);
+  }
+
+  &__item {
+    text-align: center;
+  }
+
+  &__val {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__key {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--c-muted);
+    margin-top: var(--sp-1);
+  }
+}
+
 .spark {
   background: var(--c-panel);
   border: 1px solid var(--c-border);

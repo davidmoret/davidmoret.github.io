@@ -1,14 +1,17 @@
 // Construit l'entrée d'historique (résumé + timeline) d'une séance jouée,
 // au format JSON de PROJET.md §7, à partir des échantillons du recorder.
+// Calcule aussi le HRR (Heart Rate Recovery) si une section hr est présente.
 import { fmtPace } from '../ui/format.js';
 
-export function buildSummary(session, samples, globalMs) {
+export function buildSummary(session, samples, globalMs, sectionEntryTs = {}) {
   const duration_s = Math.round(globalMs / 1000);
   const distance_m = lastNonNull(samples, 'dist') ?? 0;
 
   const hrValues = pluck(samples, 'hr');
   const spmValues = pluck(samples, 'spm');
   const paceAvgSec = distance_m > 0 ? (duration_s / distance_m) * 500 : mean(pluck(samples, 'pace'));
+
+  const hrr = computeHRR(session, samples, sectionEntryTs);
 
   return {
     id: new Date().toISOString(),
@@ -24,7 +27,42 @@ export function buildSummary(session, samples, globalMs) {
     spm_avg: spmValues.length ? Math.round(mean(spmValues)) : null,
     sections: buildSections(session, samples),
     samples,
+    hrr,
   };
+}
+
+// Heart Rate Recovery : chute de FC à +60s et +120s après l'entrée
+// dans la première section de type hr.
+function computeHRR(session, samples, sectionEntryTs) {
+  const hrSectionIdx = session.sections.findIndex((s) => s.target.type === 'hr');
+  if (hrSectionIdx < 0) return null;
+  const entrySec = sectionEntryTs[hrSectionIdx];
+  if (entrySec == null) return null;
+
+  // FC au moment d'entrée dans la section
+  const hrAtEntry = hrAt(samples, entrySec);
+  if (hrAtEntry == null) return null;
+
+  const hr60 = hrAt(samples, entrySec + 60);
+  const hr120 = hrAt(samples, entrySec + 120);
+
+  return {
+    hrStart: hrAtEntry,
+    hrr60: hr60 != null ? hrAtEntry - hr60 : null,
+    hrr120: hr120 != null ? hrAtEntry - hr120 : null,
+  };
+}
+
+function hrAt(samples, t) {
+  // Trouve le sample le plus proche à t±1s
+  let best = null;
+  let bestDist = Infinity;
+  for (const s of samples) {
+    if (s.hr == null) continue;
+    const d = Math.abs(s.t - t);
+    if (d < bestDist) { bestDist = d; best = s.hr; }
+  }
+  return bestDist <= 2 ? best : null;
 }
 
 function buildSections(session, samples) {

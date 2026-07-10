@@ -5,6 +5,7 @@
 // Quand la section courante a une cible hr (retour au calme), l'UI bascule
 // en mode récup : breath pacer + jauge FC + skip manuel.
 import { getDefinition, putHistory } from '../data/store.js';
+import { getProfile } from '../data/profile.js';
 import { buildSummary } from '../stats/summary.js';
 import { createMetricBus } from '../ble/normalizer.js';
 import { createSimulator } from '../ble/simulator.js';
@@ -46,10 +47,11 @@ export async function screenLive({ slug }, outlet) {
     return {};
   }
 
+  const profile = await getProfile();
   let mode = session.display;
   let demo = !BLE_OK;
   const bus = createMetricBus();
-  const engine = createSessionEngine(session);
+  const engine = createSessionEngine(session, profile);
   const sim = createSimulator(bus);
   const rower = createRowerSource(bus);
   const heart = createHeartSource(bus);
@@ -216,7 +218,7 @@ export async function screenLive({ slug }, outlet) {
     const snap = engine.snapshot();
     if (engine.status !== 'finished') engine.finish();
     if (!recorder.samples.length) { go(`/session/${slug}`); return; }
-    const entry = buildSummary(session, recorder.samples, snap.globalMs);
+    const entry = buildSummary(session, recorder.samples, snap.globalMs, recorder.sectionEntryTs);
     try { await putHistory(entry); go(`/summary/${encodeURIComponent(entry.id)}`); }
     catch (e) { console.error('Sauvegarde historique échouée :', e); go(`/session/${slug}`); }
   }
@@ -271,7 +273,15 @@ export async function screenLive({ slug }, outlet) {
   els.pause.addEventListener('click', () => {
     if (longPressActive) { cancelLongPress(); return; }
     const st = engine.status;
-    if (st === 'idle') { initAudio(); engine.start(); recorder.start(); acquireWakeLock(); sessionStarted = true; if (demo) sim.start(); }
+    if (st === 'idle') {
+      initAudio();
+      engine.start();
+      recorder.start();
+      recorder.markSectionEntry(0, engine.snapshot().globalMs);
+      acquireWakeLock();
+      sessionStarted = true;
+      if (demo) sim.start();
+    }
     else if (st === 'running') { engine.pause(); recorder.pause(); releaseWakeLock(); if (demo) sim.stop(); }
     else if (st === 'paused') { engine.resume(); recorder.resume(); acquireWakeLock(); if (demo) sim.start(); }
   });
@@ -348,6 +358,8 @@ export async function screenLive({ slug }, outlet) {
   const unsubEngine = engine.subscribe((type) => {
     if (type === 'section-auto' || type === 'section-change') {
       cue();
+      const snap = engine.snapshot();
+      recorder.markSectionEntry(snap.index, snap.globalMs);
       sim.setRecoveryMode(isHrSection());
       updateRecoveryMode();
     }

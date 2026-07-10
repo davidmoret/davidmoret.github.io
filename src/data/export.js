@@ -1,5 +1,6 @@
-// Export d'une séance jouée : .json → Web Share API (choix de l'app cible).
-// Fallback : téléchargement dans Downloads.
+// Export d'une séance jouée : .json → download dans Downloads/.
+// Le fichier peut ensuite être uploadé vers Proton Drive via l'app Android.
+// Import .json supporté pour restaurer depuis un backup.
 import { fmtDuration, fmtDist } from '../ui/format.js';
 
 export function buildJson(entry) {
@@ -10,27 +11,9 @@ function baseName(entry) {
   return `ram-${entry.id.slice(0, 19).replace(/[:T]/g, '-')}`;
 }
 
-export async function shareSummary(entry) {
+export function shareSummary(entry) {
   const json = buildJson(entry);
-
-  if (navigator.share) {
-    try {
-      await navigator.share({
-        title: entry.session_title,
-        text: json,
-      });
-      return;
-    } catch (e) {
-      if (e && e.name === 'AbortError') return;
-      alert(`share text failed: ${e?.name} — ${e?.message}\nshare exists: ${!!navigator.share}`);
-    }
-  } else {
-    alert('navigator.share does not exist');
-  }
-  downloadFile(json, baseName(entry));
-}
-
-function downloadFile(json, base) {
+  const base = baseName(entry);
   const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

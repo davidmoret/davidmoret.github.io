@@ -1,5 +1,5 @@
-// Écran Accueil : stats globales + listing des séances. Bouton Importer (.md).
-import { getDefinitions, getHistory, putDefinition, deleteHistory } from '../data/store.js';
+// Écran Accueil : stats globales + listing des séances. Import .md + .json.
+import { getDefinitions, getHistory, putDefinition, putHistory, deleteHistory } from '../data/store.js';
 import { aggregate } from '../stats/aggregate.js';
 import { parseSession } from '../data/session-parser.js';
 import { fmtDuration, fmtDist, escapeHtml } from './format.js';
@@ -26,10 +26,12 @@ export async function screenHome(_params, outlet) {
 
       <div class="section-head">
         <h2 class="section-head__title">Séances</h2>
-        <label class="btn btn--ghost import-btn">
-          Importer
-          <input id="import" class="import-btn__input" type="file" accept=".md,.txt,.markdown,text/markdown,text/plain,*/*">
-        </label>
+        <div class="section-head__actions">
+          <label class="btn btn--ghost import-btn">
+            Importer
+            <input id="import" class="import-btn__input" type="file" accept=".md,.txt,.markdown,.json,text/markdown,text/plain,application/json,*/*">
+          </label>
+        </div>
       </div>
 
       <ul class="card-list">
@@ -72,10 +74,19 @@ export async function screenHome(_params, outlet) {
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const session = parseSession(reader.result);
-        putDefinition(session).then(() => go(`/session/${session.slug}`));
+        const text = reader.result;
+        // .json = backup historique, .md = définition de séance
+        if (file.name.endsWith('.json')) {
+          const entry = JSON.parse(text);
+          if (!entry.id || !entry.session_title) throw new Error('Format invalide');
+          putHistory(entry).then(() => screenHome(_params, outlet));
+        } else {
+          const session = parseSession(text);
+          putDefinition(session).then(() => go(`/session/${session.slug}`));
+        }
       } catch (e) {
         console.error('Import échoué :', e);
+        alert(`Import échoué : ${e.message}`);
       }
     };
     reader.readAsText(file);

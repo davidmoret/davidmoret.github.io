@@ -23,6 +23,15 @@ export function fmtDist(meters) {
   return meters >= 1000 ? `${(meters / 1000).toFixed(2)} km` : `${Math.round(meters)} m`;
 }
 
+// Nom d'appareil BLE sans l'identifiant en suffixe :
+// "Polar Sense 1C1021AB" → "Polar Sense". On ne retire qu'un bloc hexadécimal
+// (≥ 4 caractères) précédé d'un espace/tiret, pour préserver les modèles type
+// "Polar H10". Si le nom n'est que l'id, on garde l'original.
+export function prettyDeviceName(name) {
+  if (!name) return name;
+  return name.replace(/[\s_-]+[0-9A-Fa-f:]{4,}$/, '').trim() || name;
+}
+
 export function escapeHtml(str) {
   return String(str ?? '').replace(/[&<>"']/g, (c) => (
     { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]

@@ -13,7 +13,7 @@ import { createRowerSource } from '../ble/rower.js';
 import { createHeartSource } from '../ble/heart.js';
 import { createSessionEngine } from '../engine/session-engine.js';
 import { createRecorder } from '../engine/recorder.js';
-import { fmtDuration, fmtPace, fmtDist, escapeHtml } from './format.js';
+import { fmtDuration, fmtPace, fmtDist, escapeHtml, prettyDeviceName } from './format.js';
 import { initAudio, cue, beepShort, beepLong } from './feedback.js';
 import { go } from './router.js';
 
@@ -350,7 +350,7 @@ export async function screenLive({ slug }, outlet) {
     source.onStatus((state, detail) => {
       dot.dataset.state = state;
       btn.classList.toggle('is-active', state === 'connected');
-      if (state === 'connected') { btn.textContent = detail || label; setDemo(false); }
+      if (state === 'connected') { btn.textContent = prettyDeviceName(detail) || label; setDemo(false); }
       else if (state === 'reconnecting') btn.textContent = `repli… (${detail})`;
       else if (state === 'failed') btn.textContent = `${label} ✕`;
       else if (state === 'disconnected') btn.textContent = label;

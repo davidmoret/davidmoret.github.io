@@ -7,6 +7,10 @@
 const FTMS_SERVICE = 0x1826;
 const ROWER_DATA = 0x2ad1;
 const MAX_RETRIES = 5;
+// Clé de mémorisation de l'appareil (id opaque, propre à l'origine) et durée
+// max d'attente d'une pub BLE avant d'abandonner l'auto-connexion en silence.
+const STORE_KEY = 'ble.rower.deviceId';
+const AUTO_TIMEOUT_MS = 15000;
 
 export function createRowerSource(bus) {
   let device = null;
@@ -32,7 +36,51 @@ export function createRowerSource(bus) {
     characteristic = await service.getCharacteristic(ROWER_DATA);
     await characteristic.startNotifications();
     characteristic.addEventListener('characteristicvaluechanged', onValue);
+    try { localStorage.setItem(STORE_KEY, device.id); } catch { /* stockage indispo */ }
     setStatus('connected', device.name || 'rameur');
+  }
+
+  // Reconnexion auto sans sélecteur : l'appareil déjà autorisé est retrouvé via
+  // getDevices(), puis on attend qu'il émette pour ouvrir le GATT. Renvoie true
+  // si connecté. Silencieux (pas d'erreur) si rien de mémorisé ou hors de portée.
+  async function autoConnect() {
+    if (device && device.gatt && device.gatt.connected) return true;
+    if (!navigator.bluetooth || !navigator.bluetooth.getDevices) return false;
+    const savedId = (() => { try { return localStorage.getItem(STORE_KEY); } catch { return null; } })();
+    if (!savedId) return false;
+
+    let known;
+    try { known = (await navigator.bluetooth.getDevices()).find((d) => d.id === savedId); }
+    catch { return false; }
+    if (!known) return false;
+
+    device = known;
+    manualDisconnect = false;
+    device.addEventListener('gattserverdisconnected', onDisconnected);
+
+    if (!device.watchAdvertisements) {
+      // Pas de scan de pub dispo : tentative directe (OK si déjà à portée).
+      try { await openGatt(); return true; }
+      catch { setStatus('disconnected'); return false; }
+    }
+    return waitForAdvertisement();
+  }
+
+  function waitForAdvertisement() {
+    const ac = new AbortController();
+    setStatus('reconnecting', 'auto');
+    return new Promise((resolve) => {
+      const cleanup = () => { clearTimeout(timer); device.removeEventListener('advertisementreceived', onAd); };
+      const timer = setTimeout(() => { cleanup(); ac.abort(); setStatus('disconnected'); resolve(false); }, AUTO_TIMEOUT_MS);
+      const onAd = async () => {
+        cleanup();
+        ac.abort(); // stoppe le scan avant d'ouvrir le GATT
+        try { await openGatt(); resolve(true); }
+        catch { setStatus('disconnected'); resolve(false); }
+      };
+      device.addEventListener('advertisementreceived', onAd);
+      device.watchAdvertisements({ signal: ac.signal }).catch(() => { cleanup(); setStatus('disconnected'); resolve(false); });
+    });
   }
 
   function onValue(ev) {
@@ -64,6 +112,7 @@ export function createRowerSource(bus) {
 
   return {
     connect,
+    autoConnect,
     disconnect,
     onStatus(fn) { statusListeners.add(fn); return () => statusListeners.delete(fn); },
     get connected() { return !!(device && device.gatt.connected); },

@@ -353,6 +353,7 @@ export async function screenLive({ slug }, outlet) {
       if (state === 'connected') { btn.textContent = detail || label; setDemo(false); }
       else if (state === 'reconnecting') btn.textContent = `repli… (${detail})`;
       else if (state === 'failed') btn.textContent = `${label} ✕`;
+      else if (state === 'disconnected') btn.textContent = label;
       btn.prepend(dot);
     });
     btn.addEventListener('click', async () => {
@@ -369,6 +370,10 @@ export async function screenLive({ slug }, outlet) {
   if (BLE_OK) {
     bindSource(rower, els.connectRower, els.dotRower, 'Rameur');
     bindSource(heart, els.connectHr, els.dotHr, 'FC');
+    // Reconnexion auto au matériel déjà appairé (sans sélecteur). Sort du démo
+    // dès qu'une source répond ; le bouton manuel reste le filet.
+    rower.autoConnect().catch(() => {});
+    heart.autoConnect().catch(() => {});
   } else {
     els.connectRower.disabled = true;
     els.connectHr.disabled = true;

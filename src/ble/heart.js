@@ -4,20 +4,20 @@
 const HR_SERVICE = 0x180d;
 const HR_MEASUREMENT = 0x2a37;
 const MAX_RETRIES = 5;
-// Clé de mémorisation de l'appareil (id opaque, propre à l'origine) et durée
-// max d'attente d'une pub BLE avant d'abandonner l'auto-connexion en silence.
+// Clé de mémorisation de l'appareil (id opaque, propre à l'origine).
 const STORE_KEY = 'ble.heart.deviceId';
-const AUTO_TIMEOUT_MS = 15000;
 
 export function createHeartSource(bus) {
   let device = null;
   let characteristic = null;
   let manualDisconnect = false;
+  let scanAbort = null;
   const statusListeners = new Set();
   const setStatus = (state, detail) => { for (const fn of statusListeners) fn(state, detail); };
 
   async function connect() {
     manualDisconnect = false;
+    stopScan(); // l'appairage manuel prend la main sur l'écoute auto
     device = await navigator.bluetooth.requestDevice({
       filters: [{ services: [HR_SERVICE] }],
       optionalServices: [0x180f, 0x180a],
@@ -60,24 +60,31 @@ export function createHeartSource(bus) {
       try { await openGatt(); return true; }
       catch { setStatus('disconnected'); return false; }
     }
-    return waitForAdvertisement();
+    watchForDevice();
+    return true;
   }
 
-  function waitForAdvertisement() {
+  // Écoute passive et permanente : dès que l'appareil mémorisé émet sa pub, on
+  // ouvre le GATT — quel que soit le moment où il est allumé. Reste discret
+  // (pas de statut) tant qu'il n'a pas répondu. Coupée par disconnect().
+  function watchForDevice() {
+    if (scanAbort) return; // un seul scan à la fois
     const ac = new AbortController();
-    setStatus('reconnecting', 'auto');
-    return new Promise((resolve) => {
-      const cleanup = () => { clearTimeout(timer); device.removeEventListener('advertisementreceived', onAd); };
-      const timer = setTimeout(() => { cleanup(); ac.abort(); setStatus('disconnected'); resolve(false); }, AUTO_TIMEOUT_MS);
-      const onAd = async () => {
-        cleanup();
-        ac.abort(); // stoppe le scan avant d'ouvrir le GATT
-        try { await openGatt(); resolve(true); }
-        catch { setStatus('disconnected'); resolve(false); }
-      };
-      device.addEventListener('advertisementreceived', onAd);
-      device.watchAdvertisements({ signal: ac.signal }).catch(() => { cleanup(); setStatus('disconnected'); resolve(false); });
-    });
+    scanAbort = ac;
+    let connecting = false;
+    const onAd = async () => {
+      if (connecting || (device.gatt && device.gatt.connected)) return;
+      connecting = true;
+      try { await openGatt(); stopScan(); } // connecté → plus besoin d'écouter
+      catch { connecting = false; }         // réémettra, on garde l'écoute
+    };
+    device.addEventListener('advertisementreceived', onAd);
+    ac.signal.addEventListener('abort', () => device.removeEventListener('advertisementreceived', onAd));
+    device.watchAdvertisements({ signal: ac.signal }).catch(() => stopScan());
+  }
+
+  function stopScan() {
+    if (scanAbort) { scanAbort.abort(); scanAbort = null; }
   }
 
   function onValue(ev) {
@@ -98,6 +105,7 @@ export function createHeartSource(bus) {
 
   function disconnect() {
     manualDisconnect = true;
+    stopScan();
     if (device && device.gatt.connected) device.gatt.disconnect();
   }
 

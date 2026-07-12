@@ -4,8 +4,6 @@
 //
 // États émis à l'abonné de statut : 'connecting' | 'connected' | 'reconnecting'
 //   | 'disconnected' | 'failed'.
-import { bleLog } from './debug.js';
-
 const FTMS_SERVICE = 0x1826;
 const ROWER_DATA = 0x2ad1;
 const MAX_RETRIES = 5;
@@ -40,36 +38,30 @@ export function createRowerSource(bus) {
     characteristic.addEventListener('characteristicvaluechanged', onValue);
     try { localStorage.setItem(STORE_KEY, device.id); } catch { /* stockage indispo */ }
     setStatus('connected', device.name || 'rameur');
-    navigator.bluetooth.getDevices?.().then((d) => bleLog('rameur sonde getDevices post-co →', d.length)).catch(() => {});
   }
 
   // Reconnexion auto sans sélecteur : l'appareil déjà autorisé est retrouvé via
   // getDevices(), puis on attend qu'il émette pour ouvrir le GATT. Renvoie true
   // si connecté. Silencieux (pas d'erreur) si rien de mémorisé ou hors de portée.
   async function autoConnect() {
-    bleLog('rameur autoConnect: start');
-    if (device && device.gatt && device.gatt.connected) { bleLog('rameur déjà connecté'); return true; }
-    if (!navigator.bluetooth || !navigator.bluetooth.getDevices) { bleLog('rameur getDevices non supporté'); return false; }
+    if (device && device.gatt && device.gatt.connected) return true;
+    if (!navigator.bluetooth || !navigator.bluetooth.getDevices) return false;
     const savedId = (() => { try { return localStorage.getItem(STORE_KEY); } catch { return null; } })();
-    bleLog('rameur savedId', savedId);
     if (!savedId) return false;
 
-    let devices;
-    try { devices = await navigator.bluetooth.getDevices(); }
-    catch (e) { bleLog('rameur getDevices erreur', e); return false; }
-    bleLog('rameur getDevices →', devices.length, devices.map((d) => `${d.name || '?'}:${d.id}`));
-    const known = devices.find((d) => d.id === savedId);
-    if (!known) { bleLog('rameur appareil absent de getDevices'); return false; }
+    let known;
+    try { known = (await navigator.bluetooth.getDevices()).find((d) => d.id === savedId); }
+    catch { return false; }
+    if (!known) return false;
 
     device = known;
     manualDisconnect = false;
     device.addEventListener('gattserverdisconnected', onDisconnected);
 
-    bleLog('rameur watchAdvertisements dispo ?', !!device.watchAdvertisements);
     if (!device.watchAdvertisements) {
       // Pas de scan de pub dispo : tentative directe (OK si déjà à portée).
       try { await openGatt(); return true; }
-      catch (e) { bleLog('rameur openGatt direct échec', e); setStatus('disconnected'); return false; }
+      catch { setStatus('disconnected'); return false; }
     }
     watchForDevice();
     return true;
@@ -86,14 +78,12 @@ export function createRowerSource(bus) {
     const onAd = async () => {
       if (connecting || (device.gatt && device.gatt.connected)) return;
       connecting = true;
-      bleLog('rameur pub reçue → openGatt');
       try { await openGatt(); stopScan(); } // connecté → plus besoin d'écouter
-      catch (e) { bleLog('rameur openGatt échec', e); connecting = false; } // réémettra
+      catch { connecting = false; }         // réémettra, on garde l'écoute
     };
     device.addEventListener('advertisementreceived', onAd);
     ac.signal.addEventListener('abort', () => device.removeEventListener('advertisementreceived', onAd));
-    bleLog('rameur watchAdvertisements: scan démarré');
-    device.watchAdvertisements({ signal: ac.signal }).catch((e) => { bleLog('rameur watchAdvertisements erreur', e); stopScan(); });
+    device.watchAdvertisements({ signal: ac.signal }).catch(() => stopScan());
   }
 
   function stopScan() {

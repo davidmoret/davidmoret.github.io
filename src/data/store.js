@@ -35,6 +35,15 @@ export const getDefinitions = () => run('definitions', 'readonly', (os) => os.ge
 export const getDefinition = (slug) => run('definitions', 'readonly', (os) => os.get(slug));
 export const deleteDefinition = (slug) => run('definitions', 'readwrite', (os) => os.delete(slug));
 
+// Bascule le flag favori d'une séance (stocké sur la définition, clé = slug).
+export const setFavorite = (slug, favorite) => run('definitions', 'readwrite', (os) => {
+  const req = os.get(slug);
+  req.onsuccess = () => {
+    const def = req.result;
+    if (def) { def.favorite = !!favorite; os.put(def); }
+  };
+});
+
 export const putHistory = (entry) => run('history', 'readwrite', (os) => os.put(entry));
 export const getHistory = () => run('history', 'readonly', (os) => os.getAll());
 export const getHistoryEntry = (id) => run('history', 'readonly', (os) => os.get(id));

@@ -1,6 +1,8 @@
 import './styles/main.scss';
 import { createRouter } from './ui/router.js';
 import { screenHome } from './ui/screen-home.js';
+import { screenSessions } from './ui/screen-sessions.js';
+import { screenHistory } from './ui/screen-history.js';
 import { screenDetail } from './ui/screen-detail.js';
 import { screenLive } from './ui/screen-live.js';
 import { screenSummary } from './ui/screen-summary.js';
@@ -22,6 +24,9 @@ async function seedSessions() {
 const outlet = document.getElementById('app');
 const router = createRouter([
   ['/', screenHome],
+  ['/sessions', screenSessions],
+  ['/history', screenHistory],
+  ['/history/:slug', screenHistory],
   ['/session/:slug', screenDetail],
   ['/live/:slug', screenLive],
   ['/summary/:id', screenSummary],

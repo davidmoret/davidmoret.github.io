@@ -61,6 +61,19 @@
   }
   &__go { color: var(--c-accent); font-size: 0.9rem; }
 
+  &__fav {
+    flex: 0 0 auto;
+    background: none;
+    border: none;
+    padding: var(--sp-1);
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--c-muted);
+    cursor: pointer;
+
+    &.is-active { color: var(--c-accent); }
+  }
+
   &:active { border-color: var(--c-accent-2); }
 }
 

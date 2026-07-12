@@ -77,6 +77,7 @@
 
 .live[data-recovery] {
   .hero,
+  .cad-guide,
   .tiles,
   .sources,
   .modes {
@@ -335,6 +336,46 @@
 
 // Mode complet : la grille de 6 tuiles occupe la place, pas de héro géant.
 .live[data-mode='complet'] .tiles { flex: 1; align-content: center; }
+
+// Guide de cadence (mode cad, expérimental) : échelle 5 valeurs + flèche mobile.
+.cad-guide {
+  margin: 0 auto var(--sp-3);
+  width: min(100%, 20rem);
+
+  &__scale {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 var(--sp-2);
+  }
+
+  &__tick {
+    font-size: 1.1rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--c-muted);
+
+    &.is-target { color: var(--c-accent); font-size: 1.35rem; }
+  }
+
+  &__track {
+    position: relative;
+    height: 1.4rem;
+    margin: var(--sp-1) var(--sp-2) 0;
+  }
+
+  &__arrow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: translateX(-50%);
+    color: var(--c-accent);
+    font-size: 1rem;
+    line-height: 1;
+    transition: left 0.25s ease-out;
+
+    &.is-out { color: var(--c-muted); opacity: 0.4; }
+  }
+}
 
 .controls {
   display: grid;

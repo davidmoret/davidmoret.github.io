@@ -14,12 +14,12 @@ import { createHeartSource } from '../ble/heart.js';
 import { createSessionEngine } from '../engine/session-engine.js';
 import { createRecorder } from '../engine/recorder.js';
 import { fmtDuration, fmtPace, fmtDist, escapeHtml } from './format.js';
-import { initAudio, cue } from './feedback.js';
+import { initAudio, cue, beepShort, beepLong } from './feedback.js';
 import { go } from './router.js';
 
 const BLE_OK = typeof navigator !== 'undefined' && !!navigator.bluetooth;
 
-const MODES = ['perf', 'cardio', 'complet', 'zen'];
+const MODES = ['perf', 'cardio', 'complet', 'zen', 'cad'];
 
 const LONG_PRESS_MS = 1500;
 
@@ -27,8 +27,19 @@ const LAYOUT = {
   perf:    { hero: 'pace', tiles: ['spm', 'hr', 'sdist'] },
   cardio:  { hero: 'hr',   tiles: ['pace', 'spm', 'dist'] },
   complet: { hero: null,   tiles: ['pace', 'hr', 'spm', 'power', 'dist', 'stime'] },
-  zen:     { hero: 'stime', tiles: ['pace'] },
+  zen:     { hero: 'stime', tiles: ['pace', 'hr', 'spm'] },
+  cad:     { hero: 'spm',  tiles: ['power', 'hr', 'stime'] },
 };
+
+// Chrono de section : décompte si la section se clôt au temps (cible durée),
+// sinon temps écoulé.
+function sectionClock(s) {
+  const t = s.section && s.section.target;
+  if (t && t.type === 'duration') {
+    return fmtDuration(Math.max(0, t.value - s.sectionMs / 1000));
+  }
+  return fmtDuration(s.sectionMs / 1000);
+}
 
 const METRIC = {
   pace:  (m) => ({ k: '/500m', v: fmtPace(m.pace) }),
@@ -37,7 +48,7 @@ const METRIC = {
   power: (m) => ({ k: 'puissance', v: m.power ?? '—', u: 'W' }),
   dist:  (m) => ({ k: 'distance', v: m.dist != null ? fmtDist(m.dist) : '—' }),
   sdist: (m, s) => ({ k: 'dist. section', v: fmtDist(s.sectionDist || 0) }),
-  stime: (m, s) => ({ k: 'chrono section', v: fmtDuration(s.sectionMs / 1000) }),
+  stime: (m, s) => ({ k: 'chrono section', v: sectionClock(s) }),
 };
 
 export async function screenLive({ slug }, outlet) {
@@ -69,6 +80,9 @@ export async function screenLive({ slug }, outlet) {
     hero: outlet.querySelector('[data-hero]'),
     heroVal: outlet.querySelector('[data-hero-val]'),
     heroKey: outlet.querySelector('[data-hero-key]'),
+    cadGuide: outlet.querySelector('[data-cad-guide]'),
+    cadScale: outlet.querySelector('[data-cad-scale]'),
+    cadArrow: outlet.querySelector('[data-cad-arrow]'),
     tiles: outlet.querySelector('[data-tiles]'),
     pause: outlet.querySelector('[data-pause]'),
     quit: outlet.querySelector('[data-quit]'),
@@ -89,6 +103,9 @@ export async function screenLive({ slug }, outlet) {
   let sessionStarted = false;
   let saved = false;
   let breathTimers = [];
+  let lastCountdownSec = null;   // dernière seconde de décompte bipée
+  let countdownArmed = false;    // décompte en cours → bip long à la fin
+  let cadGuideTarget = null;     // cible spm affichée par le guide (mode cad)
 
   function isHrSection() {
     const s = engine.snapshot().section;
@@ -182,6 +199,8 @@ export async function screenLive({ slug }, outlet) {
     els.tiles.innerHTML = cfg.tiles.map((key) => tileHtml(METRIC[key](m, s))).join('');
 
     applyZone(m.hr);
+    renderCadenceGuide(m, s);
+    maybeCountdownBeep(s);
 
     if (longPressActive) return;
 
@@ -190,6 +209,41 @@ export async function screenLive({ slug }, outlet) {
     else if (s.status === 'paused') els.pause.textContent = 'Reprendre';
     else els.pause.textContent = 'Terminé';
     els.pause.disabled = s.status === 'finished';
+  }
+
+  // Décompte sonore quand la section se clôt au temps : bip court à −3/−2/−1 s,
+  // countdownArmed → bip long au passage de section (géré dans engine.subscribe).
+  function maybeCountdownBeep(s) {
+    const t = s.section && s.section.target;
+    if (engine.status !== 'running' || !t || t.type !== 'duration') { lastCountdownSec = null; return; }
+    const sec = Math.ceil(t.value - s.sectionMs / 1000);
+    if (sec >= 1 && sec <= 3 && sec !== lastCountdownSec) {
+      lastCountdownSec = sec;
+      countdownArmed = true;
+      beepShort();
+    }
+  }
+
+  // Guide de cadence (mode cad, expérimental) : échelle de 5 valeurs centrée sur
+  // la cible + flèche sous la cadence courante (bloquée/grisée hors échelle).
+  function renderCadenceGuide(m, s) {
+    const target = s.section && s.section.spmTarget;
+    if (mode !== 'cad' || target == null) { els.cadGuide.hidden = true; cadGuideTarget = null; return; }
+    els.cadGuide.hidden = false;
+    const lo = target - 2;
+    if (cadGuideTarget !== target) {
+      cadGuideTarget = target;
+      els.cadScale.innerHTML = [0, 1, 2, 3, 4].map((i) => {
+        const val = lo + i;
+        return `<span class="cad-guide__tick${val === target ? ' is-target' : ''}">${val}</span>`;
+      }).join('');
+    }
+    const spm = m.spm;
+    if (spm == null) { els.cadArrow.hidden = true; return; }
+    els.cadArrow.hidden = false;
+    const raw = (spm - lo) / 4;
+    els.cadArrow.style.left = `${Math.min(1, Math.max(0, raw)) * 100}%`;
+    els.cadArrow.classList.toggle('is-out', raw < 0 || raw > 1);
   }
 
   function applyZone(hr) {
@@ -357,7 +411,9 @@ export async function screenLive({ slug }, outlet) {
   });
   const unsubEngine = engine.subscribe((type) => {
     if (type === 'section-auto' || type === 'section-change') {
-      cue();
+      if (type === 'section-auto' && countdownArmed) beepLong(); else cue();
+      countdownArmed = false;
+      lastCountdownSec = null;
       const snap = engine.snapshot();
       recorder.markSectionEntry(snap.index, snap.globalMs);
       sim.setRecoveryMode(isHrSection());
@@ -422,6 +478,10 @@ function template() {
     <div class="hero" data-hero>
       <span class="hero__val" data-hero-val>—</span>
       <span class="hero__key" data-hero-key></span>
+    </div>
+    <div class="cad-guide" data-cad-guide hidden>
+      <div class="cad-guide__scale" data-cad-scale></div>
+      <div class="cad-guide__track"><span class="cad-guide__arrow" data-cad-arrow>▲</span></div>
     </div>
     <div class="tiles" data-tiles></div>
 

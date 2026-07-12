@@ -174,7 +174,12 @@ pendant la séance.
 | **`perf`** *(défaut)* | **Allure /500m** | Cadence (spm) · FC · Distance section | Intervalles, pyramides — l'allure est la référence rameur |
 | **`cardio`** | **FC** (+ zone couleur) | Allure · Cadence · Distance | Endurance, travail en zones FC |
 | **`complet`** | grille 6 tuiles égales | Allure · FC · Cadence · Puissance · Distance · Chrono section | Tout voir d'un coup |
-| **`zen`** | **Chrono section** | 1 seule tuile (allure) | Séance libre, focus ressenti |
+| **`zen`** | **Chrono section** | Allure · FC · Cadence | Séance libre, focus ressenti |
+| **`cad`** | **Cadence (spm)** | Puissance · FC · Chrono section (+ guide échelle 5 valeurs) | Travail de cadence ciblée |
+
+**Chrono section à rebours** : quand la section se clôt au **temps** (cible durée),
+le chrono de section s'affiche en **décompte** + signal sonore final (3 bips courts
++ 1 bip long). Sinon (distance/hr/manuel) → chrono croissant.
 
 **Fiabilité des métriques (priorité de confiance) :**
 1. **FC** — Polar Verity Sense dédié, standard BLE → toujours fiable.
@@ -317,3 +322,96 @@ Quand la section courante a `target.type === 'hr'`, l'écran Live bascule automa
   - `screen-summary.js` : bloc `.hrr` avec HRR 1 min, HRR 2 min, FC début
     récup, et interprétation (excellent ≥ 40, bon ≥ 25, moyen ≥ 12, faible < 12).
   - Format JSON étendu : champ `hrr: { hrStart, hrr60, hrr120 }`.
+
+---
+
+## 12. Évolutions v2 — navigation, favoris & modes Live
+
+> Lot d'améliorations UX post-roadmap. Objectif : mieux ranger les séances quand
+> le catalogue grandit (favoris + listings dédiés), lier proprement historique et
+> séances, et enrichir l'écran Live (nouveau mode cadence, zen enrichi, chrono à
+> rebours sonore).
+
+### Points de vigilance actés
+- ⚠️ **Clé stable `slug`** : introduire un identifiant stable par séance (dérivé du
+  nom de fichier `.md`, ex. `2026-07-06-pyramide`) porté par la **définition**, le
+  **favori** et chaque entrée d'**historique**. Remplace le lien fragile par
+  `session_title` (renommer une séance ne doit pas perdre favoris + historique).
+  → **À valider avant Lot E.**
+- ✅ **Cadence cible numérique** (Lot H-bis) : **les deux syntaxes gérées**.
+  - `cadence: 24-26 spm` → plage : centre de l'échelle = **milieu arrondi** (`25`).
+  - `cadence_cible: 23` → **valeur précise** : centre de l'échelle = `23`.
+  - `cadence_cible` **prioritaire** sur `cadence` si les deux présents.
+  - Absence des deux → pas de guide de cadence (échelle masquée).
+
+### Lot E — Favoris & page « Toutes les séances »
+- Accueil : section « Séances » → **« Séances favorites »**. Bouton « Importer »
+  → remplacé par **« Ajouter »** qui mène à la page complète.
+- Nouvel écran **« Toutes les séances »** (`screen-sessions.js`, route `/sessions`) :
+  liste l'intégralité des séances dispo, **bouton « Importer » déplacé ici**, et
+  pour chaque séance un **toggle ★ favori** (ajouter/retirer).
+- `store.js` : flag favori + `slug` sur les définitions.
+- Fichiers : `store.js`, `screen-home.js`, `screen-sessions.js` (nouveau), `main.js`.
+
+### Lot F — Historique étendu
+- Accueil : sous « Dernières séances », si **> 5** entrées → bouton
+  **« Voir toutes les séances passées »** → listing complet.
+- Nouvel écran **historique complet** (`screen-history.js`, route `/history`),
+  filtrable par séance (via `slug`).
+- Détail séance : bloc **« Historique de cette séance »** en bas + bouton
+  **« Voir tout l'historique »** si **> 5** entrées.
+- Fichiers : `screen-history.js` (nouveau), `aggregate.js` (filtre par slug),
+  `screen-home.js`, `screen-detail.js`, `main.js`.
+
+### Lot G — Ajustements modes Live
+- **Mode `zen`** : tuiles secondaires = **allure /500 + FC + spm** (au lieu d'allure seule).
+- **Chrono section à rebours** : quand la section est clôturée par le **temps**
+  (`target.type === 'duration'`), afficher le chrono de section en **décompte**.
+  Sinon (distance/hr/manuel) → chrono croissant inchangé.
+- **Signal sonore de fin** : **3 bips courts + 1 bip long** sur les dernières
+  secondes. Nouvel util `engine/beeper.js` (Web Audio API, amorcé au geste de
+  démarrage). Vérifier l'infra son existante avant d'en créer une.
+- Fichiers : `screen-live.js`, `_live.scss`, `engine/beeper.js` (nouveau).
+
+### Lot H — Mode cadence (`cad`)
+- Nouveau mode d'affichage **`cad`** dans le sélecteur de modes Live.
+- **Héro (géant) : cadence (spm)**. Tuiles secondaires : **puissance (W) + FC +
+  chrono section**.
+- Ajout de la ligne dans le tableau §6.1 des modes.
+- Fichiers : `screen-live.js`, `_live.scss`.
+
+### Lot H-bis — Guide de cadence (expérimental, à valider en test réel)
+> Sous la métrique spm géante (mode `cad` uniquement) : une **échelle de 5 valeurs**
+> centrée sur la cible (ex. cible 23 → `21 22 23 24 25`) avec une **flèche** qui se
+> déplace sous la valeur courante pour guider l'ajustement.
+- Flèche bornée : si la cadence courante sort de l'échelle (ex. 18 pour cible 23),
+  la flèche reste **bloquée à l'extrémité + légèrement grisée**.
+- Centre de l'échelle : `cadence_cible: N` si présent, sinon milieu arrondi de la
+  plage `cadence: A-B spm`, sinon échelle masquée (voir décision cadence cible).
+- **Retirable sans impact** si non concluant après tests.
+- Fichiers : `session-parser.js` (parse `cadence` plage + `cadence_cible`),
+  `screen-live.js`, `_live.scss`.
+
+### État des décisions (v2)
+- ✅ **Lot E** — Favoris + page « Toutes les séances » : implémenté (v0.5.0).
+  - `store.setFavorite`, flag `favorite` sur la définition (clé `slug`).
+  - Accueil : « Séances favorites » + bouton « + Ajouter » → `/sessions`.
+  - `screen-sessions.js` : liste complète, import déplacé ici, toggle ★.
+- ✅ **Lot F** — Historique étendu : implémenté (v0.5.0).
+  - `history-list.js` : rendu + câblage partagés (accueil, historique, détail).
+  - `screen-history.js` : `/history` (tout) et `/history/:slug` (par séance).
+  - Accueil : « Voir toutes les séances passées » si > 5.
+  - Détail : bloc « Historique de cette séance » + « Voir tout » si > 5.
+  - Filtrage par `session_slug` (repli titre pour anciennes entrées).
+- ✅ **Lot G** — Modes Live : implémenté (v0.5.0).
+  - `zen` : tuiles allure + FC + cadence.
+  - Chrono section à rebours si cible durée (`sectionClock`).
+  - `feedback.js` : `beepShort()` / `beepLong()` — 3 bips + 1 long au décompte.
+- ✅ **Lot H** — Mode `cad` : implémenté (v0.5.0). Héro spm + puissance/FC/chrono.
+- ✅ **Lot H-bis** — Guide de cadence : implémenté (expérimental, à valider en test).
+  - `session-parser.js` : `spmTarget` via `cadence_cible` (prioritaire) ou milieu
+    de plage `cadence`. `display: cad` accepté.
+  - `screen-live.js` : échelle 5 valeurs centrée cible + flèche bornée/grisée.
+- ✅ `slug` stable par séance : validé (fondation favoris + historique).
+- ✅ Cadence cible : `cadence` (plage → milieu) **et** `cadence_cible` (précis),
+  `cadence_cible` prioritaire.

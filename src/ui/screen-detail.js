@@ -1,10 +1,12 @@
-// Écran Détail : aperçu des sections + estimation, bouton Démarrer + Supprimer.
-import { getDefinition, deleteDefinition } from '../data/store.js';
+// Écran Détail : aperçu des sections + estimation, bouton Démarrer + Supprimer,
+// et historique de cette séance en bas.
+import { getDefinition, deleteDefinition, getHistory } from '../data/store.js';
 import { fmtDuration, fmtDist, escapeHtml } from './format.js';
+import { historyListHtml, bindHistoryList, historyForSession } from './history-list.js';
 import { go } from './router.js';
 
 export async function screenDetail({ slug }, outlet) {
-  const s = await getDefinition(slug);
+  const [s, history] = await Promise.all([getDefinition(slug), getHistory()]);
   if (!s) {
     outlet.innerHTML = '<main class="screen"><p class="empty">Séance introuvable.</p></main>';
     return;
@@ -12,6 +14,10 @@ export async function screenDetail({ slug }, outlet) {
 
   const totalDur = s.sections.reduce((a, x) => a + (x.target.type === 'duration' ? x.target.value : 0), 0);
   const totalDist = s.sections.reduce((a, x) => a + (x.target.type === 'distance' ? x.target.value : 0), 0);
+  const past = historyForSession(
+    [...history].sort((a, b) => b.id.localeCompare(a.id)),
+    { slug, title: s.title },
+  );
 
   outlet.innerHTML = `
     <header class="app-bar app-bar--detail">
@@ -31,6 +37,12 @@ export async function screenDetail({ slug }, outlet) {
         <button class="btn btn--primary btn--block" data-start>Démarrer</button>
         <button class="btn btn--ghost btn--block" data-delete>Supprimer cette séance</button>
       </div>
+
+      ${past.length ? `
+        <div class="section-head"><h2 class="section-head__title">Historique de cette séance</h2></div>
+        ${historyListHtml(past.slice(0, 5))}
+        ${past.length > 5 ? '<button class="btn btn--ghost btn--block" data-all-history>Voir tout l’historique</button>' : ''}
+      ` : ''}
     </main>`;
 
   outlet.querySelector('[data-back]').addEventListener('click', () => go('/'));
@@ -40,6 +52,9 @@ export async function screenDetail({ slug }, outlet) {
     await deleteDefinition(slug);
     go('/');
   });
+  const allBtn = outlet.querySelector('[data-all-history]');
+  if (allBtn) allBtn.addEventListener('click', () => go(`/history/${slug}`));
+  bindHistoryList(outlet, () => screenDetail({ slug }, outlet));
 }
 
 function stepHtml(x) {

@@ -1,6 +1,8 @@
 // Source cardio — capteur FC BLE standard (Polar Verity Sense). Service Heart
 // Rate 0x180D, caractéristique Heart Rate Measurement 0x2A37. Pousse { hr }
 // dans le bus normalisé. Validé par le spike Lot 0.
+import { bleLog } from './debug.js';
+
 const HR_SERVICE = 0x180d;
 const HR_MEASUREMENT = 0x2a37;
 const MAX_RETRIES = 5;
@@ -41,24 +43,29 @@ export function createHeartSource(bus) {
   // getDevices(), puis on attend qu'il émette pour ouvrir le GATT. Renvoie true
   // si connecté. Silencieux (pas d'erreur) si rien de mémorisé ou hors de portée.
   async function autoConnect() {
-    if (device && device.gatt && device.gatt.connected) return true;
-    if (!navigator.bluetooth || !navigator.bluetooth.getDevices) return false;
+    bleLog('FC autoConnect: start');
+    if (device && device.gatt && device.gatt.connected) { bleLog('FC déjà connecté'); return true; }
+    if (!navigator.bluetooth || !navigator.bluetooth.getDevices) { bleLog('FC getDevices non supporté'); return false; }
     const savedId = (() => { try { return localStorage.getItem(STORE_KEY); } catch { return null; } })();
+    bleLog('FC savedId', savedId);
     if (!savedId) return false;
 
-    let known;
-    try { known = (await navigator.bluetooth.getDevices()).find((d) => d.id === savedId); }
-    catch { return false; }
-    if (!known) return false;
+    let devices;
+    try { devices = await navigator.bluetooth.getDevices(); }
+    catch (e) { bleLog('FC getDevices erreur', e); return false; }
+    bleLog('FC getDevices →', devices.length, devices.map((d) => `${d.name || '?'}:${d.id}`));
+    const known = devices.find((d) => d.id === savedId);
+    if (!known) { bleLog('FC appareil absent de getDevices'); return false; }
 
     device = known;
     manualDisconnect = false;
     device.addEventListener('gattserverdisconnected', onDisconnected);
 
+    bleLog('FC watchAdvertisements dispo ?', !!device.watchAdvertisements);
     if (!device.watchAdvertisements) {
       // Pas de scan de pub dispo : tentative directe (OK si déjà à portée).
       try { await openGatt(); return true; }
-      catch { setStatus('disconnected'); return false; }
+      catch (e) { bleLog('FC openGatt direct échec', e); setStatus('disconnected'); return false; }
     }
     watchForDevice();
     return true;
@@ -75,12 +82,14 @@ export function createHeartSource(bus) {
     const onAd = async () => {
       if (connecting || (device.gatt && device.gatt.connected)) return;
       connecting = true;
+      bleLog('FC pub reçue → openGatt');
       try { await openGatt(); stopScan(); } // connecté → plus besoin d'écouter
-      catch { connecting = false; }         // réémettra, on garde l'écoute
+      catch (e) { bleLog('FC openGatt échec', e); connecting = false; } // réémettra
     };
     device.addEventListener('advertisementreceived', onAd);
     ac.signal.addEventListener('abort', () => device.removeEventListener('advertisementreceived', onAd));
-    device.watchAdvertisements({ signal: ac.signal }).catch(() => stopScan());
+    bleLog('FC watchAdvertisements: scan démarré');
+    device.watchAdvertisements({ signal: ac.signal }).catch((e) => { bleLog('FC watchAdvertisements erreur', e); stopScan(); });
   }
 
   function stopScan() {

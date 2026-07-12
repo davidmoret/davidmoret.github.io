@@ -64,7 +64,6 @@ function parseSections(body) {
       duree,
       distance,
       cadence: props.cadence || null,
-      spmTarget: parseCadenceTarget(props.cadence_cible, props.cadence),
       intensite: props.intensite || null,
       note: props.note || null,
       target,
@@ -86,24 +85,6 @@ function parseHrTarget(v) {
   if (dyn) return { mode: 'dynamic', delta: Number(dyn[1]) };
   const num = Number(v);
   if (!isNaN(num) && num > 0) return { mode: 'fixed', value: num };
-  return null;
-}
-
-// Cadence cible numérique pour le guide du mode `cad` :
-//   `cadence_cible: 23`   → 23 (prioritaire, valeur précise)
-//   `cadence: 24-26 spm`  → 25 (milieu arrondi de la plage)
-//   `cadence: 24 spm`     → 24 (valeur unique)
-//   absent des deux       → null (guide masqué)
-function parseCadenceTarget(cadenceCible, cadence) {
-  if (cadenceCible != null) {
-    const n = parseInt(cadenceCible, 10);
-    if (!isNaN(n)) return n;
-  }
-  const nums = cadence && String(cadence).match(/\d+/g);
-  if (nums && nums.length) {
-    const vals = nums.map(Number);
-    return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
-  }
   return null;
 }
 

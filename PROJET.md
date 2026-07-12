@@ -175,7 +175,7 @@ pendant la séance.
 | **`cardio`** | **FC** (+ zone couleur) | Allure · Cadence · Distance | Endurance, travail en zones FC |
 | **`complet`** | grille 6 tuiles égales | Allure · FC · Cadence · Puissance · Distance · Chrono section | Tout voir d'un coup |
 | **`zen`** | **Chrono section** | Allure · FC · Cadence | Séance libre, focus ressenti |
-| **`cad`** | **Cadence (spm)** | Puissance · FC · Chrono section (+ guide échelle 5 valeurs) | Travail de cadence ciblée |
+| **`cad`** | **Cadence (spm)** | Puissance · FC · Chrono section | Travail de cadence ciblée |
 
 **Chrono section à rebours** : quand la section se clôt au **temps** (cible durée),
 le chrono de section s'affiche en **décompte** + signal sonore final (3 bips courts
@@ -408,10 +408,16 @@ Quand la section courante a `target.type === 'hr'`, l'écran Live bascule automa
   - Chrono section à rebours si cible durée (`sectionClock`).
   - `feedback.js` : `beepShort()` / `beepLong()` — 3 bips + 1 long au décompte.
 - ✅ **Lot H** — Mode `cad` : implémenté (v0.5.0). Héro spm + puissance/FC/chrono.
-- ✅ **Lot H-bis** — Guide de cadence : implémenté (expérimental, à valider en test).
-  - `session-parser.js` : `spmTarget` via `cadence_cible` (prioritaire) ou milieu
-    de plage `cadence`. `display: cad` accepté.
-  - `screen-live.js` : échelle 5 valeurs centrée cible + flèche bornée/grisée.
+  `display: cad` accepté par le parser.
+- ❌ **Lot H-bis** — Guide de cadence (échelle + flèche) : **retiré après test**
+  (v0.5.1), jugé non utile. Le parsing `cadence_cible` / `spmTarget` a été retiré
+  avec (le champ `cadence` texte reste affiché en détail de séance).
 - ✅ `slug` stable par séance : validé (fondation favoris + historique).
-- ✅ Cadence cible : `cadence` (plage → milieu) **et** `cadence_cible` (précis),
-  `cadence_cible` prioritaire.
+
+### Qualité de mesure (v0.5.1)
+- `recorder.js` : chaque échantillon 1 Hz = **moyenne des paquets reçus dans la
+  seconde** (fc/spm/puissance/allure) au lieu d'un snapshot instantané → lisse le
+  bruit et exploite les sources > 1 Hz. Distance (cumulée) = dernière valeur.
+- **Anti-stale** : une métrique sans mise à jour depuis 3 s est enregistrée à
+  `null` (plus de valeur « figée » quand le rameur est à l'arrêt / BLE perdu).
+- Coût perf négligeable (accumulation légère par paquet, sampling toujours 1 Hz).

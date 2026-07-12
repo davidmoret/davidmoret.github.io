@@ -40,6 +40,7 @@ export function createRowerSource(bus) {
     characteristic.addEventListener('characteristicvaluechanged', onValue);
     try { localStorage.setItem(STORE_KEY, device.id); } catch { /* stockage indispo */ }
     setStatus('connected', device.name || 'rameur');
+    navigator.bluetooth.getDevices?.().then((d) => bleLog('rameur sonde getDevices post-co →', d.length)).catch(() => {});
   }
 
   // Reconnexion auto sans sélecteur : l'appareil déjà autorisé est retrouvé via

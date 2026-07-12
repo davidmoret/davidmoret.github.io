@@ -37,6 +37,7 @@ export function createHeartSource(bus) {
     characteristic.addEventListener('characteristicvaluechanged', onValue);
     try { localStorage.setItem(STORE_KEY, device.id); } catch { /* stockage indispo */ }
     setStatus('connected', device.name || 'capteur FC');
+    navigator.bluetooth.getDevices?.().then((d) => bleLog('FC sonde getDevices post-co →', d.length)).catch(() => {});
   }
 
   // Reconnexion auto sans sélecteur : l'appareil déjà autorisé est retrouvé via

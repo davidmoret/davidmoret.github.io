@@ -64,7 +64,7 @@ function stepHtml(x) {
     : x.target.type === 'distance' ? fmtDist(x.target.value)
     : x.target.type === 'hr' ? fmtHrTarget(x.target)
     : 'manuelle';
-  const extra = [x.cadence && `cadence ${x.cadence}`, x.intensite].filter(Boolean).join(' · ');
+  const extra = x.cadence ? `cadence ${x.cadence}` : '';
   return `<li class="step">
     <div class="step__main">
       <span class="step__name">${escapeHtml(x.name)}</span>

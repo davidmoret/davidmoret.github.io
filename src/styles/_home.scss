@@ -2,6 +2,7 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: var(--sp-2);
+  margin-bottom: var(--sp-5);
 
   &__item {
     display: flex;

@@ -156,7 +156,6 @@ function emptySection(n) {
     hrFixed: '',
     hrPct: '',
     cadence: '',
-    intensite: '',
     note: '',
   };
 }
@@ -174,7 +173,6 @@ function sectionToForm(s) {
     hrFixed: '',
     hrPct: '',
     cadence: s.cadence || '',
-    intensite: s.intensite || '',
     note: s.note || '',
   };
 
@@ -233,17 +231,11 @@ function sectionHtml(s, idx) {
           value="${escapeHtml(s.cadence)}" placeholder="ex. 24-26 spm">
       </label>
       <label class="profile-field editor__field">
-        <span class="profile-field__label">Intensité</span>
-        <input class="profile-field__input" type="text" name="secIntensite_${idx}"
-          value="${escapeHtml(s.intensite)}" placeholder="ex. facile">
+        <span class="profile-field__label">Note</span>
+        <input class="profile-field__input" type="text" name="secNote_${idx}"
+          value="${escapeHtml(s.note)}" placeholder="optionnel">
       </label>
     </div>
-
-    <label class="profile-field">
-      <span class="profile-field__label">Note</span>
-      <input class="profile-field__input" type="text" name="secNote_${idx}"
-        value="${escapeHtml(s.note)}" placeholder="optionnel">
-    </label>
   </div>`;
 }
 
@@ -340,7 +332,6 @@ function formToSession(fd, state) {
     const name = fd.get(`secName_${i}`)?.trim() || `Section ${i + 1}`;
     const targetType = fd.get(`secTarget_${i}`);
     const cadence = fd.get(`secCadence_${i}`)?.trim() || null;
-    const intensite = fd.get(`secIntensite_${i}`)?.trim() || null;
     const note = fd.get(`secNote_${i}`)?.trim() || null;
 
     let target;
@@ -380,7 +371,7 @@ function formToSession(fd, state) {
     let distance = null;
     if (targetType === 'distance') distance = target.value;
 
-    return { name, duree, distance, cadence, intensite, note, target };
+    return { name, duree, distance, cadence, intensite: null, note, target };
   });
 
   const display = fd.get('display') || 'perf';

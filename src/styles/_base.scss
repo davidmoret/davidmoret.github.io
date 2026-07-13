@@ -26,14 +26,14 @@ code {
 .screen {
   max-width: 720px;
   margin: 0 auto;
-  padding: var(--sp-4) var(--sp-4) var(--sp-6);
+  padding: var(--sp-2) var(--sp-4) var(--sp-6);
 }
 
 .app-bar {
   display: flex;
   align-items: baseline;
   gap: var(--sp-2);
-  padding: var(--sp-4);
+  padding: var(--sp-4) var(--sp-4) var(--sp-2);
   max-width: 720px;
   margin: 0 auto;
 

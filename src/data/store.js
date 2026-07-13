@@ -2,11 +2,12 @@
 //   definitions : séances importées (parsées depuis le .md), clé = slug.
 //   history     : une entrée JSON par séance jouée (résumé + timeline), clé = id.
 //   profile     : profil utilisateur (âge, FCmax, FCrepos), clé = 'me'.
+//   meta        : clé-valeur (dernière date de backup, etc.), clé = string.
 
 const DB_NAME = 'ram';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
-function openDb() {
+export function openDb() {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = () => {
@@ -14,6 +15,7 @@ function openDb() {
       if (!db.objectStoreNames.contains('definitions')) db.createObjectStore('definitions', { keyPath: 'slug' });
       if (!db.objectStoreNames.contains('history')) db.createObjectStore('history', { keyPath: 'id' });
       if (!db.objectStoreNames.contains('profile')) db.createObjectStore('profile');
+      if (!db.objectStoreNames.contains('meta')) db.createObjectStore('meta');
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);

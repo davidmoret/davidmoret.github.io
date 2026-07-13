@@ -4,13 +4,18 @@ import { aggregate } from '../stats/aggregate.js';
 import { fmtDuration, fmtDist, escapeHtml } from './format.js';
 import { historyListHtml, bindHistoryList } from './history-list.js';
 import { go } from './router.js';
+import { getLastBackupDate, shouldRemindBackup, daysSinceBackup, exportBackup } from '../data/backup.js';
 
 export async function screenHome(_params, outlet) {
-  const [defs, history] = await Promise.all([getDefinitions(), getHistory()]);
+  const [defs, history, lastBackup] = await Promise.all([
+    getDefinitions(), getHistory(), getLastBackupDate(),
+  ]);
   const stats = aggregate(history);
   const favorites = defs.filter((d) => d.favorite).sort((a, b) => a.title.localeCompare(b.title, 'fr'));
   const sorted = [...history].sort((a, b) => b.id.localeCompare(a.id));
   const recent = sorted.slice(0, 5);
+  const remindBackup = shouldRemindBackup(lastBackup);
+  const days = lastBackup ? Math.floor(daysSinceBackup(lastBackup)) : null;
 
   outlet.innerHTML = `
     <header class="app-bar">
@@ -24,6 +29,8 @@ export async function screenHome(_params, outlet) {
         ${statItem(fmtDuration(stats.duration), 'temps')}
         ${statItem(stats.hrAvg ?? '—', 'fc moy')}
       </section>
+
+      ${remindBackup ? backupBannerHtml(days) : ''}
 
       <div class="section-head">
         <h2 class="section-head__title">Séances favorites</h2>
@@ -55,6 +62,37 @@ export async function screenHome(_params, outlet) {
     el.addEventListener('click', () => go(`/session/${el.dataset.slug}`));
   });
   bindHistoryList(outlet, () => screenHome(_params, outlet));
+
+  // Backup banner
+  const backupBtn = outlet.querySelector('[data-backup]');
+  if (backupBtn) {
+    backupBtn.addEventListener('click', async () => {
+      const pass = prompt('Choisis une passphrase pour chiffrer le backup :');
+      if (!pass || !pass.trim()) return;
+      backupBtn.disabled = true;
+      backupBtn.textContent = 'Chiffrement…';
+      try {
+        await exportBackup(pass.trim());
+        // Re-render to hide the banner
+        screenHome(_params, outlet);
+      } catch (e) {
+        console.error('Backup échoué :', e);
+        alert('Le backup a échoué. Réessaie.');
+        backupBtn.disabled = false;
+        backupBtn.textContent = 'Sauvegarder maintenant';
+      }
+    });
+  }
+}
+
+function backupBannerHtml(days) {
+  const label = days === null
+    ? 'Aucune sauvegarde'
+    : `Dernière sauvegarde il y a ${days} j`;
+  return `<div class="backup-banner">
+    <span class="backup-banner__text">${label}</span>
+    <button class="btn btn--primary btn--sm" data-backup>Sauvegarder maintenant</button>
+  </div>`;
 }
 
 function statItem(value, key) {

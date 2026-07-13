@@ -60,23 +60,24 @@ function render(outlet, state) {
             value="${escapeHtml(state.title)}" placeholder="ex. Pyramide 500m">
         </label>
 
-        <label class="profile-field">
-          <span class="profile-field__label">Type</span>
-          <input class="profile-field__input" type="text" name="type"
-            value="${escapeHtml(state.type)}" placeholder="ex. intervalles">
-        </label>
+        <div class="editor__row">
+          <label class="profile-field editor__field">
+            <span class="profile-field__label">Type</span>
+            <input class="profile-field__input" type="text" name="type"
+              value="${escapeHtml(state.type)}" placeholder="ex. intervalles">
+          </label>
+          <label class="profile-field editor__field">
+            <span class="profile-field__label">Affichage</span>
+            <select class="profile-field__input" name="display">
+              ${DISPLAY_MODES.map(m => `<option value="${m.value}"${m.value === state.display ? ' selected' : ''}>${m.label}</option>`).join('')}
+            </select>
+          </label>
+        </div>
 
         <label class="profile-field">
           <span class="profile-field__label">Description</span>
           <input class="profile-field__input" type="text" name="description"
             value="${escapeHtml(state.description)}" placeholder="optionnel">
-        </label>
-
-        <label class="profile-field">
-          <span class="profile-field__label">Mode d'affichage</span>
-          <select class="profile-field__input" name="display">
-            ${DISPLAY_MODES.map(m => `<option value="${m.value}"${m.value === state.display ? ' selected' : ''}>${m.label}</option>`).join('')}
-          </select>
         </label>
 
         <div class="profile-field">
@@ -104,17 +105,14 @@ function render(outlet, state) {
       </form>
     </main>`;
 
-  // Back
   outlet.querySelector('[data-back]').addEventListener('click', () =>
     state.slug ? go(`/session/${state.slug}`) : go('/sessions'));
 
-  // Add section
   outlet.querySelector('[data-add-section]').addEventListener('click', () => {
     state.sections.push(emptySection(state.sections.length + 1));
     render(outlet, state);
   });
 
-  // Remove section (delegated)
   outlet.querySelector('[data-sections]').addEventListener('click', (e) => {
     const btn = e.target.closest('[data-remove-section]');
     if (!btn) return;
@@ -122,25 +120,19 @@ function render(outlet, state) {
     render(outlet, state);
   });
 
-  // Target type change → re-render that section
   outlet.querySelector('[data-sections]').addEventListener('change', (e) => {
     const sel = e.target.closest('[data-target-type]');
-    if (!sel) return;
-    const idx = Number(sel.dataset.targetType);
-    state.sections[idx].targetType = sel.value;
-    render(outlet, state);
+    if (sel) {
+      state.sections[Number(sel.dataset.targetType)].targetType = sel.value;
+      render(outlet, state);
+    }
+    const hr = e.target.closest('[data-hr-mode]');
+    if (hr) {
+      state.sections[Number(hr.dataset.hrMode)].hrMode = hr.value;
+      render(outlet, state);
+    }
   });
 
-  // HR mode change
-  outlet.querySelector('[data-sections]').addEventListener('change', (e) => {
-    const sel = e.target.closest('[data-hr-mode]');
-    if (!sel) return;
-    const idx = Number(sel.dataset.hrMode);
-    state.sections[idx].hrMode = sel.value;
-    render(outlet, state);
-  });
-
-  // Submit
   outlet.querySelector('[data-form]').addEventListener('submit', (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
@@ -204,7 +196,6 @@ function sectionToForm(s) {
     if (s.target.mode === 'dynamic') sec.hrDelta = String(s.target.delta || 40);
     if (s.target.mode === 'fixed') sec.hrFixed = String(s.target.value || '');
     if (s.target.mode === 'pct' || s.target.mode === 'karvonen') sec.hrPct = String(s.target.pct || '');
-    // cap (durée plafond)
     if (s.target.cap) {
       sec.durationMin = String(Math.floor(s.target.cap / 60));
       sec.durationSec = String(s.target.cap % 60).padStart(2, '0');
@@ -224,18 +215,16 @@ function sectionHtml(s, idx) {
       <button type="button" class="btn btn--ghost editor__remove" data-remove-section="${idx}" aria-label="Supprimer">✕</button>
     </div>
 
-    <div class="editor__row">
-      <label class="profile-field editor__field">
-        <span class="profile-field__label">Cible</span>
-        <select class="profile-field__input" name="secTarget_${idx}" data-target-type="${idx}">
-          ${TARGET_TYPES.map(t => `<option value="${t.value}"${t.value === s.targetType ? ' selected' : ''}>${t.label}</option>`).join('')}
-        </select>
-      </label>
+    <label class="profile-field editor__field">
+      <span class="profile-field__label">Cible</span>
+      <select class="profile-field__input" name="secTarget_${idx}" data-target-type="${idx}">
+        ${TARGET_TYPES.map(t => `<option value="${t.value}"${t.value === s.targetType ? ' selected' : ''}>${t.label}</option>`).join('')}
+      </select>
+    </label>
 
-      ${s.targetType === 'duration' ? durationFields(s, idx) : ''}
-      ${s.targetType === 'distance' ? distanceFields(s, idx) : ''}
-      ${s.targetType === 'hr' ? hrFields(s, idx) : ''}
-    </div>
+    ${s.targetType === 'duration' ? durationFieldsHtml(s, idx) : ''}
+    ${s.targetType === 'distance' ? distanceFieldsHtml(s, idx) : ''}
+    ${s.targetType === 'hr' ? hrFieldsHtml(s, idx) : ''}
 
     <div class="editor__row">
       <label class="profile-field editor__field">
@@ -258,7 +247,7 @@ function sectionHtml(s, idx) {
   </div>`;
 }
 
-function durationFields(s, idx) {
+function durationFieldsHtml(s, idx) {
   return `<div class="editor__row">
     <label class="profile-field editor__field">
       <span class="profile-field__label">Minutes</span>
@@ -273,7 +262,7 @@ function durationFields(s, idx) {
   </div>`;
 }
 
-function distanceFields(s, idx) {
+function distanceFieldsHtml(s, idx) {
   return `<div class="editor__row">
     <label class="profile-field editor__field">
       <span class="profile-field__label">Distance</span>
@@ -290,22 +279,22 @@ function distanceFields(s, idx) {
   </div>`;
 }
 
-function hrFields(s, idx) {
-  let hrValueFields = '';
+function hrFieldsHtml(s, idx) {
+  let hrValueField;
   if (s.hrMode === 'dynamic') {
-    hrValueFields = `<label class="profile-field editor__field">
+    hrValueField = `<label class="profile-field editor__field">
       <span class="profile-field__label">max −</span>
       <input class="profile-field__input" type="number" name="secHrDelta_${idx}" inputmode="numeric"
         value="${escapeHtml(s.hrDelta)}" placeholder="40" min="1">
     </label>`;
   } else if (s.hrMode === 'fixed') {
-    hrValueFields = `<label class="profile-field editor__field">
+    hrValueField = `<label class="profile-field editor__field">
       <span class="profile-field__label">BPM</span>
       <input class="profile-field__input" type="number" name="secHrFixed_${idx}" inputmode="numeric"
         value="${escapeHtml(s.hrFixed)}" placeholder="100" min="30">
     </label>`;
   } else {
-    hrValueFields = `<label class="profile-field editor__field">
+    hrValueField = `<label class="profile-field editor__field">
       <span class="profile-field__label">%</span>
       <input class="profile-field__input" type="number" name="secHrPct_${idx}" inputmode="numeric"
         value="${escapeHtml(s.hrPct)}" placeholder="55" min="1" max="100">
@@ -319,16 +308,16 @@ function hrFields(s, idx) {
         ${HR_MODES.map(m => `<option value="${m.value}"${m.value === s.hrMode ? ' selected' : ''}>${m.label}</option>`).join('')}
       </select>
     </label>
-    ${hrValueFields}
+    ${hrValueField}
   </div>
   <div class="editor__row">
     <label class="profile-field editor__field">
-      <span class="profile-field__label">Plafond (min)</span>
+      <span class="profile-field__label">Plafond min</span>
       <input class="profile-field__input" type="number" name="secDurMin_${idx}" inputmode="numeric"
         value="${escapeHtml(s.durationMin)}" placeholder="optionnel" min="0">
     </label>
     <label class="profile-field editor__field">
-      <span class="profile-field__label">Plafond (sec)</span>
+      <span class="profile-field__label">Plafond sec</span>
       <input class="profile-field__input" type="number" name="secDurSec_${idx}" inputmode="numeric"
         value="${escapeHtml(s.durationSec)}" placeholder="0" min="0" max="59">
     </label>

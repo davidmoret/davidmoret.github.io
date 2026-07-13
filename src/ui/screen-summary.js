@@ -1,7 +1,6 @@
 // Écran Résumé post-séance : totaux, FC moy/max, allure moy, mini-graphes
-// (FC + allure), découpe par section, HRR, bouton Exporter + Supprimer.
+// (FC + allure), découpe par section, HRR, bouton Supprimer.
 import { getHistoryEntry, deleteHistory } from '../data/store.js';
-import { shareSummary } from '../data/export.js';
 import { fmtDuration, fmtDist, escapeHtml } from './format.js';
 import { go } from './router.js';
 
@@ -44,13 +43,11 @@ export async function screenSummary({ id }, outlet) {
       </ul>
 
       <div class="summary-actions">
-        <button class="btn btn--primary btn--block" data-export>Exporter (.json)</button>
         <button class="btn btn--ghost btn--block" data-delete>Supprimer</button>
       </div>
     </main>`;
 
   outlet.querySelector('[data-home]').addEventListener('click', () => go('/'));
-  outlet.querySelector('[data-export]').addEventListener('click', () => shareSummary(entry));
   outlet.querySelector('[data-delete]').addEventListener('click', async () => {
     if (!confirm("Supprimer cette séance de l\u2019historique ?")) return;
     await deleteHistory(entry.id);

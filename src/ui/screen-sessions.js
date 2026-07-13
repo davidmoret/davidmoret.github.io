@@ -1,6 +1,6 @@
-// Écran Toutes les séances : liste l'intégralité des séances, import .md/.json,
+// Écran Toutes les séances : liste l'intégralité des séances, import .md,
 // et toggle favori (★) sur chaque séance.
-import { getDefinitions, putDefinition, putHistory, setFavorite } from '../data/store.js';
+import { getDefinitions, putDefinition, setFavorite } from '../data/store.js';
 import { parseSession } from '../data/session-parser.js';
 import { escapeHtml } from './format.js';
 import { go } from './router.js';
@@ -19,7 +19,7 @@ export async function screenSessions(_params, outlet) {
         <div class="section-head__actions">
           <label class="btn btn--ghost import-btn">
             Importer
-            <input id="import" class="import-btn__input" type="file" accept=".md,.txt,.markdown,.json,text/markdown,text/plain,application/json,*/*">
+            <input id="import" class="import-btn__input" type="file" accept=".md,.txt,.markdown,text/markdown,text/plain">
           </label>
         </div>
       </div>
@@ -54,16 +54,8 @@ export async function screenSessions(_params, outlet) {
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const text = reader.result;
-        // .json = backup historique, .md = définition de séance
-        if (file.name.endsWith('.json')) {
-          const entry = JSON.parse(text);
-          if (!entry.id || !entry.session_title) throw new Error('Format invalide');
-          putHistory(entry).then(() => screenSessions(_params, outlet));
-        } else {
-          const session = parseSession(text);
-          putDefinition(session).then(() => go(`/session/${session.slug}`));
-        }
+        const session = parseSession(reader.result);
+        putDefinition(session).then(() => go(`/session/${session.slug}`));
       } catch (e) {
         console.error('Import échoué :', e);
         alert(`Import échoué : ${e.message}`);

@@ -1,6 +1,6 @@
-// Écran Profil utilisateur : âge, FCmax, FCrepos.
-// Optionnel mais débloque les cibles FC en % et Karvonen.
+// Écran Profil utilisateur : âge, FCmax, FCrepos + sauvegarde/restauration.
 import { getProfile, putProfile } from '../data/profile.js';
+import { exportBackup, importBackup } from '../data/backup.js';
 import { escapeHtml } from './format.js';
 import { go } from './router.js';
 
@@ -40,6 +40,16 @@ export async function screenProfile(_params, outlet) {
       </form>
 
       <div class="profile-result" data-result hidden></div>
+
+      <div class="section-head"><h2 class="section-head__title">Sauvegarde</h2></div>
+      <p class="lead">Exporte tes données chiffrées ou restaure depuis un backup.</p>
+      <div class="backup-actions">
+        <button class="btn btn--block" data-export-backup>Exporter un backup</button>
+        <label class="btn btn--block import-btn">
+          Restaurer un backup
+          <input class="import-btn__input" type="file" accept=".rambak" data-import-backup>
+        </label>
+      </div>
     </main>`;
 
   outlet.querySelector('[data-back]').addEventListener('click', () => go('/'));
@@ -65,5 +75,35 @@ export async function screenProfile(_params, outlet) {
     result.innerHTML = parts.length
       ? `<span class="profile-ok">✓ ${parts.join(' · ')}</span>`
       : '<span class="profile-ok">✓ Profil vidé</span>';
+  });
+
+  // Export backup
+  outlet.querySelector('[data-export-backup]').addEventListener('click', async () => {
+    const pass = prompt('Choisis une passphrase pour chiffrer le backup :');
+    if (!pass || !pass.trim()) return;
+    try {
+      await exportBackup(pass.trim());
+      alert('Backup exporté !');
+    } catch (e) {
+      console.error('Export échoué :', e);
+      alert('L\'export a échoué. Réessaie.');
+    }
+  });
+
+  // Import backup
+  outlet.querySelector('[data-import-backup]').addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const pass = prompt('Saisis la passphrase du backup :');
+    if (!pass || !pass.trim()) { e.target.value = ''; return; }
+    try {
+      await importBackup(file, pass.trim());
+      alert('Backup restauré !');
+      screenProfile(_params, outlet);
+    } catch (e) {
+      console.error('Import échoué :', e);
+      alert('Restauration échouée. Vérifie la passphrase et le fichier.');
+      e.target.value = '';
+    }
   });
 }

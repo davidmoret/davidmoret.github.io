@@ -82,23 +82,5 @@ export async function shareSession(s) {
   const filename = `${s.slug}.md`;
   const blob = new Blob([md], { type: 'text/markdown' });
   const file = new File([blob], filename, { type: 'text/markdown' });
-
-  // Web Share API (Android)
-  if (navigator.share && navigator.canShare?.({ files: [file] })) {
-    try {
-      await navigator.share({ files: [file] });
-      return;
-    } catch (e) {
-      if (e.name === 'AbortError') return;
-      // fallback si le share échoue
-    }
-  }
-
-  // Fallback : download
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  await navigator.share({ files: [file] });
 }

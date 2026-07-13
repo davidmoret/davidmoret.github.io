@@ -75,13 +75,18 @@ function fmtDistMd(m) {
   return `${m}m`;
 }
 
-// ── Partager un .md de définition de séance ───────────────────────────
+// ── Partager un fichier séance ────────────────────────────────────────
 
 export function canShareFiles() {
-  return !!navigator.share;
+  if (!navigator.canShare) return false;
+  const blob = new Blob(['test'], { type: 'text/plain' });
+  const file = new File([blob], 'test.txt', { type: 'text/plain' });
+  return navigator.canShare({ files: [file] });
 }
 
 export async function shareSession(s) {
   const md = sessionToMarkdown(s);
-  await navigator.share({ title: `${s.title}.md`, text: md });
+  const blob = new Blob([md], { type: 'text/plain' });
+  const file = new File([blob], `${s.slug}.txt`, { type: 'text/plain' });
+  await navigator.share({ files: [file] });
 }

@@ -199,3 +199,50 @@ code {
 
   .btn--block { margin-top: 0; }
 }
+
+// ── Modal passphrase ──────────────────────────────────────────────────
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: var(--sp-4);
+}
+
+.modal {
+  background: var(--c-panel);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  padding: var(--sp-5);
+  width: 100%;
+  max-width: 360px;
+
+  &__label {
+    margin: 0 0 var(--sp-4);
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  &__input {
+    width: 100%;
+    background: var(--c-bg);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-sm);
+    color: var(--c-txt);
+    font-size: 1.1rem;
+    padding: var(--sp-3);
+    margin-bottom: var(--sp-4);
+
+    &:focus { outline: none; border-color: var(--c-accent-2); }
+  }
+
+  &__actions {
+    display: flex;
+    gap: var(--sp-2);
+    justify-content: flex-end;
+  }
+}

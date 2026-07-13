@@ -1,6 +1,6 @@
 // Écran Profil utilisateur : âge, FCmax, FCrepos + sauvegarde/restauration.
 import { getProfile, putProfile } from '../data/profile.js';
-import { exportBackup, importBackup } from '../data/backup.js';
+import { exportBackup, importBackup, askPassphrase } from '../data/backup.js';
 import { escapeHtml } from './format.js';
 import { go } from './router.js';
 
@@ -79,10 +79,10 @@ export async function screenProfile(_params, outlet) {
 
   // Export backup
   outlet.querySelector('[data-export-backup]').addEventListener('click', async () => {
-    const pass = prompt('Choisis une passphrase pour chiffrer le backup :');
-    if (!pass || !pass.trim()) return;
+    const pass = await askPassphrase();
+    if (!pass) return;
     try {
-      await exportBackup(pass.trim());
+      await exportBackup(pass);
       alert('Backup exporté !');
     } catch (e) {
       console.error('Export échoué :', e);
@@ -94,10 +94,10 @@ export async function screenProfile(_params, outlet) {
   outlet.querySelector('[data-import-backup]').addEventListener('change', async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const pass = prompt('Saisis la passphrase du backup :');
-    if (!pass || !pass.trim()) { e.target.value = ''; return; }
+    const pass = await askPassphrase('Saisis la passphrase du backup');
+    if (!pass) { e.target.value = ''; return; }
     try {
-      await importBackup(file, pass.trim());
+      await importBackup(file, pass);
       alert('Backup restauré !');
       screenProfile(_params, outlet);
     } catch (e) {

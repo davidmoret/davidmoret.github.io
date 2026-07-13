@@ -4,7 +4,7 @@ import { aggregate } from '../stats/aggregate.js';
 import { fmtDuration, fmtDist, escapeHtml } from './format.js';
 import { historyListHtml, bindHistoryList } from './history-list.js';
 import { go } from './router.js';
-import { getLastBackupDate, shouldRemindBackup, daysSinceBackup, exportBackup } from '../data/backup.js';
+import { getLastBackupDate, shouldRemindBackup, daysSinceBackup, exportBackup, askPassphrase } from '../data/backup.js';
 
 export async function screenHome(_params, outlet) {
   const [defs, history, lastBackup] = await Promise.all([
@@ -67,13 +67,12 @@ export async function screenHome(_params, outlet) {
   const backupBtn = outlet.querySelector('[data-backup]');
   if (backupBtn) {
     backupBtn.addEventListener('click', async () => {
-      const pass = prompt('Choisis une passphrase pour chiffrer le backup :');
-      if (!pass || !pass.trim()) return;
+      const pass = await askPassphrase();
+      if (!pass) return;
       backupBtn.disabled = true;
       backupBtn.textContent = 'Chiffrement…';
       try {
-        await exportBackup(pass.trim());
-        // Re-render to hide the banner
+        await exportBackup(pass);
         screenHome(_params, outlet);
       } catch (e) {
         console.error('Backup échoué :', e);

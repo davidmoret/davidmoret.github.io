@@ -1,6 +1,6 @@
 // Backup chiffré de tout IndexedDB (definitions + history + profile).
 // Chiffrement : AES-256-GCM, clé dérivée d'une passphrase via PBKDF2.
-// Export : Web Share API (Android) ou download fallback.
+// Export : showSaveFilePicker (desktop) → Web Share API (Android) → download fallback.
 
 import { openDb } from './store.js';
 
@@ -81,7 +81,6 @@ async function encrypt(data, passphrase) {
   const key = await deriveKey(passphrase, salt);
   const plain = new TextEncoder().encode(JSON.stringify(data));
   const cipher = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plain);
-  // format: [salt | iv | ciphertext]
   const buf = new Uint8Array(salt.length + iv.length + cipher.byteLength);
   buf.set(salt, 0);
   buf.set(iv, salt.length);
@@ -107,20 +106,42 @@ export async function exportBackup(passphrase) {
   const date = new Date().toISOString().slice(0, 10);
   const filename = `ram-backup-${date}.rambak`;
 
-  // Web Share API (Android)
-  if (navigator.share && navigator.canShare?.({ files: [blob] })) {
-    const file = new File([blob], filename, { type: 'application/octet-stream' });
-    await navigator.share({ files: [file] });
-  } else {
-    // Fallback : download
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  // 1. File System Access API (desktop : l'utilisateur choisit l'emplacement)
+  if (window.showSaveFilePicker) {
+    try {
+      const handle = await showSaveFilePicker({
+        suggestedName: filename,
+        types: [{ description: 'Backup RAM', accept: { 'application/octet-stream': ['.rambak'] } }],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      await setLastBackupDate();
+      return;
+    } catch (e) {
+      if (e.name === 'AbortError') return; // utilisateur a annulé
+    }
   }
 
+  // 2. Web Share API (Android : share sheet vers Proton Drive, etc.)
+  const shareFile = new File([blob], filename, { type: 'application/octet-stream' });
+  if (navigator.share && navigator.canShare?.({ files: [shareFile] })) {
+    try {
+      await navigator.share({ files: [shareFile] });
+      await setLastBackupDate();
+      return;
+    } catch (e) {
+      if (e.name === 'AbortError') return;
+    }
+  }
+
+  // 3. Fallback : download
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
   await setLastBackupDate();
 }
 
@@ -143,4 +164,49 @@ export async function importBackup(file, passphrase) {
     }
   });
   await setLastBackupDate();
+}
+
+// ── Modal passphrase ──────────────────────────────────────────────────
+// Remplace prompt() pour préserver la chaîne d'activation utilisateur
+// (nécessaire pour showSaveFilePicker et navigator.share).
+
+export function askPassphrase(label = 'Choisis une passphrase pour chiffrer le backup') {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal">
+        <p class="modal__label">${label}</p>
+        <input class="modal__input" type="password" autocomplete="off" placeholder="Passphrase">
+        <div class="modal__actions">
+          <button class="btn" data-cancel>Annuler</button>
+          <button class="btn btn--primary" data-ok>OK</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const input = overlay.querySelector('.modal__input');
+    input.focus();
+
+    function close(value) {
+      overlay.remove();
+      resolve(value);
+    }
+
+    overlay.querySelector('[data-cancel]').addEventListener('click', () => close(null));
+    overlay.querySelector('[data-ok]').addEventListener('click', () => {
+      const v = input.value.trim();
+      close(v || null);
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const v = input.value.trim();
+        close(v || null);
+      }
+      if (e.key === 'Escape') close(null);
+    });
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) close(null);
+    });
+  });
 }

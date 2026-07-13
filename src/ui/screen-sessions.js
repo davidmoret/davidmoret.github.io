@@ -1,5 +1,5 @@
 // Écran Toutes les séances : liste l'intégralité des séances, import .md,
-// et toggle favori (★) sur chaque séance.
+// toggle favori (★) sur chaque séance, et bouton nouvelle séance.
 import { getDefinitions, putDefinition, setFavorite } from '../data/store.js';
 import { parseSession } from '../data/session-parser.js';
 import { escapeHtml } from './format.js';
@@ -17,6 +17,7 @@ export async function screenSessions(_params, outlet) {
       <div class="section-head">
         <h2 class="section-head__title">${defs.length} séance${defs.length > 1 ? 's' : ''}</h2>
         <div class="section-head__actions">
+          <button class="btn btn--ghost" data-new>+ Nouvelle</button>
           <label class="btn btn--ghost import-btn">
             Importer
             <input id="import" class="import-btn__input" type="file" accept=".md,.txt,.markdown,text/markdown,text/plain">
@@ -27,11 +28,12 @@ export async function screenSessions(_params, outlet) {
       <ul class="card-list">
         ${defs.length
           ? defs.map(cardHtml).join('')
-          : '<li class="empty">Aucune séance. Importe un <code>.md</code> ou dépose un fichier dans <code>sessions/</code>.</li>'}
+          : '<li class="empty">Aucune séance. Crée-en avec <strong>+ Nouvelle</strong> ou importe un <code>.md</code>.</li>'}
       </ul>
     </main>`;
 
   outlet.querySelector('[data-back]').addEventListener('click', () => go('/'));
+  outlet.querySelector('[data-new]').addEventListener('click', () => go('/edit'));
   outlet.querySelectorAll('[data-slug]').forEach((el) => {
     el.addEventListener('click', (e) => {
       if (e.target.closest('[data-fav]')) return;

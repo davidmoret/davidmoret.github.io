@@ -1,4 +1,4 @@
-// Écran Détail : aperçu des sections + estimation, bouton Démarrer + Supprimer,
+// Écran Détail : aperçu des sections + estimation, bouton Démarrer + Modifier + Supprimer,
 // et historique de cette séance en bas.
 import { getDefinition, deleteDefinition, getHistory } from '../data/store.js';
 import { fmtDuration, fmtDist, escapeHtml } from './format.js';
@@ -35,18 +35,20 @@ export async function screenDetail({ slug }, outlet) {
       <ol class="steps">${s.sections.map(stepHtml).join('')}</ol>
       <div class="detail-actions">
         <button class="btn btn--primary btn--block" data-start>Démarrer</button>
+        <button class="btn btn--block" data-edit>Modifier</button>
         <button class="btn btn--ghost btn--block" data-delete>Supprimer cette séance</button>
       </div>
 
       ${past.length ? `
         <div class="section-head"><h2 class="section-head__title">Historique de cette séance</h2></div>
         ${historyListHtml(past.slice(0, 5))}
-        ${past.length > 5 ? '<button class="btn btn--ghost btn--block" data-all-history>Voir tout l’historique</button>' : ''}
+        ${past.length > 5 ? '<button class="btn btn--ghost btn--block" data-all-history>Voir tout l\'historique</button>' : ''}
       ` : ''}
     </main>`;
 
   outlet.querySelector('[data-back]').addEventListener('click', () => go('/'));
   outlet.querySelector('[data-start]').addEventListener('click', () => go(`/live/${slug}`));
+  outlet.querySelector('[data-edit]').addEventListener('click', () => go(`/edit/${slug}`));
   outlet.querySelector('[data-delete]').addEventListener('click', async () => {
     if (!confirm("Supprimer cette séance ?")) return;
     await deleteDefinition(slug);

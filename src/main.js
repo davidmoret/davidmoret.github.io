@@ -7,6 +7,7 @@ import { screenDetail } from './ui/screen-detail.js';
 import { screenLive } from './ui/screen-live.js';
 import { screenSummary } from './ui/screen-summary.js';
 import { screenProfile } from './ui/screen-profile.js';
+import { screenEditor } from './ui/screen-editor.js';
 import { getDefinitions, putDefinition } from './data/store.js';
 import { parseSession, slugify } from './data/session-parser.js';
 
@@ -31,6 +32,8 @@ const router = createRouter([
   ['/live/:slug', screenLive],
   ['/summary/:id', screenSummary],
   ['/profile', screenProfile],
+  ['/edit', screenEditor],
+  ['/edit/:slug', screenEditor],
 ], outlet);
 
 seedSessions()

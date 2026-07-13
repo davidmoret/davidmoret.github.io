@@ -1,6 +1,7 @@
-// Écran Détail : aperçu des sections + estimation, bouton Démarrer + Modifier + Supprimer,
+// Écran Détail : aperçu des sections + estimation, boutons Démarrer/Modifier/Partager/Supprimer,
 // et historique de cette séance en bas.
 import { getDefinition, deleteDefinition, getHistory } from '../data/store.js';
+import { shareSession } from '../data/export.js';
 import { fmtDuration, fmtDist, escapeHtml } from './format.js';
 import { historyListHtml, bindHistoryList, historyForSession } from './history-list.js';
 import { go } from './router.js';
@@ -35,7 +36,10 @@ export async function screenDetail({ slug }, outlet) {
       <ol class="steps">${s.sections.map(stepHtml).join('')}</ol>
       <div class="detail-actions">
         <button class="btn btn--primary btn--block" data-start>Démarrer</button>
-        <button class="btn btn--block" data-edit>Modifier</button>
+        <div class="editor__row">
+          <button class="btn btn--block" data-edit>Modifier</button>
+          <button class="btn btn--block" data-share>Partager</button>
+        </div>
         <button class="btn btn--ghost btn--block" data-delete>Supprimer cette séance</button>
       </div>
 
@@ -49,6 +53,9 @@ export async function screenDetail({ slug }, outlet) {
   outlet.querySelector('[data-back]').addEventListener('click', () => go('/'));
   outlet.querySelector('[data-start]').addEventListener('click', () => go(`/live/${slug}`));
   outlet.querySelector('[data-edit]').addEventListener('click', () => go(`/edit/${slug}`));
+  outlet.querySelector('[data-share]').addEventListener('click', async () => {
+    try { await shareSession(s); } catch (e) { console.error('Partage échoué :', e); }
+  });
   outlet.querySelector('[data-delete]').addEventListener('click', async () => {
     if (!confirm("Supprimer cette séance ?")) return;
     await deleteDefinition(slug);

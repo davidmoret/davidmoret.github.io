@@ -1,11 +1,18 @@
 // Écran Profil utilisateur : âge, FCmax, FCrepos + sauvegarde/restauration.
 import { getProfile, putProfile } from '../data/profile.js';
-import { exportBackup, importBackup, askPassphrase } from '../data/backup.js';
+import { exportBackup, importBackup, askPassphrase, getLastBackupDate } from '../data/backup.js';
 import { escapeHtml } from './format.js';
 import { go } from './router.js';
 
+function fmtBackupDate(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
 export async function screenProfile(_params, outlet) {
   const profile = await getProfile() || {};
+  const lastBackup = await getLastBackupDate();
 
   outlet.innerHTML = `
     <header class="app-bar app-bar--detail">
@@ -41,12 +48,15 @@ export async function screenProfile(_params, outlet) {
 
       <div class="profile-result" data-result hidden></div>
 
-      <div class="section-head"><h2 class="section-head__title">Sauvegarde</h2></div>
-      <p class="lead">Exporte tes données chiffrées ou restaure depuis un backup.</p>
+      <div class="section-head">
+        <h2 class="section-head__title">Sauvegarde</h2>
+        ${lastBackup ? `<span class="section-head__meta">${fmtBackupDate(lastBackup)}</span>` : ''}
+      </div>
+      <p class="lead">${lastBackup ? 'Dernière sauvegarde le ' + fmtBackupDate(lastBackup) + '.' : 'Aucune sauvegarde effectuée.'} Les données sont chiffrées avec ta passphrase.</p>
       <div class="backup-actions">
-        <button class="btn btn--block" data-export-backup>Exporter un backup</button>
+        <button class="btn btn--block" data-export-backup>📤 Exporter un backup</button>
         <label class="btn btn--block import-btn">
-          Restaurer un backup
+          📥 Restaurer un backup
           <input class="import-btn__input" type="file" accept=".rambak" data-import-backup>
         </label>
       </div>
@@ -83,7 +93,7 @@ export async function screenProfile(_params, outlet) {
     if (!pass) return;
     try {
       await exportBackup(pass);
-      alert('Backup exporté !');
+      screenProfile(_params, outlet);
     } catch (e) {
       console.error('Export échoué :', e);
       alert('L\'export a échoué. Réessaie.');
@@ -98,7 +108,6 @@ export async function screenProfile(_params, outlet) {
     if (!pass) { e.target.value = ''; return; }
     try {
       await importBackup(file, pass);
-      alert('Backup restauré !');
       screenProfile(_params, outlet);
     } catch (e) {
       console.error('Import échoué :', e);

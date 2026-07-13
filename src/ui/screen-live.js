@@ -194,7 +194,7 @@ export async function screenLive({ slug }, outlet) {
     els.tiles.className = `tiles tiles--${cfg.tiles.length}`;
     els.tiles.innerHTML = cfg.tiles.map((key) => tileHtml(METRIC[key](m, s))).join('');
 
-    applyZone(m.hr);
+    applyZone(m.hr, s.section);
     maybeCountdownBeep(s);
 
     if (longPressActive) return;
@@ -219,9 +219,10 @@ export async function screenLive({ slug }, outlet) {
     }
   }
 
-  function applyZone(hr) {
-    if (!session.targetHrZone || hr == null) { els.zone.hidden = true; return; }
-    const [lo, hi] = session.targetHrZone;
+  function applyZone(hr, section) {
+    const zone = section?.targetHrZone || session.targetHrZone;
+    if (!zone || hr == null) { els.zone.hidden = true; return; }
+    const [lo, hi] = zone;
     els.zone.hidden = false;
     const st = hr < lo ? 'low' : hr > hi ? 'high' : 'in';
     els.zone.dataset.state = st;

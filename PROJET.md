@@ -91,27 +91,26 @@ Chaque section a une **cible de fin** : durée, distance, hr, ou manuelle.
 title: Pyramide 500m
 type: intervalles
 description: Échauffement + pyramide + retour au calme
-target_hr_zone: [130, 160]   # optionnel, zone FC cible affichée (mode cardio)
 display: perf                 # perf | cardio | complet | zen — défaut: perf
 ---
 
 ## Échauffement            <!-- section -->
 - duree: 5:00
-- intensite: facile
 - note: cadence libre, monter progressivement
 
 ## Intervalle 1
 - distance: 500m
 - cadence: 24-26 spm
+- target_hr_zone: [130, 160]
 - note: allure tenue
 
 ## Récup 1
 - duree: 2:00
-- intensite: facile
 
 ## Intervalle 2
 - distance: 750m
 - cadence: 24-26 spm
+- target_hr_zone: [130, 160]
 
 ## Retour au calme
 - cible_fc: max-40
@@ -121,7 +120,7 @@ display: perf                 # perf | cardio | complet | zen — défaut: perf
 
 **Règles de parsing (simples et tolérantes) :**
 - Chaque `##` = une nouvelle section (le titre = nom affiché).
-- Clés reconnues : `duree` (`m:ss`), `distance` (`Nm`/`Nkm`), `cadence`, `intensite`, `note`, `cible_fc`.
+- Clés reconnues : `duree` (`m:ss`), `distance` (`Nm`/`Nkm`), `cadence`, `note`, `cible_fc`, `target_hr_zone`.
 - `cible_fc` définit une cible `hr` (fin auto quand FC ≤ seuil). Syntaxes supportées :
   - `max-40` → dynamique (FCmax séance − 40)
   - `100` → fixe (100 bpm)
@@ -129,6 +128,9 @@ display: perf                 # perf | cardio | complet | zen — défaut: perf
   - `karvonen-50%` → pourcentage de la réserve Karvonen (requiert profil + FCrepos)
 - `duree` sur une section `hr` devient plafond de sécurité.
 - Sans `cible_fc`, `duree` **ou** `distance` définit la condition de fin ; sans les deux → section **manuelle**.
+- `target_hr_zone` (format `[lo, hi]`) est disponible **par section** et au niveau **séance** (frontmatter).
+  La section a priorité ; si absente, le fallback séance s'applique. Permet d'afficher le bandeau
+  de zone FC uniquement sur les sections où c'est pertinent (intervalles) et pas sur l'échauffement/récup.
 
 ---
 
@@ -152,11 +154,11 @@ Le **recorder** échantillonne (ex. 1 Hz) : timestamp, section, FC, cadence (spm
 1. **Accueil** — liste des séances dispo (depuis `sessions/`) + **stats globales** (nb séances, distance totale, temps total, FC moy…). Bouton « Importer une séance ». Bouton ⚙ vers le profil.
 2. **Détail séance** — aperçu des sections, durée/distance estimée, bouton **« Démarrer »** (déclenche l'appairage BLE).
 3. **Live** — le cœur de l'app (voir §6.1 pour les modes d'affichage) :
-   - **1 métrique “héro”** en géant + **3-4 tuiles secondaires**.
+   - **1 métrique "héro"** en géant + **3-4 tuiles secondaires**.
    - **Chrono** global + chrono/progression de la **section en cours**.
    - Nom de la section + **la suivante**.
    - Contrôles gros doigts : **Pause**, **◀ Précédent**, **Suivant ▶**.
-   - Indicateur de **zone FC** (couleur) si `target_hr_zone` défini.
+   - Indicateur de **zone FC** (couleur) si `target_hr_zone` défini sur la section (fallback séance).
    - **Mode récup** automatique quand la section a une cible `hr` (voir §6.2).
 4. **Résumé post-séance** — totaux, FC moy/max, allure moy, **bloc HRR**, mini-graphe, boutons **« Exporter (.md + .json) »** → partage Proton.
 5. **Profil** — âge, FCmax (optionnel, prioritaire sur 220−âge), FCrepos (optionnel, débloque Karvonen). Stocké dans IndexedDB store `profile`.
@@ -165,7 +167,7 @@ Le **recorder** échantillonne (ex. 1 Hz) : timestamp, section, FC, cadence (spm
 
 ### 6.1 Modes d'affichage de l'écran Live
 
-Principe : **1 métrique “héro” en géant + 3-4 tuiles secondaires**. Le mode est choisi
+Principe : **1 métrique "héro" en géant + 3-4 tuiles secondaires**. Le mode est choisi
 par séance via le champ `display` du frontmatter (défaut : `perf`), changeable à la volée
 pendant la séance.
 

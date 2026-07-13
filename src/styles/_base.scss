@@ -61,6 +61,12 @@ code {
 
     &:active { color: var(--c-txt); }
   }
+
+  &__start {
+    flex: 0 0 auto;
+    font-size: 0.85rem;
+    padding: var(--sp-2) var(--sp-3);
+  }
 }
 
 .app-bar--detail { align-items: center; }
@@ -246,4 +252,33 @@ code {
     gap: var(--sp-2);
     justify-content: flex-end;
   }
+}
+
+// ── Toast (feedback temporaire) ────────────────────────────────────────
+
+.toast {
+  position: fixed;
+  bottom: var(--sp-5);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--c-panel);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  color: var(--c-txt);
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: var(--sp-3) var(--sp-5);
+  z-index: 200;
+  animation: toast-in 0.2s ease-out, toast-out 0.3s ease-in 2.2s forwards;
+  pointer-events: none;
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes toast-out {
+  from { opacity: 1; }
+  to   { opacity: 0; transform: translateX(-50%) translateY(10px); }
 }

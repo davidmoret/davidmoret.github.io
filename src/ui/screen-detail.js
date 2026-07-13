@@ -25,6 +25,7 @@ export async function screenDetail({ slug }, outlet) {
     <header class="app-bar app-bar--detail">
       <button class="app-bar__back" data-back aria-label="Retour">‹</button>
       <h1 class="app-bar__title">${escapeHtml(s.title)}</h1>
+      <button class="app-bar__start btn btn--primary" data-start>Démarrer</button>
     </header>
     <main class="screen">
       ${s.description ? `<p class="lead">${escapeHtml(s.description)}</p>` : ''}
@@ -36,7 +37,6 @@ export async function screenDetail({ slug }, outlet) {
       </div>
       <ol class="steps">${s.sections.map(stepHtml).join('')}</ol>
       <div class="detail-actions">
-        <button class="btn btn--primary btn--block" data-start>Démarrer</button>
         <div class="editor__row">
           <button class="btn btn--block" data-edit>Modifier</button>
           ${canShare ? '<button class="btn btn--block" data-share>Partager</button>' : ''}
@@ -76,10 +76,12 @@ function stepHtml(x) {
     : x.target.type === 'hr' ? fmtHrTarget(x.target)
     : 'manuelle';
   const extra = x.cadence ? `cadence ${x.cadence}` : '';
+  const zone = x.targetHrZone ? `FC ${x.targetHrZone[0]}–${x.targetHrZone[1]}` : '';
+  const extras = [extra, zone].filter(Boolean).join(' · ');
   return `<li class="step">
     <div class="step__main">
       <span class="step__name">${escapeHtml(x.name)}</span>
-      ${extra ? `<span class="step__extra">${escapeHtml(extra)}</span>` : ''}
+      ${extras ? `<span class="step__extra">${escapeHtml(extras)}</span>` : ''}
       ${x.note ? `<span class="step__note">${escapeHtml(x.note)}</span>` : ''}
     </div>
     <span class="step__target">${escapeHtml(target)}</span>

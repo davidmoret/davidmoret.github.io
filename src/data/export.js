@@ -45,6 +45,7 @@ export function sessionToMarkdown(s) {
     } else if (sec.target.type === 'distance') {
       lines.push(`- distance: ${fmtDistMd(sec.target.value)}`);
     }
+    if (sec.targetHrZone) lines.push(`- target_hr_zone: [${sec.targetHrZone[0]}, ${sec.targetHrZone[1]}]`);
     if (sec.cadence) lines.push(`- cadence: ${sec.cadence}`);
     if (sec.note) lines.push(`- note: ${sec.note}`);
   }

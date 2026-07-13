@@ -81,7 +81,7 @@ function render(outlet, state) {
         </label>
 
         <div class="profile-field">
-          <span class="profile-field__label">Zone FC cible <small>(optionnel)</small></span>
+          <span class="profile-field__label">Zone FC cible <small>(fallback si pas défini par section)</small></span>
           <div class="editor__range">
             <input class="profile-field__input" type="number" name="hrZoneLow" inputmode="numeric"
               value="${state.hrZoneLow}" placeholder="min">
@@ -155,6 +155,8 @@ function emptySection(n) {
     hrDelta: '40',
     hrFixed: '',
     hrPct: '',
+    hrZoneLow: '',
+    hrZoneHigh: '',
     cadence: '',
     note: '',
   };
@@ -172,6 +174,8 @@ function sectionToForm(s) {
     hrDelta: '',
     hrFixed: '',
     hrPct: '',
+    hrZoneLow: s.targetHrZone?.[0] ?? '',
+    hrZoneHigh: s.targetHrZone?.[1] ?? '',
     cadence: s.cadence || '',
     note: s.note || '',
   };
@@ -223,6 +227,17 @@ function sectionHtml(s, idx) {
     ${s.targetType === 'duration' ? durationFieldsHtml(s, idx) : ''}
     ${s.targetType === 'distance' ? distanceFieldsHtml(s, idx) : ''}
     ${s.targetType === 'hr' ? hrFieldsHtml(s, idx) : ''}
+
+    <div class="profile-field">
+      <span class="profile-field__label">Zone FC cible <small>(optionnel)</small></span>
+      <div class="editor__range">
+        <input class="profile-field__input" type="number" name="secHrZoneLow_${idx}" inputmode="numeric"
+          value="${escapeHtml(s.hrZoneLow)}" placeholder="min">
+        <span class="editor__range-sep">–</span>
+        <input class="profile-field__input" type="number" name="secHrZoneHigh_${idx}" inputmode="numeric"
+          value="${escapeHtml(s.hrZoneHigh)}" placeholder="max">
+      </div>
+    </div>
 
     <div class="editor__row">
       <label class="profile-field editor__field">
@@ -334,6 +349,12 @@ function formToSession(fd, state) {
     const cadence = fd.get(`secCadence_${i}`)?.trim() || null;
     const note = fd.get(`secNote_${i}`)?.trim() || null;
 
+    const secHrZoneLow = fd.get(`secHrZoneLow_${i}`);
+    const secHrZoneHigh = fd.get(`secHrZoneHigh_${i}`);
+    const sectionHrZone = secHrZoneLow && secHrZoneHigh
+      ? [Number(secHrZoneLow), Number(secHrZoneHigh)]
+      : null;
+
     let target;
     if (targetType === 'duration') {
       const durMin = Number(fd.get(`secDurMin_${i}`) || 0);
@@ -371,7 +392,7 @@ function formToSession(fd, state) {
     let distance = null;
     if (targetType === 'distance') distance = target.value;
 
-    return { name, duree, distance, cadence, intensite: null, note, target };
+    return { name, duree, distance, cadence, targetHrZone: sectionHrZone, note, target };
   });
 
   const display = fd.get('display') || 'perf';

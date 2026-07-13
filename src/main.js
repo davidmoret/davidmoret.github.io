@@ -15,9 +15,9 @@ import { parseSession, slugify } from './data/session-parser.js';
 // (on ne réécrit pas si des définitions existent déjà → n'écrase pas les imports).
 async function seedSessions() {
   if ((await getDefinitions()).length) return;
-  const files = import.meta.glob('/sessions/*.md', { query: '?raw', import: 'default', eager: true });
+  const files = import.meta.glob('/sessions/*.txt', { query: '?raw', import: 'default', eager: true });
   for (const [path, raw] of Object.entries(files)) {
-    const slug = slugify(path.split('/').pop().replace(/\.md$/, ''));
+    const slug = slugify(path.split('/').pop().replace(/\.txt$/, ''));
     await putDefinition(parseSession(raw, slug));
   }
 }

@@ -1,4 +1,4 @@
-// Écran Toutes les séances : liste l'intégralité des séances, import .md,
+// Écran Toutes les séances : liste l'intégralité des séances, import .txt,
 // toggle favori (★) sur chaque séance, et bouton nouvelle séance.
 import { getDefinitions, putDefinition, setFavorite } from '../data/store.js';
 import { parseSession } from '../data/session-parser.js';
@@ -20,7 +20,7 @@ export async function screenSessions(_params, outlet) {
           <button class="btn btn--ghost" data-new>+ Nouvelle</button>
           <label class="btn btn--ghost import-btn">
             Importer
-            <input id="import" class="import-btn__input" type="file" accept=".md,.txt,.markdown,text/markdown,text/plain">
+            <input id="import" class="import-btn__input" type="file" accept=".txt,text/plain">
           </label>
         </div>
       </div>
@@ -28,7 +28,7 @@ export async function screenSessions(_params, outlet) {
       <ul class="card-list">
         ${defs.length
           ? defs.map(cardHtml).join('')
-          : '<li class="empty">Aucune séance. Crée-en avec <strong>+ Nouvelle</strong> ou importe un <code>.md</code>.</li>'}
+          : '<li class="empty">Aucune séance. Crée-en avec <strong>+ Nouvelle</strong> ou importe un <code>.txt</code>.</li>'}
       </ul>
     </main>`;
 

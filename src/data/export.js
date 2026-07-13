@@ -76,26 +76,12 @@ function fmtDistMd(m) {
 }
 
 // ── Partager un .md de définition de séance ───────────────────────────
-// Chrome Android accepte text/plain pour les fichiers partagés, pas text/markdown.
 
 export function canShareFiles() {
-  if (!navigator.canShare) return false;
-  const blob = new Blob(['test'], { type: 'text/plain' });
-  const file = new File([blob], 'test.md', { type: 'text/plain' });
-  return navigator.canShare({ files: [file] });
+  return !!navigator.share;
 }
 
 export async function shareSession(s) {
   const md = sessionToMarkdown(s);
-  const filename = `${s.slug}.md`;
-  const blob = new Blob([md], { type: 'text/plain' });
-  const file = new File([blob], filename, { type: 'text/plain' });
-  const shareData = { files: [file] };
-
-  if (navigator.canShare?.(shareData)) {
-    await navigator.share(shareData);
-  } else {
-    // Fallback texte brut
-    await navigator.share({ title: s.title, text: md });
-  }
+  await navigator.share({ title: `${s.title}.md`, text: md });
 }

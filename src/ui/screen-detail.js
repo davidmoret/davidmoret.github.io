@@ -57,7 +57,11 @@ export async function screenDetail({ slug }, outlet) {
   const shareBtn = outlet.querySelector('[data-share]');
   if (shareBtn) {
     shareBtn.addEventListener('click', async () => {
-      try { await shareSession(s); } catch (e) { console.error('Partage échoué :', e); }
+      try {
+        await shareSession(s);
+      } catch (e) {
+        alert(`Erreur partage : ${e.name} — ${e.message}`);
+      }
     });
   }
   outlet.querySelector('[data-delete]').addEventListener('click', async () => {

@@ -1,7 +1,7 @@
 // Écran Détail : aperçu des sections + estimation, boutons Démarrer/Modifier/Partager/Supprimer,
 // et historique de cette séance en bas.
 import { getDefinition, deleteDefinition, getHistory } from '../data/store.js';
-import { shareSession } from '../data/export.js';
+import { shareSession, canShareFiles } from '../data/export.js';
 import { fmtDuration, fmtDist, escapeHtml } from './format.js';
 import { historyListHtml, bindHistoryList, historyForSession } from './history-list.js';
 import { go } from './router.js';
@@ -19,7 +19,7 @@ export async function screenDetail({ slug }, outlet) {
     [...history].sort((a, b) => b.id.localeCompare(a.id)),
     { slug, title: s.title },
   );
-  const canShare = !!navigator.share;
+  const canShare = canShareFiles();
 
   outlet.innerHTML = `
     <header class="app-bar app-bar--detail">

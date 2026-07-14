@@ -37,7 +37,15 @@ code {
   max-width: 720px;
   margin: 0 auto;
 
-  &__title { font-size: 1.4rem; flex: 1; }
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    font-size: 1.4rem;
+    flex: 1;
+
+    svg { width: 22px; height: 22px; }
+  }
   &__sub { color: var(--c-muted); font-size: 0.85rem; }
 
   &__back {

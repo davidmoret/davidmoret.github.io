@@ -5,7 +5,7 @@ import { fmtDuration, fmtDist, escapeHtml } from './format.js';
 import { notify, flushFlash } from './notify.js';
 import { historyListHtml, bindHistoryList } from './history-list.js';
 import { go } from './router.js';
-import { Star, Menu, ChevronRight } from 'lucide';
+import { Star, History, Menu, ChevronRight } from 'lucide';
 import { iconHtml } from './icon.js';
 import { getLastBackupDate, shouldRemindBackup, daysSinceBackup, exportBackup, askPassphrase } from '../data/backup.js';
 
@@ -50,9 +50,9 @@ export async function screenHome(_params, outlet) {
       </ul>
 
       ${recent.length ? `
-        <div class="section-head"><h2 class="section-head__title">Dernières séances</h2></div>
+        <div class="section-head"><h2 class="section-head__title">${iconHtml(History)} Dernières séances</h2></div>
         ${historyListHtml(recent)}
-        ${sorted.length > 5 ? '<button class="btn btn--ghost btn--block" data-all-history>Voir toutes les séances passées</button>' : ''}
+        ${sorted.length > 5 ? '<button class="btn btn--ghost btn--block" data-all-history>Voir les séances passées</button>' : ''}
       ` : ''}
     </main>`;
 

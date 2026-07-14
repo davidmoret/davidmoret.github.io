@@ -363,6 +363,10 @@ code {
     color: var(--c-muted);
   }
 
+  &__action {
+    margin-top: var(--sp-2);
+  }
+
   &__close {
     flex: none;
     display: grid;
@@ -378,6 +382,19 @@ code {
 
     svg { width: 18px; height: 18px; }
     &:hover { color: var(--c-txt); }
+  }
+}
+
+// Notif persistante dans le flux (ex. rappel sauvegarde sur l'accueil) :
+// pleine largeur, sans ombre ni animation d'entrée.
+.inline-notify {
+  margin-top: var(--sp-5);
+
+  .notification {
+    width: 100%;
+    box-shadow: none;
+    animation: none;
+    align-items: center;
   }
 }
 

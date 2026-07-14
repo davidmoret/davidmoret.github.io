@@ -1,5 +1,9 @@
 // Notifications internes typées (cf. PROJET.md §13.3). Remplace toast()/alert().
-// Carte teintée + icône (carré blanc) + titre/desc + × ; auto-dismiss + stack.
+// Deux usages :
+//  - toast (défaut) : auto-dismiss, pas de bouton fermer.
+//  - persistante (opts.persistent) : bouton fermer, reste jusqu'à interaction.
+// opts.container monte la notif dans un hôte du flux (ex. rappel sauvegarde
+// sur l'accueil) au lieu de la pile flottante.
 import { Info, Bell, CheckCheck, TriangleAlert, Ban, X } from 'lucide';
 import { icon } from './icon.js';
 
@@ -24,7 +28,8 @@ function stack() {
   return stackEl;
 }
 
-export function notify(type, title, description) {
+export function notify(type, title, description, opts = {}) {
+  const { persistent = false, action = null, container = null } = opts;
   const t = ICONS[type] ? type : 'neutral';
 
   const card = document.createElement('div');
@@ -47,14 +52,16 @@ export function notify(type, title, description) {
     d.textContent = description;
     body.appendChild(d);
   }
+  if (action) {
+    const ab = document.createElement('button');
+    ab.className = 'notification__action btn btn--primary btn--sm';
+    ab.type = 'button';
+    ab.textContent = action.label;
+    ab.addEventListener('click', () => action.onClick());
+    body.appendChild(ab);
+  }
 
-  const close = document.createElement('button');
-  close.className = 'notification__close';
-  close.type = 'button';
-  close.setAttribute('aria-label', 'Fermer');
-  close.appendChild(icon(X, { 'aria-hidden': 'true' }));
-
-  card.append(iconBox, body, close);
+  card.append(iconBox, body);
 
   let timer;
   const dismiss = () => {
@@ -64,10 +71,20 @@ export function notify(type, title, description) {
     card.addEventListener('animationend', () => card.remove(), { once: true });
     setTimeout(() => card.remove(), 400); // filet si pas d'animation
   };
-  close.addEventListener('click', dismiss);
-  timer = setTimeout(dismiss, AUTO_DISMISS_MS);
 
-  stack().appendChild(card);
+  if (persistent) {
+    const close = document.createElement('button');
+    close.className = 'notification__close';
+    close.type = 'button';
+    close.setAttribute('aria-label', 'Fermer');
+    close.appendChild(icon(X, { 'aria-hidden': 'true' }));
+    close.addEventListener('click', dismiss);
+    card.append(close);
+  } else {
+    timer = setTimeout(dismiss, AUTO_DISMISS_MS);
+  }
+
+  (container || stack()).appendChild(card);
   return card;
 }
 

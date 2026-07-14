@@ -96,23 +96,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-.backup-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-3);
-  background: var(--c-panel);
-  border: 1px solid var(--c-warn);
-  border-radius: var(--radius);
-  padding: var(--sp-3) var(--sp-4);
-  margin: var(--sp-5) 0 0;
-
-  &__text {
-    font-size: 0.9rem;
-    color: var(--c-warn);
-  }
-}
-
 .btn--sm {
   font-size: 0.82rem;
   padding: var(--sp-2) var(--sp-3);

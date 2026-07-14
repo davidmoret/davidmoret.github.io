@@ -5,7 +5,7 @@ import { fmtDuration, fmtDist, escapeHtml } from './format.js';
 import { notify, flushFlash } from './notify.js';
 import { historyListHtml, bindHistoryList } from './history-list.js';
 import { go } from './router.js';
-import { ArrowLeft, Menu, ChevronRight } from 'lucide';
+import { Menu, ChevronRight } from 'lucide';
 import { iconHtml } from './icon.js';
 import { getLastBackupDate, shouldRemindBackup, daysSinceBackup, exportBackup, askPassphrase } from '../data/backup.js';
 
@@ -33,7 +33,7 @@ export async function screenHome(_params, outlet) {
         ${statItem(stats.hrAvg ?? '—', 'fc moy')}
       </section>
 
-      ${remindBackup ? backupBannerHtml(days) : ''}
+      ${remindBackup ? '<div class="inline-notify" data-backup-notify></div>' : ''}
 
       <div class="section-head">
         <h2 class="section-head__title">Séances favorites</h2>
@@ -62,36 +62,32 @@ export async function screenHome(_params, outlet) {
   // Notif de confirmation après navigation (ex. restauration d'un backup).
   flushFlash();
 
-  // Backup banner
-  const backupBtn = outlet.querySelector('[data-backup]');
-  if (backupBtn) {
-    backupBtn.addEventListener('click', async () => {
-      const pass = await askPassphrase();
-      if (!pass) return;
-      backupBtn.disabled = true;
-      backupBtn.textContent = 'Chiffrement…';
-      try {
-        await exportBackup(pass);
-        screenHome(_params, outlet);
-        notify('success', 'Sauvegarde exportée');
-      } catch (e) {
-        console.error('Backup échoué :', e);
-        notify('error', 'Backup échoué', 'Réessaie.');
-        backupBtn.disabled = false;
-        backupBtn.textContent = 'Sauvegarder maintenant';
-      }
+  // Rappel de sauvegarde : notif warning persistante dans le flux.
+  const notifyHost = outlet.querySelector('[data-backup-notify]');
+  if (notifyHost) {
+    const label = days === null
+      ? 'Aucune sauvegarde'
+      : `Dernière sauvegarde il y a ${days} j`;
+    notify('warning', label, 'Pense à sauvegarder tes données.', {
+      persistent: true,
+      container: notifyHost,
+      action: {
+        label: 'Sauvegarder maintenant',
+        onClick: async () => {
+          const pass = await askPassphrase();
+          if (!pass) return;
+          try {
+            await exportBackup(pass);
+            screenHome(_params, outlet);
+            notify('success', 'Sauvegarde exportée');
+          } catch (e) {
+            console.error('Backup échoué :', e);
+            notify('error', 'Backup échoué', 'Réessaie.');
+          }
+        },
+      },
     });
   }
-}
-
-function backupBannerHtml(days) {
-  const label = days === null
-    ? 'Aucune sauvegarde'
-    : `Dernière sauvegarde il y a ${days} j`;
-  return `<div class="backup-banner">
-    <span class="backup-banner__text">${label}</span>
-    <button class="btn btn--primary btn--sm" data-backup>Sauvegarder maintenant</button>
-  </div>`;
 }
 
 function statItem(value, key) {

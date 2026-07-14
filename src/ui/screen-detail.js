@@ -26,6 +26,7 @@ export async function screenDetail({ slug }, outlet) {
       <button class="app-bar__back" data-back aria-label="Retour">‹</button>
       <h1 class="app-bar__title">${escapeHtml(s.title)}</h1>
       <button class="app-bar__start btn btn--primary" data-start>Démarrer</button>
+      <button class="app-bar__action" data-menu aria-label="Menu">☰</button>
     </header>
     <main class="screen">
       ${s.description ? `<p class="lead">${escapeHtml(s.description)}</p>` : ''}

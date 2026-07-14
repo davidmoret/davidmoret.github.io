@@ -4,7 +4,6 @@ import { aggregate } from '../stats/aggregate.js';
 import { fmtDuration, fmtDist, escapeHtml, toast, consumeFlash } from './format.js';
 import { historyListHtml, bindHistoryList } from './history-list.js';
 import { go } from './router.js';
-import { openMenu } from './menu.js';
 import { getLastBackupDate, shouldRemindBackup, daysSinceBackup, exportBackup, askPassphrase } from '../data/backup.js';
 
 export async function screenHome(_params, outlet) {
@@ -50,7 +49,6 @@ export async function screenHome(_params, outlet) {
       ` : ''}
     </main>`;
 
-  outlet.querySelector('[data-menu]').addEventListener('click', openMenu);
   const allBtn = outlet.querySelector('[data-all-history]');
   if (allBtn) allBtn.addEventListener('click', () => go('/history'));
   outlet.querySelectorAll('[data-slug]').forEach((el) => {

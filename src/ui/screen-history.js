@@ -16,6 +16,7 @@ export async function screenHistory({ slug }, outlet) {
     <header class="app-bar app-bar--detail">
       <button class="app-bar__back" data-back aria-label="Retour">‹</button>
       <h1 class="app-bar__title">${escapeHtml(heading)}</h1>
+      <button class="app-bar__action" data-menu aria-label="Menu">☰</button>
     </header>
     <main class="screen">
       <div class="section-head"><h2 class="section-head__title">${entries.length} séance${entries.length > 1 ? 's' : ''}</h2></div>

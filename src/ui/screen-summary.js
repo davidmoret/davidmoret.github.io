@@ -16,6 +16,7 @@ export async function screenSummary({ id }, outlet) {
     <header class="app-bar app-bar--detail">
       <button class="app-bar__back" data-home aria-label="Accueil">‹</button>
       <h1 class="app-bar__title">${escapeHtml(entry.session_title)}</h1>
+      <button class="app-bar__action" data-menu aria-label="Menu">☰</button>
     </header>
     <main class="screen">
       <p class="lead">${escapeHtml(date)}</p>

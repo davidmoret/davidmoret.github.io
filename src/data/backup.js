@@ -160,7 +160,12 @@ export async function importBackup(file, passphrase) {
       const os = tx.objectStore(name);
       const items = data[name];
       if (!Array.isArray(items)) continue;
-      for (const item of items) os.put(item);
+      // Le store `profile` a une clé hors-ligne ('me') : put() exige la clé explicite.
+      const outOfLine = !os.keyPath;
+      for (const item of items) {
+        if (outOfLine) os.put(item, 'me');
+        else os.put(item);
+      }
     }
   });
   await setLastBackupDate();

@@ -1,19 +1,10 @@
-// Écran Profil utilisateur : âge, FCmax, FCrepos + sauvegarde/restauration.
+// Écran Profil utilisateur : âge, FCmax, FCrepos.
 import { getProfile, putProfile } from '../data/profile.js';
-import { exportBackup, importBackup, askPassphrase, getLastBackupDate, getLastImportDate } from '../data/backup.js';
-import { escapeHtml, setFlash } from './format.js';
+import { escapeHtml } from './format.js';
 import { go } from './router.js';
-
-function fmtBackupDate(iso) {
-  if (!iso) return null;
-  const d = new Date(iso);
-  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-}
 
 export async function screenProfile(_params, outlet) {
   const profile = await getProfile() || {};
-  const lastBackup = await getLastBackupDate();
-  const lastImport = await getLastImportDate();
 
   outlet.innerHTML = `
     <header class="app-bar app-bar--detail">
@@ -48,23 +39,9 @@ export async function screenProfile(_params, outlet) {
       </form>
 
       <div class="profile-result" data-result hidden></div>
-
-      <div class="section-head">
-        <h2 class="section-head__title">Sauvegarde</h2>
-        ${lastBackup ? `<span class="section-head__meta">${fmtBackupDate(lastBackup)}</span>` : ''}
-      </div>
-      <p class="lead">${lastBackup ? 'Dernière sauvegarde le ' + fmtBackupDate(lastBackup) + '.' : 'Aucune sauvegarde effectuée.'} Les données sont chiffrées avec ta passphrase.</p>
-      ${lastImport ? `<p class="lead">Dernière restauration le ${fmtBackupDate(lastImport)}.</p>` : ''}
-      <div class="backup-actions">
-        <button class="btn btn--block" data-export-backup>📤 Exporter un backup</button>
-        <label class="btn btn--block import-btn">
-          📥 Restaurer un backup
-          <input class="import-btn__input" type="file" accept=".rambak" data-import-backup>
-        </label>
-      </div>
     </main>`;
 
-  outlet.querySelector('[data-back]').addEventListener('click', () => go('/'));
+  outlet.querySelector('[data-back]').addEventListener('click', () => go('/menu'));
 
   outlet.querySelector('[data-form]').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -87,35 +64,5 @@ export async function screenProfile(_params, outlet) {
     result.innerHTML = parts.length
       ? `<span class="profile-ok">✓ ${parts.join(' · ')}</span>`
       : '<span class="profile-ok">✓ Profil vidé</span>';
-  });
-
-  // Export backup
-  outlet.querySelector('[data-export-backup]').addEventListener('click', async () => {
-    const pass = await askPassphrase();
-    if (!pass) return;
-    try {
-      await exportBackup(pass);
-      screenProfile(_params, outlet);
-    } catch (e) {
-      console.error('Export échoué :', e);
-      alert('L\'export a échoué. Réessaie.');
-    }
-  });
-
-  // Import backup
-  outlet.querySelector('[data-import-backup]').addEventListener('change', async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const pass = await askPassphrase('Saisis la passphrase du backup');
-    if (!pass) { e.target.value = ''; return; }
-    try {
-      await importBackup(file, pass);
-      setFlash('Sauvegarde restaurée');
-      go('/');
-    } catch (e) {
-      console.error('Import échoué :', e);
-      alert('Restauration échouée. Vérifie la passphrase et le fichier.');
-      e.target.value = '';
-    }
   });
 }

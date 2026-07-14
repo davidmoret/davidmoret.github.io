@@ -32,7 +32,7 @@ export async function screenSessions(_params, outlet) {
       </ul>
     </main>`;
 
-  outlet.querySelector('[data-back]').addEventListener('click', () => go('/'));
+  outlet.querySelector('[data-back]').addEventListener('click', () => go('/menu'));
   outlet.querySelector('[data-new]').addEventListener('click', () => go('/edit'));
   outlet.querySelectorAll('[data-slug]').forEach((el) => {
     el.addEventListener('click', (e) => {

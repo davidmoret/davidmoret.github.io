@@ -20,7 +20,7 @@ export async function screenHome(_params, outlet) {
   outlet.innerHTML = `
     <header class="app-bar">
       <h1 class="app-bar__title">rame rame</h1>
-      <button class="app-bar__action" data-profile aria-label="Profil">⚙</button>
+      <button class="app-bar__action" data-menu aria-label="Menu">☰</button>
     </header>
     <main class="screen">
       <section class="stats" aria-label="Statistiques globales">
@@ -34,15 +34,12 @@ export async function screenHome(_params, outlet) {
 
       <div class="section-head">
         <h2 class="section-head__title">Séances favorites</h2>
-        <div class="section-head__actions">
-          <button class="btn btn--ghost" data-add>+ Ajouter</button>
-        </div>
       </div>
 
       <ul class="card-list">
         ${favorites.length
           ? favorites.map(cardHtml).join('')
-          : '<li class="empty">Aucune séance favorite. Ajoute-en via <strong>+ Ajouter</strong>.</li>'}
+          : '<li class="empty">Aucune séance favorite. Ajoutes-en via <strong>Menu → Sessions</strong>.</li>'}
       </ul>
 
       ${recent.length ? `
@@ -50,12 +47,9 @@ export async function screenHome(_params, outlet) {
         ${historyListHtml(recent)}
         ${sorted.length > 5 ? '<button class="btn btn--ghost btn--block" data-all-history>Voir toutes les séances passées</button>' : ''}
       ` : ''}
-
-      <footer class="app-version">${__APP_VERSION__}</footer>
     </main>`;
 
-  outlet.querySelector('[data-profile]').addEventListener('click', () => go('/profile'));
-  outlet.querySelector('[data-add]').addEventListener('click', () => go('/sessions'));
+  outlet.querySelector('[data-menu]').addEventListener('click', () => go('/menu'));
   const allBtn = outlet.querySelector('[data-all-history]');
   if (allBtn) allBtn.addEventListener('click', () => go('/history'));
   outlet.querySelectorAll('[data-slug]').forEach((el) => {

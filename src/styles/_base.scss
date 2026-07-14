@@ -403,8 +403,6 @@ code {
     box-shadow: none;
     animation: none;
     align-items: center;
-
-    &[data-leaving] { animation: notif-out 0.25s ease-in forwards; }
   }
 }
 

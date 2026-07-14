@@ -37,23 +37,3 @@ export function escapeHtml(str) {
     { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
   ));
 }
-
-// Toast temporaire : affiche un message qui disparaît après ~2.5 s.
-export function toast(msg) {
-  const el = document.createElement('div');
-  el.className = 'toast';
-  el.textContent = msg;
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 2600);
-}
-
-// Flash : message à afficher au prochain rendu d'un écran (après une
-// navigation). Évite qu'un toast créé avant un rendu async ne s'efface
-// avant d'être visible.
-let pendingFlash = null;
-export function setFlash(msg) { pendingFlash = msg; }
-export function consumeFlash() {
-  const m = pendingFlash;
-  pendingFlash = null;
-  return m;
-}

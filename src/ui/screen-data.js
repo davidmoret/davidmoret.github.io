@@ -1,6 +1,6 @@
 // Écran Gestion des données : sauvegarde (export chiffré) et restauration (import) du backup global.
 import { exportBackup, importBackup, askPassphrase, getLastBackupDate, getLastImportDate } from '../data/backup.js';
-import { setFlash } from './format.js';
+import { notify, setFlash } from './notify.js';
 import { go } from './router.js';
 
 function fmtBackupDate(iso) {
@@ -42,9 +42,10 @@ export async function screenData(_params, outlet) {
     try {
       await exportBackup(pass);
       screenData(_params, outlet);
+      notify('success', 'Sauvegarde exportée');
     } catch (e) {
       console.error('Export échoué :', e);
-      alert('L\'export a échoué. Réessaie.');
+      notify('error', 'Export échoué', 'Réessaie.');
     }
   });
 
@@ -56,11 +57,11 @@ export async function screenData(_params, outlet) {
     if (!pass) { e.target.value = ''; return; }
     try {
       await importBackup(file, pass);
-      setFlash('Sauvegarde restaurée');
+      setFlash('success', 'Sauvegarde restaurée');
       go('/');
     } catch (e) {
       console.error('Import échoué :', e);
-      alert('Restauration échouée. Vérifie la passphrase et le fichier.');
+      notify('error', 'Restauration échouée', 'Vérifie la passphrase et le fichier.');
       e.target.value = '';
     }
   });

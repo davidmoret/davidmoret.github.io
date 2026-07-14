@@ -2,7 +2,8 @@
 // toggle favori (★) sur chaque séance, et bouton nouvelle séance.
 import { getDefinitions, putDefinition, setFavorite } from '../data/store.js';
 import { parseSession } from '../data/session-parser.js';
-import { escapeHtml, toast } from './format.js';
+import { escapeHtml } from './format.js';
+import { notify } from './notify.js';
 import { go } from './router.js';
 
 export async function screenSessions(_params, outlet) {
@@ -59,12 +60,12 @@ export async function screenSessions(_params, outlet) {
       try {
         const session = parseSession(reader.result);
         putDefinition(session).then(() => {
-          toast(`« ${session.title} » importée`);
+          notify('success', `« ${session.title} » importée`);
           go(`/session/${session.slug}`);
         });
       } catch (e) {
         console.error('Import échoué :', e);
-        alert(`Import échoué : ${e.message}`);
+        notify('error', 'Import échoué', e.message);
       }
     };
     reader.readAsText(file);

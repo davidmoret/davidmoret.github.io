@@ -1,7 +1,8 @@
 // Écran Accueil : stats globales + séances favorites + dernières séances.
 import { getDefinitions, getHistory } from '../data/store.js';
 import { aggregate } from '../stats/aggregate.js';
-import { fmtDuration, fmtDist, escapeHtml, toast, consumeFlash } from './format.js';
+import { fmtDuration, fmtDist, escapeHtml } from './format.js';
+import { notify, flushFlash } from './notify.js';
 import { historyListHtml, bindHistoryList } from './history-list.js';
 import { go } from './router.js';
 import { getLastBackupDate, shouldRemindBackup, daysSinceBackup, exportBackup, askPassphrase } from '../data/backup.js';
@@ -56,9 +57,8 @@ export async function screenHome(_params, outlet) {
   });
   bindHistoryList(outlet, () => screenHome(_params, outlet));
 
-  // Message de confirmation après navigation (ex. restauration d'un backup).
-  const flash = consumeFlash();
-  if (flash) toast(flash);
+  // Notif de confirmation après navigation (ex. restauration d'un backup).
+  flushFlash();
 
   // Backup banner
   const backupBtn = outlet.querySelector('[data-backup]');
@@ -71,9 +71,10 @@ export async function screenHome(_params, outlet) {
       try {
         await exportBackup(pass);
         screenHome(_params, outlet);
+        notify('success', 'Sauvegarde exportée');
       } catch (e) {
         console.error('Backup échoué :', e);
-        alert('Le backup a échoué. Réessaie.');
+        notify('error', 'Backup échoué', 'Réessaie.');
         backupBtn.disabled = false;
         backupBtn.textContent = 'Sauvegarder maintenant';
       }

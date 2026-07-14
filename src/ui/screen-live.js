@@ -16,7 +16,7 @@ import { createRecorder } from '../engine/recorder.js';
 import { fmtDuration, fmtPace, fmtDist, escapeHtml, prettyDeviceName } from './format.js';
 import { initAudio, cue, beepShort, beepLong } from './feedback.js';
 import { Heart, Gauge, Activity, Leaf, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide';
-import { icon } from './icon.js';
+import { icon, iconHtml } from './icon.js';
 import { go } from './router.js';
 
 const BLE_OK = typeof navigator !== 'undefined' && !!navigator.bluetooth;

@@ -6,7 +6,10 @@ import { createElement } from 'lucide';
 
 export function icon(node, attrs = {}) {
   const svg = createElement(node);
-  for (const [k, v] of Object.entries(attrs)) svg.setAttribute(k, v);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v === null || v === undefined) continue;
+    svg.setAttribute(k, v);
+  }
   return svg;
 }
 

@@ -85,6 +85,6 @@ function cardHtml(s) {
       <p class="card__meta">${escapeHtml(meta)}</p>
       ${s.description ? `<p class="card__desc">${escapeHtml(s.description)}</p>` : ''}
     </div>
-    <span class="card__go" aria-hidden="true">▶</span>
+    <span class="card__go" aria-hidden="true">${iconHtml(ChevronRight)}</span>
   </li>`;
 }

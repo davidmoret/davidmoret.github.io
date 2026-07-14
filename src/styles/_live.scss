@@ -104,7 +104,6 @@
     font-weight: 800;
     line-height: 1;
     font-variant-numeric: tabular-nums;
-    font-family: var(--font-title);
 
     &[data-state='above'] { color: var(--c-err); }
     &[data-state='below'] { color: var(--c-accent); }
@@ -281,7 +280,6 @@
   justify-content: center;
   text-align: center;
   padding: var(--sp-4) 0;
-  font-family: var(--font-title);
 
   &[hidden] { display: none; }
 
@@ -339,6 +337,8 @@
   &__u { font-size: 0.55em; font-weight: 400; color: var(--c-muted); }
 }
 
+// Mode complet : la grille de 6 tuiles occupe la place, pas de héro géant.
+.live[data-mode='complet'] .tiles { flex: 1; align-content: center; }
 
 .controls {
   display: grid;

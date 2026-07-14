@@ -66,6 +66,7 @@ function apply(pref) {
   return r;
 }
 
+let mediaList = null;
 let mediaListener = null;
 
 // Au boot : applique la préférence + écoute le système si 'auto'.
@@ -77,13 +78,14 @@ export async function initTheme() {
 
 // Réapplique après changement manuel de préférence.
 export async function changeTheme(pref) {
-  if (mediaListener) { matchMedia.removeEventListener('change', mediaListener); mediaListener = null; }
+  if (mediaListener && mediaList) { mediaList.removeEventListener('change', mediaListener); mediaListener = null; }
   await setThemePref(pref);
   apply(pref);
   if (pref === 'auto') watchSystem();
 }
 
 function watchSystem() {
+  mediaList = matchMedia('(prefers-color-scheme: light)');
   mediaListener = () => apply('auto');
-  matchMedia('(prefers-color-scheme: light)').addEventListener('change', mediaListener);
+  mediaList.addEventListener('change', mediaListener);
 }

@@ -8,12 +8,12 @@ body { margin: 0; }
 body {
   background: var(--c-bg);
   color: var(--c-txt);
-  font-family: var(--font-body);
+  font-family: var(--font);
   line-height: 1.4;
   -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3 { margin: 0; font-weight: 700; font-family: var(--font-title); }
+h1, h2, h3 { margin: 0; font-weight: 700; }
 
 code {
   font-family: var(--mono);
@@ -37,7 +37,7 @@ code {
   max-width: 720px;
   margin: 0 auto;
 
-  &__title { font-size: 1.4rem; flex: 1; font-family: var(--font-title); }
+  &__title { font-size: 1.4rem; flex: 1; }
   &__sub { color: var(--c-muted); font-size: 0.85rem; }
 
   &__back {
@@ -68,7 +68,7 @@ code {
   &__start {
     flex: 0 0 auto;
     font-size: 0.85rem;
-    padding: var(--sp-3) var(--sp-4);
+    padding: var(--sp-2) var(--sp-3);
   }
 }
 
@@ -151,7 +151,7 @@ code {
   justify-content: space-between;
   margin: var(--sp-5) 0 var(--sp-3);
 
-  &__title { font-size: 1.05rem; font-family: var(--font-title); }
+  &__title { font-size: 1.05rem; }
   &__meta { font-size: 0.78rem; color: var(--c-muted); }
 }
 

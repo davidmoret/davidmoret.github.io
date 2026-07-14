@@ -60,7 +60,13 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  &__go { color: var(--c-accent); font-size: 0.9rem; }
+  &__go {
+    display: flex;
+    align-items: center;
+    color: var(--c-accent);
+
+    svg { width: 20px; height: 20px; }
+  }
 
   &__fav {
     flex: 0 0 auto;

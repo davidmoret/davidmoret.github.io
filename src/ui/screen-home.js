@@ -5,7 +5,7 @@ import { fmtDuration, fmtDist, escapeHtml } from './format.js';
 import { notify, flushFlash } from './notify.js';
 import { historyListHtml, bindHistoryList } from './history-list.js';
 import { go } from './router.js';
-import { ArrowLeft, Menu } from 'lucide';
+import { ArrowLeft, Menu, ChevronRight } from 'lucide';
 import { iconHtml } from './icon.js';
 import { getLastBackupDate, shouldRemindBackup, daysSinceBackup, exportBackup, askPassphrase } from '../data/backup.js';
 
@@ -109,6 +109,6 @@ function cardHtml(s) {
       <p class="card__meta">${escapeHtml(meta)}</p>
       ${s.description ? `<p class="card__desc">${escapeHtml(s.description)}</p>` : ''}
     </div>
-    <span class="card__go" aria-hidden="true">▶</span>
+    <span class="card__go" aria-hidden="true">${iconHtml(ChevronRight)}</span>
   </li>`;
 }

@@ -1,7 +1,7 @@
 // Écran Profil utilisateur : âge, FCmax, FCrepos + sauvegarde/restauration.
 import { getProfile, putProfile } from '../data/profile.js';
 import { exportBackup, importBackup, askPassphrase, getLastBackupDate, getLastImportDate } from '../data/backup.js';
-import { escapeHtml, toast } from './format.js';
+import { escapeHtml, setFlash } from './format.js';
 import { go } from './router.js';
 
 function fmtBackupDate(iso) {
@@ -110,8 +110,8 @@ export async function screenProfile(_params, outlet) {
     if (!pass) { e.target.value = ''; return; }
     try {
       await importBackup(file, pass);
+      setFlash('Sauvegarde restaurée');
       go('/');
-      toast('Sauvegarde restaurée');
     } catch (e) {
       console.error('Import échoué :', e);
       alert('Restauration échouée. Vérifie la passphrase et le fichier.');

@@ -46,3 +46,14 @@ export function toast(msg) {
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 2600);
 }
+
+// Flash : message à afficher au prochain rendu d'un écran (après une
+// navigation). Évite qu'un toast créé avant un rendu async ne s'efface
+// avant d'être visible.
+let pendingFlash = null;
+export function setFlash(msg) { pendingFlash = msg; }
+export function consumeFlash() {
+  const m = pendingFlash;
+  pendingFlash = null;
+  return m;
+}

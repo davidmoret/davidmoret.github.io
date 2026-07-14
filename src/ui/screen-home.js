@@ -1,7 +1,7 @@
 // Écran Accueil : stats globales + séances favorites + dernières séances.
 import { getDefinitions, getHistory } from '../data/store.js';
 import { aggregate } from '../stats/aggregate.js';
-import { fmtDuration, fmtDist, escapeHtml } from './format.js';
+import { fmtDuration, fmtDist, escapeHtml, toast, consumeFlash } from './format.js';
 import { historyListHtml, bindHistoryList } from './history-list.js';
 import { go } from './router.js';
 import { getLastBackupDate, shouldRemindBackup, daysSinceBackup, exportBackup, askPassphrase } from '../data/backup.js';
@@ -62,6 +62,10 @@ export async function screenHome(_params, outlet) {
     el.addEventListener('click', () => go(`/session/${el.dataset.slug}`));
   });
   bindHistoryList(outlet, () => screenHome(_params, outlet));
+
+  // Message de confirmation après navigation (ex. restauration d'un backup).
+  const flash = consumeFlash();
+  if (flash) toast(flash);
 
   // Backup banner
   const backupBtn = outlet.querySelector('[data-backup]');

@@ -6,16 +6,16 @@
 // sur l'accueil) au lieu de la pile flottante.
 // opts.onClose est appelé une fois quand l'utilisateur ferme manuellement
 // la notif (permet de mémoriser un rejet pour ne pas réafficher au re-render).
-import { Info, Bell, CheckCheck, TriangleAlert, Ban, X } from 'lucide';
+import { Info, CircleAlert, CircleCheck, TriangleAlert, CircleX, X } from 'lucide';
 import { icon } from './icon.js';
 
-// 5 types → icône Lucide associée.
+// 5 types → icône Lucide associée (set cercle minimaliste homogène).
 const ICONS = {
   neutral: Info,
-  info: Bell,
-  success: CheckCheck,
+  info: CircleAlert,
+  success: CircleCheck,
   warning: TriangleAlert,
-  error: Ban,
+  error: CircleX,
 };
 
 const AUTO_DISMISS_MS = 3200;

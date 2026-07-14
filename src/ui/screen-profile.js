@@ -4,6 +4,8 @@
 import { getProfile, putProfile } from '../data/profile.js';
 import { escapeHtml } from './format.js';
 import { go } from './router.js';
+import { ArrowLeft, Menu } from 'lucide';
+import { iconHtml } from './icon.js';
 
 function maxPlaceholder(age) {
   return age ? `auto (${220 - age})` : 'auto';
@@ -23,9 +25,9 @@ export async function screenProfile(_params, outlet) {
 
   outlet.innerHTML = `
     <header class="app-bar app-bar--detail">
-      <button class="app-bar__back" data-back aria-label="Retour">‹</button>
+      <button class="app-bar__back" data-back aria-label="Retour">${iconHtml(ArrowLeft)}</button>
       <h1 class="app-bar__title">Profil</h1>
-      <button class="app-bar__action" data-menu aria-label="Menu">☰</button>
+      <button class="app-bar__action" data-menu aria-label="Menu">${iconHtml(Menu)}</button>
     </header>
     <main class="screen">
       <p class="lead">Optionnel. Débloque les cibles FC en % et Karvonen dans les séances.</p>

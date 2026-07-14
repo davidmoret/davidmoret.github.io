@@ -9,3 +9,9 @@ export function icon(node, attrs = {}) {
   for (const [k, v] of Object.entries(attrs)) svg.setAttribute(k, v);
   return svg;
 }
+
+// Variante string pour usage dans template literals :
+//   `...${iconHtml(Menu)}...`
+export function iconHtml(node, attrs = {}) {
+  return icon(node, attrs).outerHTML;
+}

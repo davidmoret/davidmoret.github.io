@@ -5,6 +5,8 @@ import { shareSession, canShareFiles } from '../data/export.js';
 import { fmtDuration, fmtDist, escapeHtml } from './format.js';
 import { historyListHtml, bindHistoryList, historyForSession } from './history-list.js';
 import { go } from './router.js';
+import { ArrowLeft, Menu } from 'lucide';
+import { iconHtml } from './icon.js';
 
 export async function screenDetail({ slug }, outlet) {
   const [s, history] = await Promise.all([getDefinition(slug), getHistory()]);
@@ -23,10 +25,10 @@ export async function screenDetail({ slug }, outlet) {
 
   outlet.innerHTML = `
     <header class="app-bar app-bar--detail">
-      <button class="app-bar__back" data-back aria-label="Retour">‹</button>
+      <button class="app-bar__back" data-back aria-label="Retour">${iconHtml(ArrowLeft)}</button>
       <h1 class="app-bar__title">${escapeHtml(s.title)}</h1>
       <button class="app-bar__start btn btn--primary" data-start>Démarrer</button>
-      <button class="app-bar__action" data-menu aria-label="Menu">☰</button>
+      <button class="app-bar__action" data-menu aria-label="Menu">${iconHtml(Menu)}</button>
     </header>
     <main class="screen">
       ${s.description ? `<p class="lead">${escapeHtml(s.description)}</p>` : ''}

@@ -3,6 +3,8 @@
 import { getHistoryEntry, deleteHistory } from '../data/store.js';
 import { fmtDuration, fmtDist, escapeHtml } from './format.js';
 import { go } from './router.js';
+import { ArrowLeft, Menu } from 'lucide';
+import { iconHtml } from './icon.js';
 
 export async function screenSummary({ id }, outlet) {
   const entry = await getHistoryEntry(id);
@@ -14,9 +16,9 @@ export async function screenSummary({ id }, outlet) {
 
   outlet.innerHTML = `
     <header class="app-bar app-bar--detail">
-      <button class="app-bar__back" data-home aria-label="Accueil">‹</button>
+      <button class="app-bar__back" data-home aria-label="Accueil">${iconHtml(ArrowLeft)}</button>
       <h1 class="app-bar__title">${escapeHtml(entry.session_title)}</h1>
-      <button class="app-bar__action" data-menu aria-label="Menu">☰</button>
+      <button class="app-bar__action" data-menu aria-label="Menu">${iconHtml(Menu)}</button>
     </header>
     <main class="screen">
       <p class="lead">${escapeHtml(date)}</p>

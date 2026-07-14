@@ -2,6 +2,8 @@
 import { exportBackup, importBackup, askPassphrase, getLastBackupDate, getLastImportDate } from '../data/backup.js';
 import { notify, setFlash } from './notify.js';
 import { go } from './router.js';
+import { FileDown, ArchiveRestore, ArrowLeft, Menu } from 'lucide';
+import { iconHtml } from './icon.js';
 
 function fmtBackupDate(iso) {
   if (!iso) return null;
@@ -14,9 +16,9 @@ export async function screenData(_params, outlet) {
 
   outlet.innerHTML = `
     <header class="app-bar app-bar--detail">
-      <button class="app-bar__back" data-back aria-label="Retour">‹</button>
+      <button class="app-bar__back" data-back aria-label="Retour">${iconHtml(ArrowLeft)}</button>
       <h1 class="app-bar__title">Gestion des données</h1>
-      <button class="app-bar__action" data-menu aria-label="Menu">☰</button>
+      <button class="app-bar__action" data-menu aria-label="Menu">${iconHtml(Menu)}</button>
     </header>
     <main class="screen">
       <div class="section-head">
@@ -24,9 +26,9 @@ export async function screenData(_params, outlet) {
       </div>
       <p class="lead">${lastBackup ? 'Dernière sauvegarde le ' + fmtBackupDate(lastBackup) + '.' : 'Aucune sauvegarde effectuée.'} Les données sont chiffrées avec ta passphrase.</p>
       <div class="backup-actions">
-        <button class="btn btn--block" data-export-backup>📤 Exporter un backup</button>
+        <button class="btn btn--block" data-export-backup>${iconHtml(FileDown)} Exporter un backup</button>
         <label class="btn btn--block import-btn">
-          📥 Restaurer un backup
+          ${iconHtml(ArchiveRestore)} Restaurer un backup
           <input class="import-btn__input" type="file" accept=".rambak" data-import-backup>
         </label>
       </div>

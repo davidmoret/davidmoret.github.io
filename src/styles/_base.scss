@@ -41,24 +41,27 @@ code {
   &__sub { color: var(--c-muted); font-size: 0.85rem; }
 
   &__back {
+    display: flex;
+    align-items: center;
     background: none;
     border: 0;
     color: var(--c-txt);
-    font-size: 2rem;
-    line-height: 1;
     padding: 0 var(--sp-2) 0 0;
     cursor: pointer;
+
+    svg { width: 24px; height: 24px; }
   }
 
   &__action {
+    display: flex;
+    align-items: center;
     background: none;
     border: 0;
     color: var(--c-muted);
-    font-size: 1.4rem;
-    line-height: 1;
     padding: var(--sp-2);
     cursor: pointer;
 
+    svg { width: 22px; height: 22px; }
     &:active { color: var(--c-txt); }
   }
 

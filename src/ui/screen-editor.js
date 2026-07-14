@@ -5,6 +5,8 @@ import { getDefinition, putDefinition } from '../data/store.js';
 import { parseSession, slugify } from '../data/session-parser.js';
 import { escapeHtml } from './format.js';
 import { go } from './router.js';
+import { ArrowLeft, Menu } from 'lucide';
+import { iconHtml } from './icon.js';
 
 const DISPLAY_MODES = [
   { value: 'perf', label: 'Perf' },
@@ -49,9 +51,9 @@ export async function screenEditor({ slug }, outlet) {
 function render(outlet, state) {
   outlet.innerHTML = `
     <header class="app-bar app-bar--detail">
-      <button class="app-bar__back" data-back aria-label="Retour">‹</button>
+      <button class="app-bar__back" data-back aria-label="Retour">${iconHtml(ArrowLeft)}</button>
       <h1 class="app-bar__title">${state.slug ? 'Modifier' : 'Nouvelle'} séance</h1>
-      <button class="app-bar__action" data-menu aria-label="Menu">☰</button>
+      <button class="app-bar__action" data-menu aria-label="Menu">${iconHtml(Menu)}</button>
     </header>
     <main class="screen">
       <form class="editor" data-form>

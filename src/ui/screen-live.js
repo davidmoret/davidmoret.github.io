@@ -15,7 +15,7 @@ import { createSessionEngine } from '../engine/session-engine.js';
 import { createRecorder } from '../engine/recorder.js';
 import { fmtDuration, fmtPace, fmtDist, escapeHtml, prettyDeviceName } from './format.js';
 import { initAudio, cue, beepShort, beepLong } from './feedback.js';
-import { Heart, Gauge, Activity, Leaf } from 'lucide';
+import { Heart, Gauge, Activity, Leaf, ArrowLeft } from 'lucide';
 import { icon } from './icon.js';
 import { go } from './router.js';
 
@@ -453,7 +453,7 @@ function template() {
   return `
   <div class="live" data-mode="perf">
     <div class="live__bar">
-      <button class="live__quit" data-quit aria-label="Quitter">‹</button>
+      <button class="live__quit" data-quit aria-label="Quitter">${iconHtml(ArrowLeft)}</button>
       <span class="live__global" data-global>0:00</span>
       <span class="live__counter" data-counter></span>
     </div>

@@ -5,6 +5,8 @@ import { fmtDuration, fmtDist, escapeHtml } from './format.js';
 import { notify, flushFlash } from './notify.js';
 import { historyListHtml, bindHistoryList } from './history-list.js';
 import { go } from './router.js';
+import { ArrowLeft, Menu } from 'lucide';
+import { iconHtml } from './icon.js';
 import { getLastBackupDate, shouldRemindBackup, daysSinceBackup, exportBackup, askPassphrase } from '../data/backup.js';
 
 export async function screenHome(_params, outlet) {
@@ -21,7 +23,7 @@ export async function screenHome(_params, outlet) {
   outlet.innerHTML = `
     <header class="app-bar">
       <h1 class="app-bar__title">rame rame</h1>
-      <button class="app-bar__action" data-menu aria-label="Menu">☰</button>
+      <button class="app-bar__action" data-menu aria-label="Menu">${iconHtml(Menu)}</button>
     </header>
     <main class="screen">
       <section class="stats" aria-label="Statistiques globales">

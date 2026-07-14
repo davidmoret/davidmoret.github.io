@@ -1,6 +1,8 @@
 // Écran Préférences : thème (dark / light / auto).
 import { getThemePref, changeTheme } from './theme.js';
 import { go } from './router.js';
+import { ArrowLeft, Menu } from 'lucide';
+import { iconHtml } from './icon.js';
 
 const OPTIONS = [
   { value: 'auto', label: 'Auto', hint: 'Système' },
@@ -13,9 +15,9 @@ export async function screenPrefs(_params, outlet) {
 
   outlet.innerHTML = `
     <header class="app-bar app-bar--detail">
-      <button class="app-bar__back" data-back aria-label="Retour">‹</button>
+      <button class="app-bar__back" data-back aria-label="Retour">${iconHtml(ArrowLeft)}</button>
       <h1 class="app-bar__title">Préférences</h1>
-      <button class="app-bar__action" data-menu aria-label="Menu">☰</button>
+      <button class="app-bar__action" data-menu aria-label="Menu">${iconHtml(Menu)}</button>
     </header>
     <main class="screen">
       <div class="prefs">

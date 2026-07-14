@@ -4,6 +4,8 @@ import { getHistory, getDefinition } from '../data/store.js';
 import { escapeHtml } from './format.js';
 import { historyListHtml, bindHistoryList, historyForSession } from './history-list.js';
 import { go } from './router.js';
+import { ArrowLeft, Menu } from 'lucide';
+import { iconHtml } from './icon.js';
 
 export async function screenHistory({ slug }, outlet) {
   const [history, def] = await Promise.all([getHistory(), slug ? getDefinition(slug) : null]);
@@ -14,9 +16,9 @@ export async function screenHistory({ slug }, outlet) {
 
   outlet.innerHTML = `
     <header class="app-bar app-bar--detail">
-      <button class="app-bar__back" data-back aria-label="Retour">‹</button>
+      <button class="app-bar__back" data-back aria-label="Retour">${iconHtml(ArrowLeft)}</button>
       <h1 class="app-bar__title">${escapeHtml(heading)}</h1>
-      <button class="app-bar__action" data-menu aria-label="Menu">☰</button>
+      <button class="app-bar__action" data-menu aria-label="Menu">${iconHtml(Menu)}</button>
     </header>
     <main class="screen">
       <div class="section-head"><h2 class="section-head__title">${entries.length} séance${entries.length > 1 ? 's' : ''}</h2></div>

@@ -5,15 +5,17 @@ import { parseSession } from '../data/session-parser.js';
 import { escapeHtml } from './format.js';
 import { notify } from './notify.js';
 import { go } from './router.js';
+import { ArrowLeft, Menu, Star } from 'lucide';
+import { iconHtml } from './icon.js';
 
 export async function screenSessions(_params, outlet) {
   const defs = (await getDefinitions()).sort((a, b) => a.title.localeCompare(b.title, 'fr'));
 
   outlet.innerHTML = `
     <header class="app-bar app-bar--detail">
-      <button class="app-bar__back" data-back aria-label="Retour">‹</button>
+      <button class="app-bar__back" data-back aria-label="Retour">${iconHtml(ArrowLeft)}</button>
       <h1 class="app-bar__title">Toutes les séances</h1>
-      <button class="app-bar__action" data-menu aria-label="Menu">☰</button>
+      <button class="app-bar__action" data-menu aria-label="Menu">${iconHtml(Menu)}</button>
     </header>
     <main class="screen">
       <div class="section-head">
@@ -77,7 +79,7 @@ function cardHtml(s) {
   const fav = !!s.favorite;
   return `<li class="card" data-slug="${escapeHtml(s.slug)}" role="button" tabindex="0">
     <button class="card__fav${fav ? ' is-active' : ''}" data-fav="${escapeHtml(s.slug)}"
-      aria-pressed="${fav}" aria-label="${fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}">${fav ? '★' : '☆'}</button>
+      aria-pressed="${fav}" aria-label="${fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}">${iconHtml(Star, { 'data-filled': fav ? '' : null })}</button>
     <div class="card__body">
       <h3 class="card__title">${escapeHtml(s.title)}</h3>
       <p class="card__meta">${escapeHtml(meta)}</p>

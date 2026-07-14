@@ -279,6 +279,8 @@
   text-align: center;
   padding: var(--sp-4) 0;
 
+  &[hidden] { display: none; }
+
   &__val {
     font-size: clamp(4rem, 26vw, 9rem);
     font-weight: 800;

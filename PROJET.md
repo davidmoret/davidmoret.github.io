@@ -423,3 +423,119 @@ Quand la section courante a `target.type === 'hr'`, l'écran Live bascule automa
 - **Anti-stale** : une métrique sans mise à jour depuis 3 s est enregistrée à
   `null` (plus de valeur « figée » quand le rameur est à l'arrêt / BLE perdu).
 - Coût perf négligeable (accumulation légère par paquet, sampling toujours 1 Hz).
+
+---
+
+## 13. v3 — Refonte visuelle, modes Live & thèmes (planifié)
+
+> Lot de refonte UX/UI post-v0.9. Objectif : identité visuelle (fonts + icônes),
+> système de notifications cohérent, simplification des modes Live (4 modes
+> colorés + icônes), dark/light mode, et correction de deux bugs Live.
+> **Statut : planifié — non implémenté.** Réf. visuelles : moodboards Pinterest
+> (notifications, menu bas Live).
+
+### 13.1 — Typographie (fonts)
+- **Titres : League Spartan** · **Texte : Manrope**.
+- **Self-host obligatoire** (privacy + offline-first : pas de Google Fonts CDN).
+  Fichiers `.woff2` locaux dans `public/fonts/`, `@font-face` dédiés.
+- Tokens : `--font-title` (League Spartan) / `--font-body` (Manrope) dans
+  `_tokens.scss`. Titres (`app-bar__title`, `section-head__title`, `hero`) →
+  `--font-title` ; corps → `--font-body`.
+- Fichiers : `public/fonts/`, `_tokens.scss`, `_base.scss`.
+
+### 13.2 — Librairie d'icônes → **recommandation : Lucide**
+- **Choix recommandé : Lucide** (fork maintenu de Feather). MIT, ~1500 icônes,
+  trait fin cohérent avec l'esthétique minimale de l'app, SVG.
+- **Intégration : sprite SVG local** (`<symbol>` + `<use>`), pas de dépendance JS
+  runtime → payload minimal, 100 % offline. On n'embarque que les icônes utilisées.
+- Alternative si besoin de glyphes sport/santé plus spécifiques : **Tabler Icons**
+  (4000+, MIT, même style trait).
+- Helper `icon(name)` → `<svg><use href="#icon-name"/></svg>`.
+- Fichiers : `public/icons.svg` (sprite), `ui/icon.js` (helper), usages divers.
+
+### 13.3 — Système de notifications internes (5 types)
+> Réf. visuelle : `notifs.jpg`. Chaque notif = **carte arrondie à fond teinté
+> clair**, **icône dans un carré blanc arrondi** à gauche, **titre en gras +
+> description** (ligne secondaire), **bouton × de fermeture** à droite.
+
+- Remplace le `toast()` actuel + les `alert()` par un util typé
+  `notify(type, title, description?)`.
+- **5 types** (calés sur la réf) :
+
+| Type | Fond | Icône (Lucide) | Usage |
+|---|---|---|---|
+| `neutral` | gris clair | `info` (ⓘ) | état par défaut / générique |
+| `info` | bleu clair | `bell` | info secondaire |
+| `success` | vert clair | `check-check` (✓✓) | backup exporté/restauré, séance importée |
+| `warning` | orange clair | `alert-triangle` (⚠) | pas de ceinture FC, rappel de sauvegarde |
+| `error` | rouge clair | `ban` (🚫) | export/import échoué, connexion BLE échouée |
+
+- **Comportement** : auto-dismiss après ~3 s **+** × pour fermer manuellement ;
+  empilables (stack). Réutilise le mécanisme `flash` existant pour les notifs
+  post-navigation (ex. « backup restauré » à l'arrivée sur l'accueil).
+- Remplacer les `alert(...)` de `screen-data.js`, `screen-home.js`,
+  `screen-sessions.js`, `screen-live.js` par `notify('error'|'success', …)`.
+- Fichiers : `ui/notify.js` (nouveau, absorbe `toast`/`flash` de `format.js`),
+  `_base.scss` (styles `.notification--{type}`).
+
+### 13.4 — Modes Live : passer de 5 à **4 modes** (couleurs + icônes)
+- **Décision : retirer le mode `complet`** (grille 6 tuiles). Raisons : contraire au
+  principe « 1 métrique héro » + illisible de loin pendant l'effort (contrainte UX
+  rameur) + source du bug 13.6-b. Les 4 modes focalisés couvrent les archétypes.
+- **4 modes retenus** (héro / couleur / icône Lucide / usage) :
+
+| Mode | Héro | Couleur | Icône | Type de séance couvert |
+|---|---|---|---|---|
+| **Cardio** | FC (+ zone) | 🔴 rouge | `heart` | Endurance, travail en zones FC |
+| **Perf** | Allure /500m | 🔵 bleu | `gauge` / `zap` | Intervalles, pyramides (allure = réf rameur) |
+| **Cadence** | Cadence (spm) | 🟠 orange/ambre | `activity` / `waves` | Travail de cadence ciblée |
+| **Zen** | Chrono section | 🟢 vert | `leaf` / `wind` | Séance libre, récup, focus ressenti |
+
+- **Couleur `zen` : vert recommandé** (cohérent avec le vert récup/respiration déjà
+  utilisé `--c-accent`). Le bleu est réservé à `perf` (technique/allure, ton froid).
+- **Menu bas du Live** (réf. `menu-modes.jpg`) : barre horizontale arrondie (fond
+  panel, marche en dark/light). Le mode **actif** = **pill teintée** de sa couleur
+  (fond translucide + icône colorée + **label texte**) ; les modes **inactifs** =
+  **icône seule atténuée**, sans label. Un seul label visible à la fois → compact +
+  code couleur clair.
+- Impact données : `display: complet` dans d'anciennes séances → repli sur `perf`.
+- Fichiers : `screen-live.js` (`MODES`, `LAYOUT`, rendu menu), `_live.scss`,
+  `session-parser.js` (fallback `complet`→`perf`).
+
+### 13.5 — Dark / Light mode
+- **Défaut : config utilisateur système** (`prefers-color-scheme`), **surchargé**
+  via **Menu → Préférences** (nouvelle entrée + nouvel écran/section).
+- Mécanique : `data-theme="dark|light|auto"` sur `<html>`, palette claire en
+  parallèle des tokens sombres actuels (`_tokens.scss`). Préférence persistée
+  (IndexedDB store `meta`, clé `theme`, ou `localStorage`).
+- Ajouter l'entrée **Préférences** dans l'overlay menu (`menu.js`) + écran
+  `screen-prefs.js` (route `/prefs`).
+- Fichiers : `_tokens.scss` (palette light), `main.js` (application du thème au
+  boot), `menu.js`, `screen-prefs.js` (nouveau), `main.js` (route).
+
+### 13.6 — Corrections écran Live (bugs identifiés)
+- **13.6-a — Flèches ◀/▶ inopérantes (▶ mort).** Collision d'attribut : le label
+  « → suivante » (`<span data-next>`) et le bouton ▶ (`<button data-next>`) partagent
+  `data-next`. `querySelector('[data-next]')` retourne le span → `engine.next()`
+  câblé sur le label, pas le bouton. **Fix** : renommer le label (`data-next-label`)
+  pour que `[data-next]` = le bouton.
+  **Pertinence (avis)** : garder ◀/▶ — utiles pour sauter un échauffement, rejouer
+  un intervalle, avancer une section manuelle. Clarifier : ◀ = section précédente
+  (rejouer), ▶ = section suivante (skip). Option : désactiver ◀ sur la 1re section.
+- **13.6-b — FC affichée en double / incohérente en mode `complet`.** `els.hero.hidden
+  = true` est neutralisé par `.hero { display: flex }` (classe > `[hidden]`), donc le
+  héro reste visible avec sa **dernière valeur figée** (FC héritée d'un mode
+  précédent) pendant que la tuile FC se met à jour. **Fix** : `.hero[hidden] {
+  display: none; }` (ou toggler une classe). Devient sans objet si `complet` est
+  retiré (13.4), mais le fix `[hidden]` reste sain pour tout héro masqué.
+- Fichiers : `screen-live.js`, `_live.scss`.
+
+### Décisions à confirmer (v3)
+- ⏳ **Fonts** League Spartan / Manrope — self-host validé, à intégrer.
+- ✅ **Icônes : Lucide** (sprite SVG local) — recommandé.
+- ✅ **Notifications** : 5 types (neutral / info / success / warning / error),
+  visuel calé sur `notifs.jpg` (fond teinté + icône + titre/desc + ×).
+- ✅ **Modes Live** : retirer `complet`, garder Cardio/Perf/Cadence/Zen ;
+  **zen = vert**, perf = bleu, cardio = rouge, cadence = orange.
+- ⏳ **Dark/Light** : défaut système + override Menu → Préférences.
+- 🐛 **Bugs Live** 13.6-a (flèches) & 13.6-b (héro `[hidden]`) — à corriger.

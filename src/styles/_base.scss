@@ -238,19 +238,85 @@ code {
 }
 
 .menu-sheet {
+  position: relative;
   background: var(--c-panel);
-  border-left: 1px solid var(--c-border);
-  width: min(78vw, 300px);
+  width: 100%;
+  max-width: 480px;
   height: 100%;
-  padding: var(--sp-5);
+  padding: var(--sp-5) 0 var(--sp-4);
   display: flex;
   flex-direction: column;
-  gap: var(--sp-3);
   animation: menu-slide 0.2s ease-out;
 
-  .btn--block { margin-top: 0; }
+  &__close {
+    position: absolute;
+    top: var(--sp-3);
+    right: var(--sp-3);
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-radius: var(--radius-sm);
+    color: var(--c-muted);
+    cursor: pointer;
 
-  .app-version { margin-top: auto; }
+    svg { width: 22px; height: 22px; }
+    &:active { color: var(--c-txt); }
+  }
+
+  .app-version { margin-top: auto; padding: 0 var(--sp-5); }
+}
+
+.menu-list {
+  list-style: none;
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  width: 100%;
+  padding: var(--sp-4) var(--sp-5);
+  background: none;
+  border: 0;
+  color: var(--c-txt);
+  font-size: 1.05rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+
+  &__icon {
+    display: grid;
+    place-items: center;
+    flex: none;
+    color: var(--c-accent);
+
+    svg { width: 22px; height: 22px; }
+  }
+
+  &__label { flex: 1; min-width: 0; }
+
+  &__go {
+    display: flex;
+    align-items: center;
+    flex: none;
+    color: var(--c-muted);
+
+    svg { width: 20px; height: 20px; }
+  }
+
+  &:active {
+    background: var(--c-panel-2);
+  }
 }
 
 @keyframes menu-fade {

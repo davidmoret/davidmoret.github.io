@@ -9,6 +9,7 @@ const PBKDF2_ITER = 600_000;
 const SALT_LEN = 16;
 const IV_LEN = 12;
 const META_KEY = 'lastBackupDate';
+const META_IMPORT_KEY = 'lastImportDate';
 
 // ── Meta (lastBackupDate) ─────────────────────────────────────────────
 
@@ -27,6 +28,26 @@ async function setLastBackupDate(date = new Date()) {
   return new Promise((resolve, reject) => {
     const tx = db.transaction('meta', 'readwrite');
     tx.objectStore('meta').put(date.toISOString(), META_KEY);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+export async function getLastImportDate() {
+  const db = await openDb();
+  return new Promise((resolve) => {
+    const tx = db.transaction('meta', 'readonly');
+    const req = tx.objectStore('meta').get(META_IMPORT_KEY);
+    tx.oncomplete = () => resolve(req.result ?? null);
+    tx.onerror = () => resolve(null);
+  });
+}
+
+async function setLastImportDate(date = new Date()) {
+  const db = await openDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('meta', 'readwrite');
+    tx.objectStore('meta').put(date.toISOString(), META_IMPORT_KEY);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
@@ -168,7 +189,7 @@ export async function importBackup(file, passphrase) {
       }
     }
   });
-  await setLastBackupDate();
+  await setLastImportDate();
 }
 
 // ── Modal passphrase ──────────────────────────────────────────────────

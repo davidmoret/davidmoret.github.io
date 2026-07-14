@@ -1,7 +1,7 @@
 // Écran Profil utilisateur : âge, FCmax, FCrepos + sauvegarde/restauration.
 import { getProfile, putProfile } from '../data/profile.js';
-import { exportBackup, importBackup, askPassphrase, getLastBackupDate } from '../data/backup.js';
-import { escapeHtml } from './format.js';
+import { exportBackup, importBackup, askPassphrase, getLastBackupDate, getLastImportDate } from '../data/backup.js';
+import { escapeHtml, toast } from './format.js';
 import { go } from './router.js';
 
 function fmtBackupDate(iso) {
@@ -13,6 +13,7 @@ function fmtBackupDate(iso) {
 export async function screenProfile(_params, outlet) {
   const profile = await getProfile() || {};
   const lastBackup = await getLastBackupDate();
+  const lastImport = await getLastImportDate();
 
   outlet.innerHTML = `
     <header class="app-bar app-bar--detail">
@@ -53,6 +54,7 @@ export async function screenProfile(_params, outlet) {
         ${lastBackup ? `<span class="section-head__meta">${fmtBackupDate(lastBackup)}</span>` : ''}
       </div>
       <p class="lead">${lastBackup ? 'Dernière sauvegarde le ' + fmtBackupDate(lastBackup) + '.' : 'Aucune sauvegarde effectuée.'} Les données sont chiffrées avec ta passphrase.</p>
+      ${lastImport ? `<p class="lead">Dernière restauration le ${fmtBackupDate(lastImport)}.</p>` : ''}
       <div class="backup-actions">
         <button class="btn btn--block" data-export-backup>📤 Exporter un backup</button>
         <label class="btn btn--block import-btn">
@@ -108,7 +110,8 @@ export async function screenProfile(_params, outlet) {
     if (!pass) { e.target.value = ''; return; }
     try {
       await importBackup(file, pass);
-      screenProfile(_params, outlet);
+      go('/');
+      toast('Sauvegarde restaurée');
     } catch (e) {
       console.error('Import échoué :', e);
       alert('Restauration échouée. Vérifie la passphrase et le fichier.');

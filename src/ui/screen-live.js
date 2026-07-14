@@ -15,6 +15,8 @@ import { createSessionEngine } from '../engine/session-engine.js';
 import { createRecorder } from '../engine/recorder.js';
 import { fmtDuration, fmtPace, fmtDist, escapeHtml, prettyDeviceName } from './format.js';
 import { initAudio, cue, beepShort, beepLong } from './feedback.js';
+import { Heart, Gauge, Activity, Leaf } from 'lucide';
+import { icon } from './icon.js';
 import { go } from './router.js';
 
 const BLE_OK = typeof navigator !== 'undefined' && !!navigator.bluetooth;
@@ -30,6 +32,14 @@ const LAYOUT = {
   cad:     { hero: 'spm',  tiles: ['power', 'hr', 'stime'] },
 };
 
+
+// Métadonnées visuelles des modes (§13.4) : couleur + icône Lucide + label.
+const MODE_META = {
+  cardio: { color: "var(--c-err)", icon: Heart, label: "Cardio" },
+  perf:   { color: "var(--c-accent-2)", icon: Gauge, label: "Perf" },
+  cad:    { color: "var(--c-warn)", icon: Activity, label: "Cadence" },
+  zen:    { color: "var(--c-accent)", icon: Leaf, label: "Zen" },
+};
 // Chrono de section : décompte si la section se clôt au temps (cible durée),
 // sinon temps écoulé.
 function sectionClock(s) {
@@ -231,7 +241,15 @@ export async function screenLive({ slug }, outlet) {
   function setMode(next) {
     mode = next;
     els.root.dataset.mode = next;
-    outlet.querySelectorAll('[data-mode]').forEach((b) => b.classList.toggle('is-active', b.dataset.mode === next));
+    outlet.querySelectorAll('[data-mode]').forEach((b) => {
+      const active = b.dataset.mode === next;
+      b.classList.toggle('is-active', active);
+      b.style.setProperty('--mode-c', active ? MODE_META[b.dataset.mode].color : 'var(--c-muted)');
+      b.style.color = active ? MODE_META[b.dataset.mode].color : 'var(--c-muted)';
+      const host = b.querySelector('[data-mode-icon]');
+      host.innerHTML = '';
+      host.appendChild(icon(MODE_META[b.dataset.mode].icon, { 'aria-hidden': 'true' }));
+    });
     render();
   }
 
@@ -482,7 +500,7 @@ function template() {
     </div>
 
     <div class="modes">
-      ${MODES.map((m) => `<button class="modes__btn" data-mode="${m}">${m}</button>`).join('')}
+      ${MODES.map((m) => `<button class="modes__btn" data-mode="${m}" data-color="${MODE_META[m].color}"><span class="modes__icon" data-mode-icon="${m}"></span><span class="modes__label">${MODE_META[m].label}</span></button>`).join('')}
     </div>
   </div>`;
 }

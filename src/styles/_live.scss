@@ -380,20 +380,37 @@
 }
 
 .modes {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  display: flex;
+  justify-content: center;
   gap: var(--sp-1);
+  padding: var(--sp-1);
+  background: var(--c-panel);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
 
   &__btn {
-    font-size: 0.8rem;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-1);
     color: var(--c-muted);
-    background: none;
-    border: 1px solid var(--c-border);
-    border-radius: var(--radius-sm);
+    background: transparent;
+    border: 0;
+    border-radius: calc(var(--radius) - 4px);
     padding: var(--sp-2);
     cursor: pointer;
-    text-transform: capitalize;
+    transition: background 0.15s ease-out, color 0.15s ease-out;
 
-    &.is-active { color: var(--c-txt); border-color: var(--c-accent-2); background: var(--c-panel-2); }
+    svg { width: 20px; height: 20px; }
+
+    &.is-active {
+      color: var(--mode-c);
+      background: color-mix(in srgb, var(--mode-c) 18%, transparent);
+    }
   }
+
+  // Inactifs : icône seule, label masqué (compact). Actif : icône + label.
+  &__label { display: none; }
+  &__btn.is-active &__label { display: inline; font-size: 0.8rem; font-weight: 600; }
 }

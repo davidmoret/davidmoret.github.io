@@ -387,3 +387,32 @@ code {
   from { opacity: 1; }
   to   { opacity: 0; transform: translateY(12px); }
 }
+
+// ── Préférences (thème) ─────────────────────────────────────────────────
+
+.prefs__options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-2);
+}
+
+.prefs__opt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  align-items: center;
+  padding: var(--sp-4) var(--sp-2);
+  background: var(--c-panel);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  touch-action: manipulation;
+
+  &.is-active {
+    border-color: var(--c-accent-2);
+    background: color-mix(in srgb, var(--c-accent-2) 12%, var(--c-panel));
+  }
+
+  &-label { font-weight: 600; font-size: 1rem; }
+  &-hint { font-size: 0.75rem; color: var(--c-muted); }
+}

@@ -1,4 +1,5 @@
 import './styles/main.scss';
+import { initTheme } from './ui/theme.js';
 import { createRouter } from './ui/router.js';
 import { openMenu } from './ui/menu.js';
 import { screenHome } from './ui/screen-home.js';
@@ -8,6 +9,7 @@ import { screenDetail } from './ui/screen-detail.js';
 import { screenLive } from './ui/screen-live.js';
 import { screenSummary } from './ui/screen-summary.js';
 import { screenProfile } from './ui/screen-profile.js';
+import { screenPrefs } from './ui/screen-prefs.js';
 import { screenData } from './ui/screen-data.js';
 import { screenEditor } from './ui/screen-editor.js';
 import { getDefinitions, putDefinition } from './data/store.js';
@@ -40,11 +42,13 @@ const router = createRouter([
   ['/live/:slug', screenLive],
   ['/summary/:id', screenSummary],
   ['/profile', screenProfile],
+  ['/prefs', screenPrefs],
   ['/data', screenData],
   ['/edit', screenEditor],
   ['/edit/:slug', screenEditor],
 ], outlet);
 
+initTheme().catch((e) => console.error('Init thème échoué :', e));
 seedSessions()
   .catch((e) => console.error('Seed séances échoué :', e))
   .finally(() => {

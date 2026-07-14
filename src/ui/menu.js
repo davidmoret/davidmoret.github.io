@@ -10,6 +10,7 @@ export function openMenu() {
       <button class="btn btn--block" data-go="/profile">Profil</button>
       <button class="btn btn--block" data-go="/sessions">Sessions</button>
       <button class="btn btn--block" data-go="/data">Gestion des données</button>
+      <button class="btn btn--block" data-go="/prefs">Préférences</button>
       <footer class="app-version">${__APP_VERSION__}</footer>
     </nav>`;
   document.body.appendChild(overlay);

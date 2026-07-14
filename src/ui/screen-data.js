@@ -20,10 +20,8 @@ export async function screenData(_params, outlet) {
     <main class="screen">
       <div class="section-head">
         <h2 class="section-head__title">Sauvegarde</h2>
-        ${lastBackup ? `<span class="section-head__meta">${fmtBackupDate(lastBackup)}</span>` : ''}
       </div>
       <p class="lead">${lastBackup ? 'Dernière sauvegarde le ' + fmtBackupDate(lastBackup) + '.' : 'Aucune sauvegarde effectuée.'} Les données sont chiffrées avec ta passphrase.</p>
-      ${lastImport ? `<p class="lead">Dernière restauration le ${fmtBackupDate(lastImport)}.</p>` : ''}
       <div class="backup-actions">
         <button class="btn btn--block" data-export-backup>📤 Exporter un backup</button>
         <label class="btn btn--block import-btn">
@@ -31,9 +29,10 @@ export async function screenData(_params, outlet) {
           <input class="import-btn__input" type="file" accept=".rambak" data-import-backup>
         </label>
       </div>
+      ${lastImport ? `<p class="lead">Dernière restauration le ${fmtBackupDate(lastImport)}.</p>` : ''}
     </main>`;
 
-  outlet.querySelector('[data-back]').addEventListener('click', () => go('/menu'));
+  outlet.querySelector('[data-back]').addEventListener('click', () => go('/'));
 
   // Export backup
   outlet.querySelector('[data-export-backup]').addEventListener('click', async () => {

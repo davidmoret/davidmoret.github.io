@@ -8,7 +8,6 @@ import { screenLive } from './ui/screen-live.js';
 import { screenSummary } from './ui/screen-summary.js';
 import { screenProfile } from './ui/screen-profile.js';
 import { screenData } from './ui/screen-data.js';
-import { screenMenu } from './ui/screen-menu.js';
 import { screenEditor } from './ui/screen-editor.js';
 import { getDefinitions, putDefinition } from './data/store.js';
 import { parseSession, slugify } from './data/session-parser.js';
@@ -33,7 +32,6 @@ const router = createRouter([
   ['/session/:slug', screenDetail],
   ['/live/:slug', screenLive],
   ['/summary/:id', screenSummary],
-  ['/menu', screenMenu],
   ['/profile', screenProfile],
   ['/data', screenData],
   ['/edit', screenEditor],

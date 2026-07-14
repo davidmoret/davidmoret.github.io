@@ -207,12 +207,42 @@ code {
   .btn--block { margin-top: 0; }
 }
 
-.menu-list {
+// ── Menu overlay (drawer) ──────────────────────────────────────────────
+
+.menu-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 100;
+  display: flex;
+  justify-content: flex-end;
+  animation: menu-fade 0.15s ease-out;
+}
+
+.menu-sheet {
+  background: var(--c-panel);
+  border-left: 1px solid var(--c-border);
+  width: min(78vw, 300px);
+  height: 100%;
+  padding: var(--sp-5);
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
+  animation: menu-slide 0.2s ease-out;
 
   .btn--block { margin-top: 0; }
+
+  .app-version { margin-top: auto; }
+}
+
+@keyframes menu-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes menu-slide {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
 }
 
 // ── Modal passphrase ──────────────────────────────────────────────────

@@ -1,7 +1,22 @@
 // Écran Profil utilisateur : âge, FCmax, FCrepos.
+// Les valeurs dérivées (FCmax auto = 220 − âge, réserve = FCmax − FCrepos)
+// s'affichent en continu dans le formulaire et sont persistées à l'enregistrement.
 import { getProfile, putProfile } from '../data/profile.js';
 import { escapeHtml } from './format.js';
 import { go } from './router.js';
+
+function maxPlaceholder(age) {
+  return age ? `auto (${220 - age})` : 'auto';
+}
+
+function effectiveMax(age, hrMax) {
+  return hrMax || (age ? 220 - age : null);
+}
+
+function reserveHint(age, hrMax, hrRest) {
+  const max = effectiveMax(age, hrMax);
+  return (max && hrRest) ? `Réserve = ${max - hrRest} bpm` : 'Débloque les cibles Karvonen';
+}
 
 export async function screenProfile(_params, outlet) {
   const profile = await getProfile() || {};
@@ -25,44 +40,45 @@ export async function screenProfile(_params, outlet) {
         <label class="profile-field">
           <span class="profile-field__label">FC max <small>(si connue, prioritaire sur 220 − âge)</small></span>
           <input class="profile-field__input" type="number" name="hrMax" min="80" max="230"
-            value="${escapeHtml(String(profile.hrMax ?? ''))}" placeholder="auto" inputmode="numeric">
+            value="${escapeHtml(String(profile.hrMax ?? ''))}" placeholder="${maxPlaceholder(profile.age)}" inputmode="numeric">
         </label>
 
         <label class="profile-field">
           <span class="profile-field__label">FC repos</span>
           <input class="profile-field__input" type="number" name="hrRest" min="30" max="100"
             value="${escapeHtml(String(profile.hrRest ?? ''))}" placeholder="ex. 60" inputmode="numeric">
-          <span class="profile-field__hint">Débloque les cibles Karvonen</span>
+          <span class="profile-field__hint" data-reserve-hint>${reserveHint(profile.age, profile.hrMax, profile.hrRest)}</span>
         </label>
 
         <button class="btn btn--primary btn--block" type="submit">Enregistrer</button>
       </form>
-
-      <div class="profile-result" data-result hidden></div>
     </main>`;
 
-  outlet.querySelector('[data-back]').addEventListener('click', () => go('/menu'));
+  outlet.querySelector('[data-back]').addEventListener('click', () => go('/'));
 
-  outlet.querySelector('[data-form]').addEventListener('submit', async (e) => {
+  const form = outlet.querySelector('[data-form]');
+  const ageEl = form.querySelector('[name=age]');
+  const hrMaxEl = form.querySelector('[name=hrMax]');
+  const hrRestEl = form.querySelector('[name=hrRest]');
+  const reserveEl = form.querySelector('[data-reserve-hint]');
+
+  // Recalcul en continu des valeurs dérivées pendant la saisie.
+  form.addEventListener('input', () => {
+    const age = Number(ageEl.value) || null;
+    const hrMax = Number(hrMaxEl.value) || null;
+    const hrRest = Number(hrRestEl.value) || null;
+    hrMaxEl.placeholder = maxPlaceholder(age);
+    reserveEl.textContent = reserveHint(age, hrMax, hrRest);
+  });
+
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const fd = new FormData(e.target);
     const p = {};
-    const age = fd.get('age');
-    const hrMaxVal = fd.get('hrMax');
-    const hrRestVal = fd.get('hrRest');
-    if (age) p.age = Number(age);
-    if (hrMaxVal) p.hrMax = Number(hrMaxVal);
-    if (hrRestVal) p.hrRest = Number(hrRestVal);
+    if (ageEl.value) p.age = Number(ageEl.value);
+    if (hrMaxEl.value) p.hrMax = Number(hrMaxEl.value);
+    if (hrRestEl.value) p.hrRest = Number(hrRestEl.value);
     await putProfile(p);
-
-    const result = outlet.querySelector('[data-result]');
-    result.hidden = false;
-    const max = p.hrMax || (p.age ? 220 - p.age : null);
-    const parts = [];
-    if (max) parts.push(`FCmax = ${max} bpm`);
-    if (p.hrRest && max) parts.push(`Réserve = ${max - p.hrRest} bpm`);
-    result.innerHTML = parts.length
-      ? `<span class="profile-ok">✓ ${parts.join(' · ')}</span>`
-      : '<span class="profile-ok">✓ Profil vidé</span>';
+    // Re-render : les valeurs dérivées reflètent le profil persisté.
+    screenProfile(_params, outlet);
   });
 }

@@ -80,8 +80,8 @@
 
     svg { width: 22px; height: 22px; }
 
-    &[data-filled] { color: var(--c-accent); }
-    &[data-filled] svg { fill: currentColor; }
+    &.is-active { color: var(--c-accent); }
+    &.is-active svg { fill: currentColor; }
   }
 
   &:active { border-color: var(--c-accent-2); }

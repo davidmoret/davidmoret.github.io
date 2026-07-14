@@ -79,7 +79,7 @@ function cardHtml(s) {
   const fav = !!s.favorite;
   return `<li class="card" data-slug="${escapeHtml(s.slug)}" role="button" tabindex="0">
     <button class="card__fav${fav ? ' is-active' : ''}" data-fav="${escapeHtml(s.slug)}"
-      aria-pressed="${fav}" aria-label="${fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}">${iconHtml(Star, { 'data-filled': fav ? '' : null })}</button>
+      aria-pressed="${fav}" aria-label="${fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}">${iconHtml(Star)}</button>
     <div class="card__body">
       <h3 class="card__title">${escapeHtml(s.title)}</h3>
       <p class="card__meta">${escapeHtml(meta)}</p>

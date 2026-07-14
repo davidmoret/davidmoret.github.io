@@ -5,7 +5,7 @@ import { fmtDuration, fmtDist, escapeHtml } from './format.js';
 import { notify, flushFlash } from './notify.js';
 import { historyListHtml, bindHistoryList } from './history-list.js';
 import { go } from './router.js';
-import { Menu, ChevronRight } from 'lucide';
+import { Star, Menu, ChevronRight } from 'lucide';
 import { iconHtml } from './icon.js';
 import { getLastBackupDate, shouldRemindBackup, daysSinceBackup, exportBackup, askPassphrase } from '../data/backup.js';
 
@@ -40,7 +40,7 @@ export async function screenHome(_params, outlet) {
       ${remindBackup ? '<div class="inline-notify" data-backup-notify></div>' : ''}
 
       <div class="section-head">
-        <h2 class="section-head__title">Séances favorites</h2>
+        <h2 class="section-head__title">${iconHtml(Star)} Séances favorites</h2>
       </div>
 
       <ul class="card-list">

@@ -151,7 +151,14 @@ code {
   justify-content: space-between;
   margin: var(--sp-5) 0 var(--sp-3);
 
-  &__title { font-size: 1.05rem; }
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    font-size: 1.05rem;
+
+    svg { width: 18px; height: 18px; color: var(--c-accent); }
+  }
   &__meta { font-size: 0.78rem; color: var(--c-muted); }
 }
 

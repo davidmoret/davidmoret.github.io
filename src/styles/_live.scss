@@ -346,7 +346,9 @@
   gap: var(--sp-2);
 
   &__btn {
-    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-weight: 700;
     color: var(--c-txt);
     background: var(--c-panel-2);
@@ -357,6 +359,8 @@
     touch-action: manipulation;
     position: relative;
     overflow: hidden;
+
+    svg { width: 28px; height: 28px; }
 
     &--main { background: var(--c-accent-2); border-color: transparent; color: #fff; }
 

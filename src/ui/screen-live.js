@@ -15,7 +15,7 @@ import { createSessionEngine } from '../engine/session-engine.js';
 import { createRecorder } from '../engine/recorder.js';
 import { fmtDuration, fmtPace, fmtDist, escapeHtml, prettyDeviceName } from './format.js';
 import { initAudio, cue, beepShort, beepLong } from './feedback.js';
-import { Heart, Gauge, Activity, Leaf, ArrowLeft } from 'lucide';
+import { Heart, Gauge, Activity, Leaf, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide';
 import { icon } from './icon.js';
 import { go } from './router.js';
 
@@ -494,9 +494,9 @@ function template() {
     </div>
 
     <div class="controls">
-      <button class="controls__btn" data-prev aria-label="Section précédente">◀</button>
+      <button class="controls__btn" data-prev aria-label="Section précédente">${iconHtml(ChevronLeft)}</button>
       <button class="controls__btn controls__btn--main" data-pause>Démarrer</button>
-      <button class="controls__btn" data-next aria-label="Section suivante">▶</button>
+      <button class="controls__btn" data-next aria-label="Section suivante">${iconHtml(ChevronRight)}</button>
     </div>
 
     <div class="modes">

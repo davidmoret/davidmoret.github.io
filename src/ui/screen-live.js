@@ -1,5 +1,5 @@
 // Écran Live : métrique « héro » + tuiles secondaires, chrono global + section,
-// contrôles gros doigts, indicateur de zone FC. 4 modes (perf/cardio/complet/zen)
+// contrôles gros doigts, indicateur de zone FC. 4 modes (cardio/perf/cad/zen)
 // changeables à la volée (cf. PROJET.md §6.1).
 //
 // Quand la section courante a une cible hr (retour au calme), l'UI bascule
@@ -19,14 +19,13 @@ import { go } from './router.js';
 
 const BLE_OK = typeof navigator !== 'undefined' && !!navigator.bluetooth;
 
-const MODES = ['perf', 'cardio', 'complet', 'zen', 'cad'];
+const MODES = ['cardio', 'perf', 'cad', 'zen'];
 
 const LONG_PRESS_MS = 1500;
 
 const LAYOUT = {
   perf:    { hero: 'pace', tiles: ['spm', 'hr', 'sdist'] },
   cardio:  { hero: 'hr',   tiles: ['pace', 'spm', 'dist'] },
-  complet: { hero: null,   tiles: ['pace', 'hr', 'spm', 'power', 'dist', 'stime'] },
   zen:     { hero: 'stime', tiles: ['pace', 'hr', 'spm'] },
   cad:     { hero: 'spm',  tiles: ['power', 'hr', 'stime'] },
 };

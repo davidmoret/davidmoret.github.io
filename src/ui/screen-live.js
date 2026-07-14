@@ -74,7 +74,7 @@ export async function screenLive({ slug }, outlet) {
     global: outlet.querySelector('[data-global]'),
     counter: outlet.querySelector('[data-counter]'),
     sectionName: outlet.querySelector('[data-section-name]'),
-    next: outlet.querySelector('[data-next]'),
+    next: outlet.querySelector('[data-next-label]'),
     progress: outlet.querySelector('[data-progress]'),
     zone: outlet.querySelector('[data-zone]'),
     hero: outlet.querySelector('[data-hero]'),
@@ -443,7 +443,7 @@ function template() {
 
     <div class="live__section">
       <span class="live__section-name" data-section-name>—</span>
-      <span class="live__next" data-next></span>
+      <span class="live__next" data-next-label></span>
     </div>
     <div class="live__progress"><span class="live__progress-fill" data-progress></span></div>
     <div class="live__zone" data-zone hidden></div>

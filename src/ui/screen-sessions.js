@@ -4,8 +4,8 @@ import { getDefinitions, putDefinition, setFavorite } from '../data/store.js';
 import { parseSession } from '../data/session-parser.js';
 import { escapeHtml } from './format.js';
 import { notify } from './notify.js';
-import { go } from './router.js';
-import { ArrowLeft, Menu, Star } from 'lucide';
+import { go, back } from './router.js';
+import { ArrowLeft, Menu, Star, ChevronRight } from 'lucide';
 import { iconHtml } from './icon.js';
 
 export async function screenSessions(_params, outlet) {
@@ -36,7 +36,7 @@ export async function screenSessions(_params, outlet) {
       </ul>
     </main>`;
 
-  outlet.querySelector('[data-back]').addEventListener('click', () => go('/'));
+  outlet.querySelector('[data-back]').addEventListener('click', () => back());
   outlet.querySelector('[data-new]').addEventListener('click', () => go('/edit'));
   outlet.querySelectorAll('[data-slug]').forEach((el) => {
     el.addEventListener('click', (e) => {

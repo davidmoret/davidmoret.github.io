@@ -1,7 +1,7 @@
 // Écran Gestion des données : sauvegarde (export chiffré) et restauration (import) du backup global.
 import { exportBackup, importBackup, askPassphrase, getLastBackupDate, getLastImportDate } from '../data/backup.js';
 import { notify, setFlash } from './notify.js';
-import { go } from './router.js';
+import { go, back } from './router.js';
 import { FileDown, ArchiveRestore, ArrowLeft, Menu } from 'lucide';
 import { iconHtml } from './icon.js';
 
@@ -35,7 +35,7 @@ export async function screenData(_params, outlet) {
       ${lastImport ? `<p class="lead">Dernière restauration le ${fmtBackupDate(lastImport)}.</p>` : ''}
     </main>`;
 
-  outlet.querySelector('[data-back]').addEventListener('click', () => go('/'));
+  outlet.querySelector('[data-back]').addEventListener('click', () => back());
 
   // Export backup
   outlet.querySelector('[data-export-backup]').addEventListener('click', async () => {

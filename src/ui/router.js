@@ -36,3 +36,11 @@ export function go(path) {
   if (location.hash.slice(1) === path) window.dispatchEvent(new HashChangeEvent('hashchange'));
   else location.hash = path;
 }
+
+// Revient à l'écran précédent (ex. bouton retour d'un écran atteint via le
+// menu, qui n'a pas de parent sémantique fixe). Fallback vers l'accueil si
+// l'historique est vide (arrivée directe par URL).
+export function back(fallback = '/') {
+  if (window.history.length > 1) history.back();
+  else go(fallback);
+}

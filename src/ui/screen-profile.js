@@ -3,7 +3,7 @@
 // s'affichent en continu dans le formulaire et sont persistées à l'enregistrement.
 import { getProfile, putProfile } from '../data/profile.js';
 import { escapeHtml } from './format.js';
-import { go } from './router.js';
+import { back } from './router.js';
 import { ArrowLeft, Menu } from 'lucide';
 import { iconHtml } from './icon.js';
 
@@ -57,7 +57,7 @@ export async function screenProfile(_params, outlet) {
       </form>
     </main>`;
 
-  outlet.querySelector('[data-back]').addEventListener('click', () => go('/'));
+  outlet.querySelector('[data-back]').addEventListener('click', () => back());
 
   const form = outlet.querySelector('[data-form]');
   const ageEl = form.querySelector('[name=age]');

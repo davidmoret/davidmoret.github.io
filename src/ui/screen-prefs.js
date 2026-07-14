@@ -1,6 +1,6 @@
 // Écran Préférences : thème (dark / light / auto).
 import { getThemePref, changeTheme } from './theme.js';
-import { go } from './router.js';
+import { back } from './router.js';
 import { ArrowLeft, Menu } from 'lucide';
 import { iconHtml } from './icon.js';
 
@@ -32,7 +32,7 @@ export async function screenPrefs(_params, outlet) {
       </div>
     </main>`;
 
-  outlet.querySelector('[data-back]').addEventListener('click', () => go('/'));
+  outlet.querySelector('[data-back]').addEventListener('click', () => back());
 
   outlet.querySelectorAll('[data-theme]').forEach((btn) => {
     btn.addEventListener('click', async () => {

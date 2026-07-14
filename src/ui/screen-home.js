@@ -9,6 +9,10 @@ import { Menu, ChevronRight } from 'lucide';
 import { iconHtml } from './icon.js';
 import { getLastBackupDate, shouldRemindBackup, daysSinceBackup, exportBackup, askPassphrase } from '../data/backup.js';
 
+// L'utilisateur a fermé le rappel de sauvegarde : on ne le réaffiche pas
+// tant que le backup reste stale. Reset au prochain reload de l'app.
+let backupDismissed = false;
+
 export async function screenHome(_params, outlet) {
   const [defs, history, lastBackup] = await Promise.all([
     getDefinitions(), getHistory(), getLastBackupDate(),
@@ -17,7 +21,7 @@ export async function screenHome(_params, outlet) {
   const favorites = defs.filter((d) => d.favorite).sort((a, b) => a.title.localeCompare(b.title, 'fr'));
   const sorted = [...history].sort((a, b) => b.id.localeCompare(a.id));
   const recent = sorted.slice(0, 5);
-  const remindBackup = shouldRemindBackup(lastBackup);
+  const remindBackup = shouldRemindBackup(lastBackup) && !backupDismissed;
   const days = lastBackup ? Math.floor(daysSinceBackup(lastBackup)) : null;
 
   outlet.innerHTML = `
@@ -71,6 +75,7 @@ export async function screenHome(_params, outlet) {
     notify('warning', label, 'Pense à sauvegarder tes données.', {
       persistent: true,
       container: notifyHost,
+      onClose: () => { backupDismissed = true; },
       action: {
         label: 'Sauvegarder maintenant',
         onClick: async () => {
@@ -78,6 +83,7 @@ export async function screenHome(_params, outlet) {
           if (!pass) return;
           try {
             await exportBackup(pass);
+            backupDismissed = false;
             screenHome(_params, outlet);
             notify('success', 'Sauvegarde exportée');
           } catch (e) {

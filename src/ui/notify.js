@@ -4,6 +4,8 @@
 //  - persistante (opts.persistent) : bouton fermer, reste jusqu'à interaction.
 // opts.container monte la notif dans un hôte du flux (ex. rappel sauvegarde
 // sur l'accueil) au lieu de la pile flottante.
+// opts.onClose est appelé une fois quand l'utilisateur ferme manuellement
+// la notif (permet de mémoriser un rejet pour ne pas réafficher au re-render).
 import { Info, Bell, CheckCheck, TriangleAlert, Ban, X } from 'lucide';
 import { icon } from './icon.js';
 
@@ -29,7 +31,7 @@ function stack() {
 }
 
 export function notify(type, title, description, opts = {}) {
-  const { persistent = false, action = null, container = null } = opts;
+  const { persistent = false, action = null, container = null, onClose = null } = opts;
   const t = ICONS[type] ? type : 'neutral';
 
   const card = document.createElement('div');
@@ -78,7 +80,10 @@ export function notify(type, title, description, opts = {}) {
     close.type = 'button';
     close.setAttribute('aria-label', 'Fermer');
     close.appendChild(icon(X, { 'aria-hidden': 'true' }));
-    close.addEventListener('click', dismiss);
+    close.addEventListener('click', () => {
+      if (onClose) onClose();
+      dismiss();
+    });
     card.append(close);
   } else {
     timer = setTimeout(dismiss, AUTO_DISMISS_MS);

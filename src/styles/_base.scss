@@ -387,14 +387,17 @@ code {
 
 // Notif persistante dans le flux (ex. rappel sauvegarde sur l'accueil) :
 // pleine largeur, sans ombre ni animation d'entrée.
+// La marge est portée par la notif (et non par le hôte) afin qu'un hôte
+// vide après fermeture ne laisse pas d'espace résiduel.
 .inline-notify {
-  margin-top: var(--sp-5);
-
   .notification {
     width: 100%;
+    margin-top: var(--sp-5);
     box-shadow: none;
     animation: none;
     align-items: center;
+
+    &[data-leaving] { animation: notif-out 0.25s ease-in forwards; }
   }
 }
 

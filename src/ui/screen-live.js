@@ -241,7 +241,7 @@ export async function screenLive({ slug }, outlet) {
   function setMode(next) {
     mode = next;
     els.root.dataset.mode = next;
-    outlet.querySelectorAll('[data-mode]').forEach((b) => {
+    outlet.querySelectorAll('.modes__btn').forEach((b) => {
       const active = b.dataset.mode === next;
       b.classList.toggle('is-active', active);
       b.style.setProperty('--mode-c', active ? MODE_META[b.dataset.mode].color : 'var(--c-muted)');
@@ -421,7 +421,7 @@ export async function screenLive({ slug }, outlet) {
 
   outlet.querySelector('[data-prev]').addEventListener('click', () => engine.prev());
   outlet.querySelector('[data-next]').addEventListener('click', () => engine.next());
-  outlet.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => setMode(b.dataset.mode)));
+  outlet.querySelectorAll('.modes__btn').forEach((b) => b.addEventListener('click', () => setMode(b.dataset.mode)));
 
   setMode(mode);
 

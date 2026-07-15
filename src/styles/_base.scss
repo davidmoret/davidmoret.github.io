@@ -64,6 +64,12 @@ code {
   }
   &__sub { color: var(--c-muted); font-size: 0.85rem; }
 
+  // Valeur numérique dans un titre réduit — reste à la taille pleine.
+  &__num { font-size: 1.4rem; }
+
+  // Titre des écrans de détail (tous sauf home) : légèrement réduit.
+  &--detail &__title { font-size: 1.1rem; }
+
   &__home {
     display: flex;
     align-items: center;

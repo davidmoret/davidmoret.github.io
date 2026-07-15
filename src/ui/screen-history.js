@@ -14,7 +14,7 @@ export async function screenHistory({ slug }, outlet) {
   const entries = slug ? historyForSession(sorted, { slug, title: def && def.title }) : sorted;
   const heading = slug
     ? (def ? escapeHtml(def.title) : escapeHtml(t('history.title')))
-    : escapeHtml(t('history.count', { count: entries.length }));
+    : { html: t('history.count', { count: `<span class="app-bar__num">${entries.length}</span>` }) };
 
   outlet.innerHTML = `
     ${appBar({ title: heading })}

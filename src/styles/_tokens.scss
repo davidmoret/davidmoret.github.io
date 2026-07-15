@@ -1,28 +1,27 @@
-// Jetons de thème sous forme de CSS custom properties (thème sombre par défaut,
-// contrainte UX rameur : fort contraste). Réutilisées partout via var(--…).
+// Thème sombre par défaut — fond bleu-nuit, accent indigo/ciel.
 :root {
-  --c-bg: #0e1116;
-  --c-panel: #161b22;
-  --c-panel-2: #1c232d;
-  --c-border: #2a323d;
-  --c-txt: #e6edf3;
-  --c-muted: #8b98a6;
-  --c-accent: #3fb950;
-  --c-accent-2: #2f81f7;
-  --c-warn: #d29922;
-  --c-err: #f85149;
+  --c-bg: #0d0f18;
+  --c-panel: #13162a;
+  --c-panel-2: #1a1e30;
+  --c-border: #252c42;
+  --c-txt: #dde2f4;
+  --c-muted: #8898c0;
+  --c-accent: #f07048;
+  --c-accent-2: #38bdf8;
+  --c-warn: #f59e0b;
+  --c-err: #f87171;
 
   // Notifications (couleur d'accent par type)
-  --c-neutral: #8b98a6;
-  --c-info: #2f81f7;
-  --c-success: #3fb950;
-  --c-warning: #d29922;
-  --c-error: #f85149;
+  --c-neutral: #8898c0;
+  --c-info: #38bdf8;
+  --c-success: #f07048;
+  --c-warning: #f59e0b;
+  --c-error: #f87171;
 
   // Zones FC
-  --c-zone-low: #2f81f7;
-  --c-zone-in: #3fb950;
-  --c-zone-high: #f85149;
+  --c-zone-low: #38bdf8;
+  --c-zone-in: #f07048;
+  --c-zone-high: #e84040;
 
   --sp-1: 4px;
   --sp-2: 8px;
@@ -31,37 +30,38 @@
   --sp-5: 24px;
   --sp-6: 32px;
 
-  --radius: 12px;
-  --radius-sm: 8px;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-lg: 24px;
 
   // ── Typographie ────────────────────────────────────────────────────
-  // Open Sans pour le texte, Ubuntu (bold) réservé au logo wordmark.
   --font: 'Open Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-logo: 'Ubuntu', system-ui, sans-serif;
   --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 }
 
-// ── Thème clair (§13.5) ─────────────────────────────────────────────────
-// Activé via data-theme="light" sur <html>. Surcharge les tokens sombres.
-[data-theme='light'] {
-  --c-bg: #f6f8fa;
+// ── Thème clair ────────────────────────────────────────────────────────────
+// Scoping sur html uniquement : évite que les boutons .prefs__opt (qui portent
+// eux aussi data-theme="light/dark/auto") héritent accidentellement des tokens.
+html[data-theme='light'] {
+  --c-bg: #f5f2ec;
   --c-panel: #ffffff;
-  --c-panel-2: #eef1f4;
-  --c-border: #d0d7de;
-  --c-txt: #1f2328;
-  --c-muted: #636c76;
-  --c-accent: #2da44e;
-  --c-accent-2: #0969da;
-  --c-warn: #bf8700;
-  --c-err: #cf222e;
+  --c-panel-2: #ece8e0;
+  --c-border: #ddd8ce;
+  --c-txt: #1e1b18;
+  --c-muted: #6a6560;
+  --c-accent: #a83d20;
+  --c-accent-2: #0284c7;
+  --c-warn: #d97706;
+  --c-err: #dc2626;
 
-  --c-neutral: #636c76;
-  --c-info: #0969da;
-  --c-success: #2da44e;
-  --c-warning: #bf8700;
-  --c-error: #cf222e;
+  --c-neutral: #6a6560;
+  --c-info: #0284c7;
+  --c-success: #a83d20;
+  --c-warning: #d97706;
+  --c-error: #dc2626;
 
-  --c-zone-low: #0969da;
-  --c-zone-in: #2da44e;
-  --c-zone-high: #cf222e;
+  --c-zone-low: #0284c7;
+  --c-zone-in: #a83d20;
+  --c-zone-high: #dc2626;
 }

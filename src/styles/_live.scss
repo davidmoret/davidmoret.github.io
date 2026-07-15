@@ -59,14 +59,15 @@
     transform: scaleX(0);
     transform-origin: left;
     transition: transform 0.2s linear;
+    box-shadow: 0 0 10px color-mix(in srgb, var(--c-accent) 70%, transparent);
   }
 
   &__zone {
     text-align: center;
     font-weight: 600;
     font-size: 0.9rem;
-    padding: var(--sp-2);
-    border-radius: var(--radius-sm);
+    padding: var(--sp-2) var(--sp-4);
+    border-radius: 999px;
     color: #fff;
 
     &[data-state='low'] { background: var(--c-zone-low); }
@@ -166,7 +167,7 @@
     position: absolute;
     inset: 0;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(63, 185, 80, 0.15), transparent 70%);
+    background: radial-gradient(circle, color-mix(in srgb, var(--c-accent) 18%, transparent) 0%, transparent 70%);
     border: 2px solid var(--c-accent);
     opacity: 0.6;
     animation: breath 10s ease-in-out infinite;
@@ -188,7 +189,6 @@
     font-size: 0.85rem;
     color: var(--c-warn);
     background: var(--c-panel);
-    border: 1px solid var(--c-border);
     border-radius: var(--radius-sm);
     padding: var(--sp-2) var(--sp-3);
   }
@@ -198,7 +198,6 @@
     font-weight: 600;
     color: var(--c-txt);
     background: var(--c-panel-2);
-    border: 1px solid var(--c-border);
     border-radius: var(--radius);
     padding: var(--sp-4) var(--sp-6);
     cursor: pointer;
@@ -245,7 +244,6 @@
     font-size: 0.82rem;
     color: var(--c-muted);
     background: var(--c-panel);
-    border: 1px solid var(--c-border);
     border-radius: var(--radius-sm);
     padding: var(--sp-2) var(--sp-3);
     cursor: pointer;
@@ -254,7 +252,10 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 
-    &.is-active { color: var(--c-txt); border-color: var(--c-accent); }
+    &.is-active {
+      color: var(--c-txt);
+      background: color-mix(in srgb, var(--c-accent) 14%, var(--c-panel));
+    }
     &:disabled { opacity: 0.4; }
   }
 
@@ -280,6 +281,9 @@
   justify-content: center;
   text-align: center;
   padding: var(--sp-4) 0;
+  position: relative;
+  // Halo coloré centré derrière le chiffre principal
+  background: radial-gradient(ellipse at center 38%, color-mix(in srgb, var(--c-accent) 10%, transparent) 0%, transparent 65%);
 
   &[hidden] { display: none; }
 
@@ -289,6 +293,7 @@
     line-height: 1;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.02em;
+    color: var(--c-accent);
   }
 
   &__u { font-size: 0.28em; font-weight: 500; color: var(--c-muted); }
@@ -316,7 +321,6 @@
   align-items: center;
   gap: var(--sp-1);
   background: var(--c-panel);
-  border: 1px solid var(--c-border);
   border-radius: var(--radius);
   padding: var(--sp-3) var(--sp-2);
 
@@ -348,7 +352,6 @@
     font-weight: 700;
     color: var(--c-txt);
     background: var(--c-panel-2);
-    border: 1px solid var(--c-border);
     border-radius: var(--radius);
     padding: var(--sp-4) var(--sp-2);
     cursor: pointer;
@@ -358,11 +361,12 @@
 
     svg { width: 28px; height: 28px; }
 
-    &--main { background: var(--c-accent-2); border-color: transparent; color: #fff; }
+    &--main { background: var(--c-accent); color: var(--c-bg); border-radius: var(--radius-lg); }
 
     // Progression appui long → terminer
     &--main.is-finishing {
       background: var(--c-err);
+      color: #fff;
 
       &::after {
         content: '';
@@ -387,7 +391,6 @@
   gap: var(--sp-1);
   padding: var(--sp-1);
   background: var(--c-panel);
-  border: 1px solid var(--c-border);
   border-radius: var(--radius);
 
   &__btn {

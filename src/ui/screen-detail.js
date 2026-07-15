@@ -7,7 +7,7 @@ import { historyListHtml, bindHistoryList, historyForSession } from './history-l
 import { go } from './router.js';
 import { confirmDialog } from './modal.js';
 import { appBar } from './app-bar.js';
-import { SquarePen, Share2, Trash } from 'lucide';
+import { SquarePen, Share2, Trash, History } from 'lucide';
 import { iconHtml } from './icon.js';
 import { t } from './i18n/index.js';
 
@@ -46,7 +46,7 @@ export async function screenDetail({ slug }, outlet) {
       </div>
 
       ${past.length ? `
-        <div class="section-head"><h2 class="section-head__title">${t('detail.history')}</h2></div>
+        <div class="section-head"><h2 class="section-head__title">${iconHtml(History)} ${t('detail.history')}</h2></div>
         ${historyListHtml(past.slice(0, 5))}
         ${past.length > 5 ? `<button class="btn btn--ghost btn--block" data-all-history>${t('detail.seeAll')}</button>` : ''}
       ` : ''}

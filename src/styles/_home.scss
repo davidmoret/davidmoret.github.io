@@ -12,7 +12,7 @@
   padding: 0;
   cursor: pointer;
   touch-action: manipulation;
-  &:active .stats__item { border-color: var(--c-accent-2); }
+  &:active .stats__item { opacity: 0.8; }
 
   &__item {
     display: flex;
@@ -20,7 +20,6 @@
     align-items: center;
     gap: var(--sp-1);
     background: var(--c-panel);
-    border: 1px solid var(--c-border);
     border-radius: var(--radius);
     padding: var(--sp-3) var(--sp-2);
   }
@@ -60,7 +59,6 @@
   align-items: center;
   gap: var(--sp-3);
   background: var(--c-panel);
-  border: 1px solid var(--c-border);
   border-radius: var(--radius);
   padding: var(--sp-4);
   cursor: pointer;
@@ -100,7 +98,7 @@
     &.is-active svg { fill: currentColor; }
   }
 
-  &:active { border-color: var(--c-accent-2); }
+  &:active { opacity: 0.8; }
 }
 
 .app-version {

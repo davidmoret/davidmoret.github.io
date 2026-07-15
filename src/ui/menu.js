@@ -6,7 +6,7 @@ import { iconHtml } from './icon.js';
 
 const ENTRIES = [
   { path: '/profile', label: 'Profil', icon: User },
-  { path: '/sessions', label: 'Sessions', icon: Layers },
+  { path: '/sessions', label: 'Séances', icon: Layers },
   { path: '/data', label: 'Gestion des données', icon: Database },
   { path: '/prefs', label: 'Préférences', icon: Settings },
 ];
@@ -16,7 +16,7 @@ export function openMenu() {
   overlay.className = 'menu-overlay';
   overlay.innerHTML = `
     <nav class="menu-sheet" role="menu" aria-label="Menu">
-      <button class="menu-sheet__close" aria-label="Fermer">${iconHtml(X)}</button>
+      <button class="menu-sheet__close" data-menu-close aria-label="Fermer">${iconHtml(X)}</button>
       <ul class="menu-list">
         ${ENTRIES.map((e) => `
           <li>
@@ -40,7 +40,7 @@ export function openMenu() {
   }
 
   overlay.addEventListener('click', (e) => {
-    if (e.target === overlay || e.target.closest('[aria-label="Fermer"]')) close();
+    if (e.target === overlay || e.target.closest('[data-menu-close]')) close();
   });
   overlay.querySelectorAll('[data-go]').forEach((btn) => {
     btn.addEventListener('click', () => { close(); go(btn.dataset.go); });

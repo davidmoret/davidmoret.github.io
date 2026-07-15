@@ -4,8 +4,8 @@ import { getDefinitions, putDefinition, setFavorite } from '../data/store.js';
 import { parseSession } from '../data/session-parser.js';
 import { escapeHtml } from './format.js';
 import { notify } from './notify.js';
-import { go } from './router.js';
-import { Star, ChevronRight } from 'lucide';
+import { go, back } from './router.js';
+import { Star, ChevronRight, SquarePen, FileDown } from 'lucide';
 import { appBar } from './app-bar.js';
 import { iconHtml } from './icon.js';
 
@@ -13,27 +13,26 @@ export async function screenSessions(_params, outlet) {
   const defs = (await getDefinitions()).sort((a, b) => a.title.localeCompare(b.title, 'fr'));
 
   outlet.innerHTML = `
-    ${appBar({ title: 'Toutes les séances' })}
+    ${appBar({ title: `${defs.length} séance${defs.length > 1 ? 's' : ''}` })}
     <main class="screen">
-      <div class="section-head">
-        <h2 class="section-head__title">${defs.length} séance${defs.length > 1 ? 's' : ''}</h2>
-        <div class="section-head__actions">
-          <button class="btn btn--ghost" data-new>+ Nouvelle</button>
-          <label class="btn btn--ghost import-btn">
-            Importer
+      <ul class="card-list">
+        ${defs.length
+          ? defs.map(cardHtml).join('')
+          : '<li class="empty">Aucune séance. Crée-en avec <strong>Nouvelle</strong> ou importe un <code>.txt</code>.</li>'}
+      </ul>
+
+      <div class="detail-actions">
+        <div class="editor__row">
+          <button class="btn btn--block" data-new>${iconHtml(SquarePen)} Nouvelle</button>
+          <label class="btn btn--block import-btn">
+            ${iconHtml(FileDown)} Importer
             <input id="import" class="import-btn__input" type="file" accept=".txt,text/plain">
           </label>
         </div>
       </div>
-
-      <ul class="card-list">
-        ${defs.length
-          ? defs.map(cardHtml).join('')
-          : '<li class="empty">Aucune séance. Crée-en avec <strong>+ Nouvelle</strong> ou importe un <code>.txt</code>.</li>'}
-      </ul>
     </main>`;
 
-  outlet.querySelector('[data-back]').addEventListener('click', () => go('/'));
+  outlet.querySelector('[data-back]').addEventListener('click', () => back());
   outlet.querySelector('[data-new]').addEventListener('click', () => go('/edit'));
   outlet.querySelectorAll('[data-slug]').forEach((el) => {
     el.addEventListener('click', (e) => {

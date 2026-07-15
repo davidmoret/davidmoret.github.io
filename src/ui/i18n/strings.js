@@ -5,6 +5,7 @@
 export const STRINGS = {
   fr: {
     'app.name': 'rame rame',
+    'app.brand': 'RameRame',
 
     'common.cancel': 'Annuler',
     'common.confirm': 'Confirmer',
@@ -14,6 +15,7 @@ export const STRINGS = {
     'common.edit': 'Modifier',
     'common.close': 'Fermer',
     'common.back': 'Retour',
+    'common.home': 'Accueil',
     'common.menu': 'Menu',
     'common.optional': 'optionnel',
     'common.notFound.page': 'Page introuvable.',
@@ -32,7 +34,7 @@ export const STRINGS = {
     'home.favorites': 'Séances favorites',
     'home.favoritesEmpty': 'Aucune séance favorite. Ajoutes-en via <strong>Menu → Séances</strong>.',
     'home.recent': 'Dernières séances',
-    'home.seePast': 'Voir les séances passées',
+    'home.seePast': 'Voir toutes les séances effectuées',
     'home.backup.none': 'Aucune sauvegarde',
     'home.backup.daysAgo': 'Dernière sauvegarde il y a {n} j',
     'home.backup.remind': 'Pense à sauvegarder tes données.',
@@ -41,8 +43,9 @@ export const STRINGS = {
 
     'sessions.count': '{count} séance',
     'sessions.count_plural': '{count} séances',
+    'sessions.title': 'Séances disponibles',
     'sessions.empty': 'Aucune séance. Crée-en avec <strong>Nouvelle</strong> ou importe un <code>.txt</code>.',
-    'sessions.new': 'Nouvelle',
+    'sessions.new': 'Créer',
     'sessions.import': 'Importer',
     'sessions.imported': '« {title} » importée',
     'sessions.importFailed': 'Import échoué',
@@ -50,9 +53,9 @@ export const STRINGS = {
     'sessions.fav.remove': 'Retirer des favoris',
     'sessions.sections': '{n} sections',
 
-    'history.title': 'Séances passées',
-    'history.count': '{count} séance',
-    'history.count_plural': '{count} séances',
+    'history.title': 'Séances effectuées',
+    'history.count': '{count} séance effectuée',
+    'history.count_plural': '{count} séances effectuées',
     'history.empty': 'Aucune séance enregistrée.',
     'history.deleteConfirm': 'Supprimer cette séance de l\u2019historique ?',
 
@@ -202,6 +205,7 @@ export const STRINGS = {
 
   en: {
     'app.name': 'rame rame',
+    'app.brand': 'RameRame',
 
     'common.cancel': 'Cancel',
     'common.confirm': 'Confirm',
@@ -211,6 +215,7 @@ export const STRINGS = {
     'common.edit': 'Edit',
     'common.close': 'Close',
     'common.back': 'Back',
+    'common.home': 'Home',
     'common.menu': 'Menu',
     'common.optional': 'optional',
     'common.notFound.page': 'Page not found.',
@@ -229,7 +234,7 @@ export const STRINGS = {
     'home.favorites': 'Favorite sessions',
     'home.favoritesEmpty': 'No favorite session. Add one via <strong>Menu → Sessions</strong>.',
     'home.recent': 'Recent sessions',
-    'home.seePast': 'See past sessions',
+    'home.seePast': 'See all completed sessions',
     'home.backup.none': 'No backup',
     'home.backup.daysAgo': 'Last backup {n} d ago',
     'home.backup.remind': 'Remember to back up your data.',
@@ -238,8 +243,9 @@ export const STRINGS = {
 
     'sessions.count': '{count} session',
     'sessions.count_plural': '{count} sessions',
+    'sessions.title': 'Available sessions',
     'sessions.empty': 'No session. Create one with <strong>New</strong> or import a <code>.txt</code>.',
-    'sessions.new': 'New',
+    'sessions.new': 'Create',
     'sessions.import': 'Import',
     'sessions.imported': '« {title} » imported',
     'sessions.importFailed': 'Import failed',
@@ -247,9 +253,9 @@ export const STRINGS = {
     'sessions.fav.remove': 'Remove from favorites',
     'sessions.sections': '{n} sections',
 
-    'history.title': 'Past sessions',
-    'history.count': '{count} session',
-    'history.count_plural': '{count} sessions',
+    'history.title': 'Completed sessions',
+    'history.count': '{count} session completed',
+    'history.count_plural': '{count} sessions completed',
     'history.empty': 'No recorded session.',
     'history.deleteConfirm': 'Delete this session from history?',
 

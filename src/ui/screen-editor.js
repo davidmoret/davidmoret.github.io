@@ -97,9 +97,6 @@ function render(outlet, state) {
       </form>
     </main>`;
 
-  outlet.querySelector('[data-back]').addEventListener('click', () =>
-    state.slug ? go(`/session/${state.slug}`) : go('/sessions'));
-
   outlet.querySelector('[data-add-section]').addEventListener('click', () => {
     state.sections.push(emptySection(state.sections.length + 1));
     render(outlet, state);

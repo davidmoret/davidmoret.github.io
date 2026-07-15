@@ -7,6 +7,7 @@ import { historyListHtml, bindHistoryList } from './history-list.js';
 import { go } from './router.js';
 import { Star, History, ChevronRight } from 'lucide';
 import { appBar } from './app-bar.js';
+import { statsTilesHtml } from './stats-tiles.js';
 import { iconHtml } from './icon.js';
 import { getLastBackupDate, shouldRemindBackup, daysSinceBackup, exportBackup, askPassphrase } from '../data/backup.js';
 import { t } from './i18n/index.js';
@@ -27,14 +28,9 @@ export async function screenHome(_params, outlet) {
   const days = lastBackup ? Math.floor(daysSinceBackup(lastBackup)) : null;
 
   outlet.innerHTML = `
-    ${appBar({ title: t('app.name'), back: false })}
+    ${appBar({ title: t('app.brand'), brand: true, home: false })}
     <main class="screen">
-      <section class="stats" aria-label="${t('stats.sessions')}">
-        ${statItem(stats.count, t('stats.sessions'))}
-        ${statItem(fmtDist(stats.distance), t('stats.distance'))}
-        ${statItem(fmtDuration(stats.duration), t('stats.duration'))}
-        ${statItem(stats.hrAvg ?? '—', t('stats.hrAvg'))}
-      </section>
+      ${statsTilesHtml(stats, { interactive: true })}
 
       ${remindBackup ? '<div class="inline-notify" data-backup-notify></div>' : ''}
 
@@ -55,6 +51,8 @@ export async function screenHome(_params, outlet) {
       ` : ''}
     </main>`;
 
+  const statsHistoryBtn = outlet.querySelector('[data-stats-history]');
+  if (statsHistoryBtn) statsHistoryBtn.addEventListener('click', () => go('/history'));
   const allBtn = outlet.querySelector('[data-all-history]');
   if (allBtn) allBtn.addEventListener('click', () => go('/history'));
   outlet.querySelectorAll('[data-slug]').forEach((el) => {
@@ -93,13 +91,6 @@ export async function screenHome(_params, outlet) {
       },
     });
   }
-}
-
-function statItem(value, key) {
-  return `<div class="stats__item">
-    <span class="stats__val">${escapeHtml(value)}</span>
-    <span class="stats__key">${key}</span>
-  </div>`;
 }
 
 function cardHtml(s) {

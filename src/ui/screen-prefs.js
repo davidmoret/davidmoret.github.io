@@ -1,7 +1,7 @@
 // Écran Préférences : thème (dark / light / auto) + langue (fr / en).
 import { getThemePref, changeTheme } from './theme.js';
 import { getLang, changeLang } from './i18n/index.js';
-import { go, back } from './router.js';
+import { go } from './router.js';
 import { appBar } from './app-bar.js';
 import { t } from './i18n/index.js';
 
@@ -23,8 +23,8 @@ export async function screenPrefs(_params, outlet) {
   outlet.innerHTML = `
     ${appBar({ title: t('prefs.title') })}
     <main class="screen">
-      <div class="prefs">
-        <h2 class="section-head__title">${t('prefs.theme')}</h2>
+      <section class="prefs">
+        <h2 class="prefs__title">${t('prefs.theme')}</h2>
         <div class="prefs__options" data-theme-options>
           ${THEME_OPTIONS.map((o) => `
             <button class="prefs__opt ${o.value === currentTheme ? 'is-active' : ''}" data-theme="${o.value}">
@@ -32,10 +32,10 @@ export async function screenPrefs(_params, outlet) {
               <span class="prefs__opt-hint">${t(o.hintKey)}</span>
             </button>`).join('')}
         </div>
-      </div>
+      </section>
 
-      <div class="prefs">
-        <h2 class="section-head__title">${t('prefs.lang')}</h2>
+      <section class="prefs">
+        <h2 class="prefs__title">${t('prefs.lang')}</h2>
         <div class="prefs__options" data-lang-options>
           ${LANG_OPTIONS.map((o) => `
             <button class="prefs__opt ${o.value === currentLang ? 'is-active' : ''}" data-lang="${o.value}">
@@ -43,10 +43,10 @@ export async function screenPrefs(_params, outlet) {
               <span class="prefs__opt-hint">${o.hint}</span>
             </button>`).join('')}
         </div>
-      </div>
+      </section>
     </main>`;
 
-  outlet.querySelector('[data-back]').addEventListener('click', () => back());
+  // Bouton accueil géré globalement (data-home -> go('/')).
 
   outlet.querySelectorAll('[data-theme]').forEach((btn) => {
     btn.addEventListener('click', async () => {

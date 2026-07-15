@@ -16,7 +16,7 @@ export async function screenSummary({ id }, outlet) {
   const date = new Date(entry.id).toLocaleString(getLang(), { dateStyle: 'medium', timeStyle: 'short' });
 
   outlet.innerHTML = `
-    ${appBar({ title: entry.session_title, back: { attr: 'home', label: t('nav.home') } })}
+    ${appBar({ title: entry.session_title })}
     <main class="screen">
       <p class="lead">${escapeHtml(date)}</p>
 
@@ -47,7 +47,7 @@ export async function screenSummary({ id }, outlet) {
       </div>
     </main>`;
 
-  outlet.querySelector('[data-home]').addEventListener('click', () => go('/'));
+  // Bouton accueil géré globalement (data-home -> go('/')).
   outlet.querySelector('[data-delete]').addEventListener('click', async () => {
     if (!await confirmDialog(t('summary.deleteConfirm'), { confirmLabel: t('common.delete'), danger: true })) return;
     await deleteHistory(entry.id);

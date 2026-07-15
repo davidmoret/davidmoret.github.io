@@ -52,6 +52,9 @@
   margin-top: var(--sp-5);
 
   .btn--block { margin-top: 0; }
+
+  // Bloc de boutons en tete d'ecran (ex. sessions) : marge vers la liste.
+  .screen > &:first-child { margin-top: 0; margin-bottom: var(--sp-5); }
 }
 
 // ── Éditeur ──────────────────────────────────────────────────────────

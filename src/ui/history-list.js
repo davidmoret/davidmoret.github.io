@@ -29,6 +29,29 @@ export function historyListHtml(entries) {
   return `<ul class="history">${entries.map(historyItemHtml).join('')}</ul>`;
 }
 
+// Variante avec en-têtes de mois. `entries` doit être triée du plus récent au
+// plus ancien. En-tête "JANVIER" pour l'année courante, "JANVIER 2024" sinon.
+export function historyListGroupedHtml(entries) {
+  const lang = getLang();
+  const currentYear = new Date().getFullYear();
+  let html = '';
+  let lastKey = null;
+  for (const h of entries) {
+    const d = new Date(h.id);
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    if (key !== lastKey) {
+      lastKey = key;
+      const month = d.toLocaleDateString(lang, { month: 'long' });
+      const label = d.getFullYear() === currentYear
+        ? month.toUpperCase()
+        : `${month.toUpperCase()} ${d.getFullYear()}`;
+      html += `<li class="history__month" role="separator">${escapeHtml(label)}</li>`;
+    }
+    html += historyItemHtml(h);
+  }
+  return `<ul class="history">${html}</ul>`;
+}
+
 // Câble ouverture (clic sur l'item) + suppression (clic sur ✕) pour tous les
 // items présents dans `outlet`. `onChange` est rappelé après une suppression.
 export function bindHistoryList(outlet, onChange) {

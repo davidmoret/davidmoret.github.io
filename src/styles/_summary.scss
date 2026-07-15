@@ -114,6 +114,19 @@
   &__title { font-weight: 600; }
   &__meta { color: var(--c-muted); font-size: 0.82rem; font-variant-numeric: tabular-nums; }
 
+  &__month {
+    list-style: none;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--c-muted);
+    text-transform: uppercase;
+    padding: var(--sp-4) var(--sp-1) var(--sp-1);
+    margin-top: var(--sp-2);
+
+    &:first-child { margin-top: 0; }
+  }
+
   &__del {
     flex: 0 0 auto;
     background: none;

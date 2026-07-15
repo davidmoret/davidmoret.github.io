@@ -13,7 +13,17 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+// h1/h2/h3 héritent de Open Sans 700 par défaut ; le logo wordmark
+// (.brand) passe sur Ubuntu Bold.
 h1, h2, h3 { margin: 0; font-weight: 700; }
+
+// Logo wordmark "rame rame" — Ubuntu Bold, réservé au header d'accueil et
+// au sommet du menu. Letter-spacing négatif pour resserrer l'italique ronde.
+.brand {
+  font-family: var(--font-logo);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
 
 code {
   font-family: var(--mono);
@@ -30,6 +40,7 @@ code {
 }
 
 .app-bar {
+  position: relative;
   display: flex;
   align-items: baseline;
   gap: var(--sp-2);
@@ -43,12 +54,17 @@ code {
     gap: var(--sp-2);
     font-size: 1.4rem;
     flex: 1;
+    justify-content: center;
+    text-align: center;
 
     svg { width: 22px; height: 22px; }
+
+    // Logo wordmark aligné à gauche (header d'accueil).
+    &.brand { justify-content: flex-start; text-align: left; }
   }
   &__sub { color: var(--c-muted); font-size: 0.85rem; }
 
-  &__back {
+  &__home {
     display: flex;
     align-items: center;
     background: none;
@@ -169,7 +185,8 @@ code {
     display: flex;
     align-items: center;
     gap: var(--sp-2);
-    font-size: 1.05rem;
+    font-size: 1.1rem;
+    font-weight: 700;
 
     svg { width: 18px; height: 18px; color: var(--c-accent); }
   }
@@ -274,12 +291,21 @@ code {
     &:active { color: var(--c-txt); }
   }
 
+  // Logo wordmark centré en tête du menu.
+  &__brand {
+    padding: var(--sp-4) var(--sp-5) var(--sp-2);
+    text-align: center;
+    font-size: 1.5rem;
+    border-bottom: 1px solid var(--c-border);
+    margin-bottom: var(--sp-2);
+  }
+
   .app-version { margin-top: auto; padding: 0 var(--sp-5); }
 }
 
 .menu-list {
   list-style: none;
-  margin: var(--sp-4) 0 0;
+  margin: var(--sp-2) 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -317,7 +343,7 @@ code {
     flex: none;
     color: var(--c-muted);
 
-    svg { width: 20px; height: 20px; }
+    svg { width: 24px; height: 24px; }
   }
 
   &:active {
@@ -419,15 +445,12 @@ code {
 
   &__icon {
     flex: none;
-    display: grid;
-    place-items: center;
-    width: 40px;
-    height: 40px;
-    border-radius: var(--radius-sm);
-    background: #fff;
+    display: flex;
+    align-items: flex-start;
+    padding-top: 2px;
     color: var(--c);
 
-    svg { width: 22px; height: 22px; }
+    svg { width: 24px; height: 24px; }
   }
 
   &__body {
@@ -482,7 +505,6 @@ code {
     margin-top: var(--sp-5);
     box-shadow: none;
     animation: none;
-    align-items: center;
   }
 }
 
@@ -497,6 +519,19 @@ code {
 }
 
 // ── Préférences (thème) ─────────────────────────────────────────────────
+
+.prefs {
+  margin-bottom: var(--sp-5);
+
+  &__title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--c-muted);
+    margin-bottom: var(--sp-2);
+  }
+}
 
 .prefs__options {
   display: grid;

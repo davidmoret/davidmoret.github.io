@@ -3,6 +3,7 @@
 import { go } from './router.js';
 import { User, Layers, Database, Settings, ChevronRight, X } from 'lucide';
 import { iconHtml } from './icon.js';
+import { escapeHtml } from './format.js';
 import { t } from './i18n/index.js';
 
 const ENTRIES = [
@@ -18,6 +19,7 @@ export function openMenu() {
   overlay.innerHTML = `
     <nav class="menu-sheet" role="menu" aria-label="${t('common.menu')}">
       <button class="menu-sheet__close" data-menu-close aria-label="${t('common.close')}">${iconHtml(X)}</button>
+      <div class="menu-sheet__brand brand">${escapeHtml(t('app.brand'))}</div>
       <ul class="menu-list">
         ${ENTRIES.map((e) => `
           <li>

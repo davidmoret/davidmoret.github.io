@@ -1,7 +1,7 @@
 import './styles/main.scss';
 import { initTheme } from './ui/theme.js';
 import { initLang } from './ui/i18n/index.js';
-import { createRouter } from './ui/router.js';
+import { createRouter, go } from './ui/router.js';
 import { openMenu } from './ui/menu.js';
 import { screenHome } from './ui/screen-home.js';
 import { screenSessions } from './ui/screen-sessions.js';
@@ -30,8 +30,10 @@ async function seedSessions() {
 const outlet = document.getElementById('app');
 
 // Menu accessible depuis le header de tous les écrans (bouton ☰), sauf Live.
+// Bouton accueil des écrans de détail → retour à la racine.
 document.addEventListener('click', (e) => {
   if (e.target.closest('[data-menu]')) openMenu();
+  else if (e.target.closest('[data-home]')) go('/');
 });
 
 const router = createRouter([

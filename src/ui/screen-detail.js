@@ -7,6 +7,8 @@ import { historyListHtml, bindHistoryList, historyForSession } from './history-l
 import { go } from './router.js';
 import { confirmDialog } from './modal.js';
 import { appBar } from './app-bar.js';
+import { SquarePen, Share2, Trash } from 'lucide';
+import { iconHtml } from './icon.js';
 import { t } from './i18n/index.js';
 
 export async function screenDetail({ slug }, outlet) {
@@ -37,10 +39,10 @@ export async function screenDetail({ slug }, outlet) {
       <ol class="steps">${s.sections.map(stepHtml).join('')}</ol>
       <div class="detail-actions">
         <div class="editor__row">
-          <button class="btn btn--block" data-edit>${t('common.edit')}</button>
-          ${canShare ? `<button class="btn btn--block" data-share>${t('detail.share')}</button>` : ''}
+          <button class="btn btn--block" data-edit>${iconHtml(SquarePen)} ${t('common.edit')}</button>
+          ${canShare ? `<button class="btn btn--block" data-share>${iconHtml(Share2)} ${t('detail.share')}</button>` : ''}
         </div>
-        <button class="btn btn--ghost btn--block" data-delete>${t('detail.delete')}</button>
+        <button class="btn btn--ghost btn--block" data-delete>${iconHtml(Trash)} ${t('detail.delete')}</button>
       </div>
 
       ${past.length ? `
@@ -50,7 +52,7 @@ export async function screenDetail({ slug }, outlet) {
       ` : ''}
     </main>`;
 
-  outlet.querySelector('[data-back]').addEventListener('click', () => go('/'));
+  // Bouton accueil géré globalement (data-home -> go('/')).
   outlet.querySelector('[data-start]').addEventListener('click', () => go(`/live/${slug}`));
   outlet.querySelector('[data-edit]').addEventListener('click', () => go(`/edit/${slug}`));
   const shareBtn = outlet.querySelector('[data-share]');

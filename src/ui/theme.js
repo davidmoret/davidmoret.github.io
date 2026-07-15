@@ -1,50 +1,18 @@
 // Préférence de thème : 'dark' | 'light' | 'auto' (défaut).
-// Persistée dans IndexedDB store `meta` (clé 'theme').
+// Persistée dans le store `meta` (clé 'theme') via store.js (connexion unique).
 // 'auto' suit prefers-color-scheme (réactif au changement système).
 
-const DB_NAME = 'ram';
-const STORE = 'meta';
+import { getMeta, setMeta } from '../data/store.js';
+
 const META_KEY = 'theme';
 const VALID = ['dark', 'light', 'auto'];
 
-function openDb() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-async function readMeta(key) {
-  const db = await openDb();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readonly');
-    const req = tx.objectStore(STORE).get(key);
-    tx.oncomplete = () => resolve(req.result);
-    tx.onerror = () => reject(tx.error);
-  });
-}
-
-async function writeMeta(key, value) {
-  const db = await openDb();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readwrite');
-    tx.objectStore(STORE).put(value, key);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
-}
-
 export function getThemePref() {
-  return readMeta(META_KEY).then((v) => (VALID.includes(v) ? v : 'auto'));
+  return getMeta(META_KEY).then((v) => (VALID.includes(v) ? v : 'auto'));
 }
 
 export function setThemePref(pref) {
-  return writeMeta(META_KEY, pref);
+  return setMeta(META_KEY, pref);
 }
 
 // Résout 'auto' en dark/light selon le système.

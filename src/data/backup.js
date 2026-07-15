@@ -2,7 +2,7 @@
 // Chiffrement : AES-256-GCM, clé dérivée d'une passphrase via PBKDF2.
 // Export : showSaveFilePicker (desktop) → Web Share API (Android) → download fallback.
 
-import { openDb } from './store.js';
+import { openDb, getMeta, setMeta } from './store.js';
 
 const BACKUP_DAYS = 7;
 const PBKDF2_ITER = 600_000;
@@ -14,44 +14,16 @@ const META_IMPORT_KEY = 'lastImportDate';
 // ── Meta (lastBackupDate) ─────────────────────────────────────────────
 
 export async function getLastBackupDate() {
-  const db = await openDb();
-  return new Promise((resolve) => {
-    const tx = db.transaction('meta', 'readonly');
-    const req = tx.objectStore('meta').get(META_KEY);
-    tx.oncomplete = () => resolve(req.result ?? null);
-    tx.onerror = () => resolve(null);
-  });
+  return (await getMeta(META_KEY)) ?? null;
 }
 
-async function setLastBackupDate(date = new Date()) {
-  const db = await openDb();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('meta', 'readwrite');
-    tx.objectStore('meta').put(date.toISOString(), META_KEY);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
-}
+const setLastBackupDate = (date = new Date()) => setMeta(META_KEY, date.toISOString());
 
 export async function getLastImportDate() {
-  const db = await openDb();
-  return new Promise((resolve) => {
-    const tx = db.transaction('meta', 'readonly');
-    const req = tx.objectStore('meta').get(META_IMPORT_KEY);
-    tx.oncomplete = () => resolve(req.result ?? null);
-    tx.onerror = () => resolve(null);
-  });
+  return (await getMeta(META_IMPORT_KEY)) ?? null;
 }
 
-async function setLastImportDate(date = new Date()) {
-  const db = await openDb();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('meta', 'readwrite');
-    tx.objectStore('meta').put(date.toISOString(), META_IMPORT_KEY);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
-}
+const setLastImportDate = (date = new Date()) => setMeta(META_IMPORT_KEY, date.toISOString());
 
 export function daysSinceBackup(lastDate) {
   if (!lastDate) return Infinity;

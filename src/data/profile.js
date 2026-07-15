@@ -1,33 +1,8 @@
-// Profil utilisateur minimal (âge, FCmax, FCrepos) stocké dans IndexedDB.
+// Profil utilisateur minimal (âge, FCmax, FCrepos). Persistance déléguée à
+// store.js (connexion IndexedDB unique) ; ici, uniquement la logique métier.
 // Optionnel : s'il n'existe pas, les cibles dynamiques max-N restent disponibles.
 
-const DB_NAME = 'ram';
-const STORE = 'profile';
-
-function openDb() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-function run(mode, fn) {
-  return openDb().then((db) => new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, mode);
-    const os = tx.objectStore(STORE);
-    const req = fn(os);
-    tx.oncomplete = () => resolve(req ? req.result : undefined);
-    tx.onerror = () => reject(tx.error);
-  }));
-}
-
-export const getProfile = () => run('readonly', (os) => os.get('me')).then((v) => v || null);
-export const putProfile = (p) => run('readwrite', (os) => os.put(p, 'me'));
+export { getProfile, putProfile } from './store.js';
 
 // FCmax estimée : valeur saisie ou 220 − âge.
 export function hrMax(profile) {

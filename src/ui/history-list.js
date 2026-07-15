@@ -4,6 +4,7 @@ import { fmtDuration, fmtDist, escapeHtml } from './format.js';
 import { deleteHistory } from '../data/store.js';
 import { confirmDialog } from './modal.js';
 import { go } from './router.js';
+import { t, getLang } from './i18n/index.js';
 
 // Filtre l'historique d'une séance (par slug, avec repli titre pour les
 // anciennes entrées sans session_slug).
@@ -12,7 +13,7 @@ export function historyForSession(history, { slug, title }) {
 }
 
 export function historyItemHtml(h) {
-  const date = new Date(h.id).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+  const date = new Date(h.id).toLocaleDateString(getLang(), { day: '2-digit', month: 'short' });
   const meta = [fmtDist(h.distance_m), fmtDuration(h.duration_s), h.hr && h.hr.avg ? `${h.hr.avg} bpm` : null]
     .filter(Boolean).join(' · ');
   return `<li class="history__item" data-history="${escapeHtml(h.id)}" role="button" tabindex="0">
@@ -20,7 +21,7 @@ export function historyItemHtml(h) {
       <span class="history__title">${escapeHtml(h.session_title)}</span>
       <span class="history__meta">${escapeHtml(date)} — ${escapeHtml(meta)}</span>
     </div>
-    <button class="history__del" data-history-delete="${escapeHtml(h.id)}" aria-label="Supprimer">✕</button>
+    <button class="history__del" data-history-delete="${escapeHtml(h.id)}" aria-label="${t('common.delete')}">✕</button>
   </li>`;
 }
 
@@ -40,7 +41,7 @@ export function bindHistoryList(outlet, onChange) {
   outlet.querySelectorAll('[data-history-delete]').forEach((btn) => {
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
-      if (!await confirmDialog('Supprimer cette séance de l’historique ?', { confirmLabel: 'Supprimer', danger: true })) return;
+      if (!await confirmDialog(t('history.deleteConfirm'), { confirmLabel: t('common.delete'), danger: true })) return;
       await deleteHistory(btn.dataset.historyDelete);
       if (onChange) onChange();
     });

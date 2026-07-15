@@ -20,6 +20,7 @@ import { icon, iconHtml } from './icon.js';
 import { DISPLAY_MODES } from '../data/display-modes.js';
 import { confirmDialog } from './modal.js';
 import { go } from './router.js';
+import { t } from './i18n/index.js';
 
 const BLE_OK = typeof navigator !== 'undefined' && !!navigator.bluetooth;
 
@@ -39,35 +40,35 @@ const LAYOUT = {
 
 // Métadonnées visuelles des modes (§13.4) : couleur + icône Lucide + label.
 const MODE_META = {
-  cardio: { color: "var(--c-err)", icon: Heart, label: "Cardio" },
-  perf:   { color: "var(--c-accent-2)", icon: Gauge, label: "Perf" },
-  cad:    { color: "var(--c-warn)", icon: Activity, label: "Cadence" },
-  zen:    { color: "var(--c-accent)", icon: Leaf, label: "Zen" },
+  cardio: { color: "var(--c-err)", icon: Heart, labelKey: 'mode.cardio' },
+  perf:   { color: "var(--c-accent-2)", icon: Gauge, labelKey: 'mode.perf' },
+  cad:    { color: "var(--c-warn)", icon: Activity, labelKey: 'mode.cad' },
+  zen:    { color: "var(--c-accent)", icon: Leaf, labelKey: 'mode.zen' },
 };
 // Chrono de section : décompte si la section se clôt au temps (cible durée),
 // sinon temps écoulé.
 function sectionClock(s) {
-  const t = s.section && s.section.target;
-  if (t && t.type === 'duration') {
-    return fmtDuration(Math.max(0, t.value - s.sectionMs / 1000));
+  const tt = s.section && s.section.target;
+  if (tt && tt.type === 'duration') {
+    return fmtDuration(Math.max(0, tt.value - s.sectionMs / 1000));
   }
   return fmtDuration(s.sectionMs / 1000);
 }
 
 const METRIC = {
-  pace:  (m) => ({ k: '/500m', v: fmtPace(m.pace) }),
-  hr:    (m) => ({ k: 'fc', v: m.hr ?? '—', u: 'bpm' }),
-  spm:   (m) => ({ k: 'cadence', v: m.spm ?? '—', u: 'spm' }),
-  power: (m) => ({ k: 'puissance', v: m.power ?? '—', u: 'W' }),
-  dist:  (m) => ({ k: 'distance', v: m.dist != null ? fmtDist(m.dist) : '—' }),
-  sdist: (m, s) => ({ k: 'dist. section', v: fmtDist(s.sectionDist || 0) }),
-  stime: (m, s) => ({ k: 'chrono section', v: sectionClock(s) }),
+  pace:  (m) => ({ k: t('metric.pace'), v: fmtPace(m.pace) }),
+  hr:    (m) => ({ k: t('metric.hr'), v: m.hr ?? '—', u: 'bpm' }),
+  spm:   (m) => ({ k: t('metric.spm'), v: m.spm ?? '—', u: 'spm' }),
+  power: (m) => ({ k: t('metric.power'), v: m.power ?? '—', u: 'W' }),
+  dist:  (m) => ({ k: t('metric.dist'), v: m.dist != null ? fmtDist(m.dist) : '—' }),
+  sdist: (m, s) => ({ k: t('metric.sectionDist'), v: fmtDist(s.sectionDist || 0) }),
+  stime: (m, s) => ({ k: t('metric.sectionTime'), v: sectionClock(s) }),
 };
 
 export async function screenLive({ slug }, outlet) {
   const session = await getDefinition(slug);
   if (!session) {
-    outlet.innerHTML = '<main class="screen"><p class="empty">Séance introuvable.</p></main>';
+    outlet.innerHTML = `<main class="screen"><p class="empty">${t('common.notFound.session')}</p></main>`;
     return {};
   }
 
@@ -185,8 +186,8 @@ export async function screenLive({ slug }, outlet) {
     els.global.textContent = fmtDuration(s.globalMs / 1000);
     els.counter.textContent = `${Math.min(s.index + 1, s.total)}/${s.total}`;
     els.sectionName.textContent = s.section ? s.section.name : '—';
-    els.next.textContent = s.status === 'finished' ? 'terminé'
-      : s.next ? `→ ${s.next.name}` : 'dernière section';
+    els.next.textContent = s.status === 'finished' ? t('live.done')
+      : s.next ? t('live.next', { name: s.next.name }) : t('live.lastSection');
     els.progress.style.transform = `scaleX(${s.progress || 0})`;
 
     if (isHrSection()) {
@@ -212,19 +213,19 @@ export async function screenLive({ slug }, outlet) {
 
     if (longPressActive) return;
 
-    if (s.status === 'idle') els.pause.textContent = 'Démarrer';
-    else if (s.status === 'running') els.pause.textContent = 'Pause';
-    else if (s.status === 'paused') els.pause.textContent = 'Reprendre';
-    else els.pause.textContent = 'Terminé';
+    if (s.status === 'idle') els.pause.textContent = t('live.start');
+    else if (s.status === 'running') els.pause.textContent = t('live.pause');
+    else if (s.status === 'paused') els.pause.textContent = t('live.resume');
+    else els.pause.textContent = t('live.finish');
     els.pause.disabled = s.status === 'finished';
   }
 
   // Décompte sonore quand la section se clôt au temps : bip court à −3/−2/−1 s,
   // countdownArmed → bip long au passage de section (géré dans engine.subscribe).
   function maybeCountdownBeep(s) {
-    const t = s.section && s.section.target;
-    if (engine.status !== 'running' || !t || t.type !== 'duration') { lastCountdownSec = null; return; }
-    const sec = Math.ceil(t.value - s.sectionMs / 1000);
+    const tt = s.section && s.section.target;
+    if (engine.status !== 'running' || !tt || tt.type !== 'duration') { lastCountdownSec = null; return; }
+    const sec = Math.ceil(tt.value - s.sectionMs / 1000);
     if (sec >= 1 && sec <= 3 && sec !== lastCountdownSec) {
       lastCountdownSec = sec;
       countdownArmed = true;
@@ -239,7 +240,7 @@ export async function screenLive({ slug }, outlet) {
     els.zone.hidden = false;
     const st = hr < lo ? 'low' : hr > hi ? 'high' : 'in';
     els.zone.dataset.state = st;
-    els.zone.textContent = st === 'in' ? `zone ${lo}–${hi} ✓` : st === 'low' ? `sous ${lo}` : `au-dessus ${hi}`;
+    els.zone.textContent = st === 'in' ? t('live.zone.in', { lo, hi }) : st === 'low' ? t('live.zone.low', { lo }) : t('live.zone.high', { hi });
   }
 
   function setMode(next) {
@@ -281,7 +282,7 @@ export async function screenLive({ slug }, outlet) {
     if (engine.status === 'idle' || engine.status === 'finished') return;
     longPressActive = true;
     longPressStart = Date.now();
-    els.pause.textContent = 'Terminer';
+    els.pause.textContent = t('live.finishing');
     els.pause.classList.add('is-finishing');
     longPressTimer = setTimeout(() => {
       longPressActive = false;
@@ -339,7 +340,7 @@ export async function screenLive({ slug }, outlet) {
 
   els.quit.addEventListener('click', async () => {
     if (sessionStarted && engine.status !== 'finished') {
-      if (!await confirmDialog('Quitter la séance ? Les données seront sauvegardées.', { confirmLabel: 'Quitter' })) return;
+      if (!await confirmDialog(t('live.quitConfirm'), { confirmLabel: t('live.quit') })) return;
       finishAndSave();
     } else {
       go(`/session/${slug}`);
@@ -373,8 +374,8 @@ export async function screenLive({ slug }, outlet) {
       dot.dataset.state = state;
       btn.classList.toggle('is-active', state === 'connected');
       if (state === 'connected') { btn.textContent = prettyDeviceName(detail) || label; setDemo(false); }
-      else if (state === 'reconnecting') btn.textContent = `repli… (${detail})`;
-      else if (state === 'failed') btn.textContent = `${label} ✕`;
+      else if (state === 'reconnecting') btn.textContent = t('live.reconnecting', { detail });
+      else if (state === 'failed') btn.textContent = t('live.failed', { label });
       else if (state === 'disconnected') btn.textContent = label;
       btn.prepend(dot);
     });
@@ -390,8 +391,8 @@ export async function screenLive({ slug }, outlet) {
   }
 
   if (BLE_OK) {
-    bindSource(rower, els.connectRower, els.dotRower, 'Rameur');
-    bindSource(heart, els.connectHr, els.dotHr, 'FC');
+    bindSource(rower, els.connectRower, els.dotRower, t('live.rower'));
+    bindSource(heart, els.connectHr, els.dotHr, t('live.hr'));
     // Reconnexion auto au matériel déjà appairé (sans sélecteur). Sort du démo
     // dès qu'une source répond ; le bouton manuel reste le filet.
     rower.autoConnect().catch(() => {});
@@ -457,7 +458,7 @@ function template() {
   return `
   <div class="live" data-mode="perf">
     <div class="live__bar">
-      <button class="live__quit" data-quit aria-label="Quitter">${iconHtml(ArrowLeft)}</button>
+      <button class="live__quit" data-quit aria-label="${t('live.quit')}">${iconHtml(ArrowLeft)}</button>
       <span class="live__global" data-global>0:00</span>
       <span class="live__counter" data-counter></span>
     </div>
@@ -470,9 +471,9 @@ function template() {
     <div class="live__zone" data-zone hidden></div>
 
     <div class="sources">
-      <button class="sources__btn" data-connect-rower><span class="sources__dot" data-dot-rower></span>Rameur</button>
-      <button class="sources__btn" data-connect-hr><span class="sources__dot" data-dot-hr></span>FC</button>
-      <button class="sources__btn" data-demo>Démo</button>
+      <button class="sources__btn" data-connect-rower><span class="sources__dot" data-dot-rower></span>${t('live.rower')}</button>
+      <button class="sources__btn" data-connect-hr><span class="sources__dot" data-dot-hr></span>${t('live.hr')}</button>
+      <button class="sources__btn" data-demo>${t('live.demo')}</button>
     </div>
 
     <div class="hero" data-hero>
@@ -493,18 +494,18 @@ function template() {
         <div class="recovery__breath-ring"></div>
         <div class="recovery__breath-text"></div>
       </div>
-      <div class="recovery__no-hr" data-recovery-no-hr hidden>Connecte ta ceinture FC pour l'auto-fin</div>
-      <button class="recovery__skip" data-recovery-skip>Terminer</button>
+      <div class="recovery__no-hr" data-recovery-no-hr hidden>${t('live.recovery.connect')}</div>
+      <button class="recovery__skip" data-recovery-skip>${t('live.recovery.skip')}</button>
     </div>
 
     <div class="controls">
-      <button class="controls__btn" data-prev aria-label="Section précédente">${iconHtml(ChevronLeft)}</button>
-      <button class="controls__btn controls__btn--main" data-pause>Démarrer</button>
-      <button class="controls__btn" data-next aria-label="Section suivante">${iconHtml(ChevronRight)}</button>
+      <button class="controls__btn" data-prev aria-label="${t('live.prevSection')}">${iconHtml(ChevronLeft)}</button>
+      <button class="controls__btn controls__btn--main" data-pause>${t('live.start')}</button>
+      <button class="controls__btn" data-next aria-label="${t('live.nextSection')}">${iconHtml(ChevronRight)}</button>
     </div>
 
     <div class="modes">
-      ${MODES.map((m) => `<button class="modes__btn" data-mode="${m}" data-color="${MODE_META[m].color}"><span class="modes__icon" data-mode-icon="${m}"></span><span class="modes__label">${MODE_META[m].label}</span></button>`).join('')}
+      ${MODES.map((m) => `<button class="modes__btn" data-mode="${m}" data-color="${MODE_META[m].color}"><span class="modes__icon" data-mode-icon="${m}"></span><span class="modes__label">${t(MODE_META[m].labelKey)}</span></button>`).join('')}
     </div>
   </div>`;
 }

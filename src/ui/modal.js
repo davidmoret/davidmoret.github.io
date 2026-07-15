@@ -1,11 +1,14 @@
 // Modales maison (overlay `.modal`), en remplacement des confirm()/prompt()
 // natifs qui cassent le rendu PWA. Cohérent avec askPassphrase() de backup.js.
 import { escapeHtml } from './format.js';
+import { t } from './i18n/index.js';
 
 // Confirmation → Promise<boolean>. `danger` colore le bouton de validation en
 // rouge (actions destructives : suppression).
 export function confirmDialog(message, opts = {}) {
-  const { confirmLabel = 'Confirmer', cancelLabel = 'Annuler', danger = false } = opts;
+  const { confirmLabel, cancelLabel, danger = false } = opts;
+  const cLabel = confirmLabel || t('common.confirm');
+  const cxLabel = cancelLabel || t('common.cancel');
   return new Promise((resolve) => {
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
@@ -13,8 +16,8 @@ export function confirmDialog(message, opts = {}) {
       <div class="modal" role="dialog" aria-modal="true">
         <p class="modal__label">${escapeHtml(message)}</p>
         <div class="modal__actions">
-          <button class="btn" data-cancel>${escapeHtml(cancelLabel)}</button>
-          <button class="btn ${danger ? 'btn--danger' : 'btn--primary'}" data-ok>${escapeHtml(confirmLabel)}</button>
+          <button class="btn" data-cancel>${escapeHtml(cxLabel)}</button>
+          <button class="btn ${danger ? 'btn--danger' : 'btn--primary'}" data-ok>${escapeHtml(cLabel)}</button>
         </div>
       </div>`;
     document.body.appendChild(overlay);

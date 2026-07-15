@@ -9,6 +9,7 @@ import { Star, History, ChevronRight } from 'lucide';
 import { appBar } from './app-bar.js';
 import { iconHtml } from './icon.js';
 import { getLastBackupDate, shouldRemindBackup, daysSinceBackup, exportBackup, askPassphrase } from '../data/backup.js';
+import { t } from './i18n/index.js';
 
 // L'utilisateur a fermé le rappel de sauvegarde : on ne le réaffiche pas
 // tant que le backup reste stale. Reset au prochain reload de l'app.
@@ -26,31 +27,31 @@ export async function screenHome(_params, outlet) {
   const days = lastBackup ? Math.floor(daysSinceBackup(lastBackup)) : null;
 
   outlet.innerHTML = `
-    ${appBar({ title: 'rame rame', back: false })}
+    ${appBar({ title: t('app.name'), back: false })}
     <main class="screen">
-      <section class="stats" aria-label="Statistiques globales">
-        ${statItem(stats.count, 'séances')}
-        ${statItem(fmtDist(stats.distance), 'distance')}
-        ${statItem(fmtDuration(stats.duration), 'temps')}
-        ${statItem(stats.hrAvg ?? '—', 'fc moy')}
+      <section class="stats" aria-label="${t('stats.sessions')}">
+        ${statItem(stats.count, t('stats.sessions'))}
+        ${statItem(fmtDist(stats.distance), t('stats.distance'))}
+        ${statItem(fmtDuration(stats.duration), t('stats.duration'))}
+        ${statItem(stats.hrAvg ?? '—', t('stats.hrAvg'))}
       </section>
 
       ${remindBackup ? '<div class="inline-notify" data-backup-notify></div>' : ''}
 
       <div class="section-head">
-        <h2 class="section-head__title">${iconHtml(Star)} Séances favorites</h2>
+        <h2 class="section-head__title">${iconHtml(Star)} ${t('home.favorites')}</h2>
       </div>
 
       <ul class="card-list">
         ${favorites.length
           ? favorites.map(cardHtml).join('')
-          : '<li class="empty">Aucune séance favorite. Ajoutes-en via <strong>Menu → Sessions</strong>.</li>'}
+          : `<li class="empty">${t('home.favoritesEmpty')}</li>`}
       </ul>
 
       ${recent.length ? `
-        <div class="section-head"><h2 class="section-head__title">${iconHtml(History)} Dernières séances</h2></div>
+        <div class="section-head"><h2 class="section-head__title">${iconHtml(History)} ${t('home.recent')}</h2></div>
         ${historyListHtml(recent)}
-        ${sorted.length > 5 ? '<button class="btn btn--ghost btn--block" data-all-history>Voir les séances passées</button>' : ''}
+        ${sorted.length > 5 ? `<button class="btn btn--ghost btn--block" data-all-history>${t('home.seePast')}</button>` : ''}
       ` : ''}
     </main>`;
 
@@ -68,14 +69,14 @@ export async function screenHome(_params, outlet) {
   const notifyHost = outlet.querySelector('[data-backup-notify]');
   if (notifyHost) {
     const label = days === null
-      ? 'Aucune sauvegarde'
-      : `Dernière sauvegarde il y a ${days} j`;
-    notify('warning', label, 'Pense à sauvegarder tes données.', {
+      ? t('home.backup.none')
+      : t('home.backup.daysAgo', { n: days });
+    notify('warning', label, t('home.backup.remind'), {
       persistent: true,
       container: notifyHost,
       onClose: () => { backupDismissed = true; },
       action: {
-        label: 'Sauvegarder maintenant',
+        label: t('home.backup.now'),
         onClick: async () => {
           const pass = await askPassphrase();
           if (!pass) return;
@@ -83,10 +84,10 @@ export async function screenHome(_params, outlet) {
             await exportBackup(pass);
             backupDismissed = false;
             screenHome(_params, outlet);
-            notify('success', 'Sauvegarde exportée');
+            notify('success', t('home.backup.exported'));
           } catch (e) {
             console.error('Backup échoué :', e);
-            notify('error', 'Backup échoué', 'Réessaie.');
+            notify('error', t('backup.exportFailed'), t('backup.retry'));
           }
         },
       },
@@ -102,7 +103,7 @@ function statItem(value, key) {
 }
 
 function cardHtml(s) {
-  const meta = [s.type, `${s.sections.length} sections`].filter(Boolean).join(' · ');
+  const meta = [s.type, t('sessions.sections', { n: s.sections.length })].filter(Boolean).join(' · ');
   return `<li class="card" data-slug="${escapeHtml(s.slug)}" role="button" tabindex="0">
     <div class="card__body">
       <h3 class="card__title">${escapeHtml(s.title)}</h3>

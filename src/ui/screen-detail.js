@@ -7,11 +7,12 @@ import { historyListHtml, bindHistoryList, historyForSession } from './history-l
 import { go } from './router.js';
 import { confirmDialog } from './modal.js';
 import { appBar } from './app-bar.js';
+import { t } from './i18n/index.js';
 
 export async function screenDetail({ slug }, outlet) {
   const [s, history] = await Promise.all([getDefinition(slug), getHistory()]);
   if (!s) {
-    outlet.innerHTML = '<main class="screen"><p class="empty">Séance introuvable.</p></main>';
+    outlet.innerHTML = `<main class="screen"><p class="empty">${t('common.notFound.session')}</p></main>`;
     return;
   }
 
@@ -24,28 +25,28 @@ export async function screenDetail({ slug }, outlet) {
   const canShare = canShareFiles();
 
   outlet.innerHTML = `
-    ${appBar({ title: s.title, extra: '<button class="app-bar__start btn btn--primary" data-start>Démarrer</button>' })}
+    ${appBar({ title: s.title, extra: `<button class="app-bar__start btn btn--primary" data-start>${t('detail.start')}</button>` })}
     <main class="screen">
       ${s.description ? `<p class="lead">${escapeHtml(s.description)}</p>` : ''}
       <div class="chips">
         ${totalDur ? `<span class="chip">≈ ${fmtDuration(totalDur)}</span>` : ''}
         ${totalDist ? `<span class="chip">${fmtDist(totalDist)}</span>` : ''}
-        <span class="chip">mode ${escapeHtml(s.display)}</span>
-        ${s.targetHrZone ? `<span class="chip">FC ${s.targetHrZone[0]}–${s.targetHrZone[1]}</span>` : ''}
+        <span class="chip">${escapeHtml(t('detail.mode', { mode: s.display }))}</span>
+        ${s.targetHrZone ? `<span class="chip">${escapeHtml(t('detail.targetHr', { lo: s.targetHrZone[0], hi: s.targetHrZone[1] }))}</span>` : ''}
       </div>
       <ol class="steps">${s.sections.map(stepHtml).join('')}</ol>
       <div class="detail-actions">
         <div class="editor__row">
-          <button class="btn btn--block" data-edit>Modifier</button>
-          ${canShare ? '<button class="btn btn--block" data-share>Partager</button>' : ''}
+          <button class="btn btn--block" data-edit>${t('common.edit')}</button>
+          ${canShare ? `<button class="btn btn--block" data-share>${t('detail.share')}</button>` : ''}
         </div>
-        <button class="btn btn--ghost btn--block" data-delete>Supprimer cette séance</button>
+        <button class="btn btn--ghost btn--block" data-delete>${t('detail.delete')}</button>
       </div>
 
       ${past.length ? `
-        <div class="section-head"><h2 class="section-head__title">Historique de cette séance</h2></div>
+        <div class="section-head"><h2 class="section-head__title">${t('detail.history')}</h2></div>
         ${historyListHtml(past.slice(0, 5))}
-        ${past.length > 5 ? '<button class="btn btn--ghost btn--block" data-all-history>Voir tout l\'historique</button>' : ''}
+        ${past.length > 5 ? `<button class="btn btn--ghost btn--block" data-all-history>${t('detail.seeAll')}</button>` : ''}
       ` : ''}
     </main>`;
 
@@ -59,7 +60,7 @@ export async function screenDetail({ slug }, outlet) {
     });
   }
   outlet.querySelector('[data-delete]').addEventListener('click', async () => {
-    if (!await confirmDialog('Supprimer cette séance ?', { confirmLabel: 'Supprimer', danger: true })) return;
+    if (!await confirmDialog(t('detail.deleteConfirm'), { confirmLabel: t('common.delete'), danger: true })) return;
     await deleteDefinition(slug);
     go('/');
   });
@@ -72,9 +73,9 @@ function stepHtml(x) {
   const target = x.target.type === 'duration' ? fmtDuration(x.target.value)
     : x.target.type === 'distance' ? fmtDist(x.target.value)
     : x.target.type === 'hr' ? fmtHrTarget(x.target)
-    : 'manuelle';
-  const extra = x.cadence ? `cadence ${x.cadence}` : '';
-  const zone = x.targetHrZone ? `FC ${x.targetHrZone[0]}–${x.targetHrZone[1]}` : '';
+    : t('target.manual');
+  const extra = x.cadence ? `${x.cadence}` : '';
+  const zone = x.targetHrZone ? t('detail.targetHr', { lo: x.targetHrZone[0], hi: x.targetHrZone[1] }) : '';
   const extras = [extra, zone].filter(Boolean).join(' · ');
   return `<li class="step">
     <div class="step__main">
@@ -86,10 +87,10 @@ function stepHtml(x) {
   </li>`;
 }
 
-function fmtHrTarget(t) {
-  if (t.mode === 'dynamic') return `FC cible max−${t.delta}${t.cap ? ` (max ${fmtDuration(t.cap)})` : ''}`;
-  if (t.mode === 'fixed') return `FC cible ${t.value} bpm${t.cap ? ` (max ${fmtDuration(t.cap)})` : ''}`;
-  if (t.mode === 'pct') return `FC cible ${t.pct}%${t.cap ? ` (max ${fmtDuration(t.cap)})` : ''}`;
-  if (t.mode === 'karvonen') return `FC cible Karvonen ${t.pct}%${t.cap ? ` (max ${fmtDuration(t.cap)})` : ''}`;
+function fmtHrTarget(t2) {
+  if (t2.mode === 'dynamic') return `FC cible max−${t2.delta}${t2.cap ? ` (max ${fmtDuration(t2.cap)})` : ''}`;
+  if (t2.mode === 'fixed') return `FC cible ${t2.value} bpm${t2.cap ? ` (max ${fmtDuration(t2.cap)})` : ''}`;
+  if (t2.mode === 'pct') return `FC cible ${t2.pct}%${t2.cap ? ` (max ${fmtDuration(t2.cap)})` : ''}`;
+  if (t2.mode === 'karvonen') return `FC cible Karvonen ${t2.pct}%${t2.cap ? ` (max ${fmtDuration(t2.cap)})` : ''}`;
   return 'FC cible';
 }

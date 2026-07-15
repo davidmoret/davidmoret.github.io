@@ -1,5 +1,6 @@
 import './styles/main.scss';
 import { initTheme } from './ui/theme.js';
+import { initLang } from './ui/i18n/index.js';
 import { createRouter } from './ui/router.js';
 import { openMenu } from './ui/menu.js';
 import { screenHome } from './ui/screen-home.js';
@@ -49,8 +50,8 @@ const router = createRouter([
 ], outlet);
 
 initTheme().catch((e) => console.error('Init thème échoué :', e));
-seedSessions()
-  .catch((e) => console.error('Seed séances échoué :', e))
+initLang()
+  .catch((e) => console.error('Init langue échoué :', e))
   .finally(() => {
     if (!location.hash) location.hash = '/';
     router.start();

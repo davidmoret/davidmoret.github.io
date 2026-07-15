@@ -7,19 +7,20 @@ import { DISPLAY_MODES } from '../data/display-modes.js';
 import { escapeHtml } from './format.js';
 import { go } from './router.js';
 import { appBar } from './app-bar.js';
+import { t } from './i18n/index.js';
 
 const TARGET_TYPES = [
-  { value: 'duration', label: 'Durée' },
-  { value: 'distance', label: 'Distance' },
-  { value: 'hr', label: 'FC cible' },
-  { value: 'manual', label: 'Manuel' },
+  { value: 'duration', labelKey: 'target.duration' },
+  { value: 'distance', labelKey: 'target.distance' },
+  { value: 'hr', labelKey: 'target.hr' },
+  { value: 'manual', labelKey: 'target.manual' },
 ];
 
 const HR_MODES = [
-  { value: 'dynamic', label: 'max − N' },
-  { value: 'fixed', label: 'Fixe (bpm)' },
-  { value: 'pct', label: '% FCmax' },
-  { value: 'karvonen', label: 'Karvonen %' },
+  { value: 'dynamic', labelKey: 'hrMode.dynamic' },
+  { value: 'fixed', labelKey: 'hrMode.fixed' },
+  { value: 'pct', labelKey: 'hrMode.pct' },
+  { value: 'karvonen', labelKey: 'hrMode.karvonen' },
 ];
 
 export async function screenEditor({ slug }, outlet) {
@@ -42,23 +43,23 @@ export async function screenEditor({ slug }, outlet) {
 
 function render(outlet, state) {
   outlet.innerHTML = `
-    ${appBar({ title: `${state.slug ? 'Modifier' : 'Nouvelle'} séance` })}
+    ${appBar({ title: state.slug ? t('editor.title.edit') : t('editor.title.new') })}
     <main class="screen">
       <form class="editor" data-form>
         <label class="profile-field">
-          <span class="profile-field__label">Titre</span>
+          <span class="profile-field__label">${t('editor.field.title')}</span>
           <input class="profile-field__input" type="text" name="title" required
             value="${escapeHtml(state.title)}" placeholder="ex. Pyramide 500m">
         </label>
 
         <div class="editor__row">
           <label class="profile-field editor__field">
-            <span class="profile-field__label">Type</span>
+            <span class="profile-field__label">${t('editor.field.type')}</span>
             <input class="profile-field__input" type="text" name="type"
               value="${escapeHtml(state.type)}" placeholder="ex. intervalles">
           </label>
           <label class="profile-field editor__field">
-            <span class="profile-field__label">Affichage</span>
+            <span class="profile-field__label">${t('editor.field.display')}</span>
             <select class="profile-field__input" name="display">
               ${DISPLAY_MODES.map(m => `<option value="${m.value}"${m.value === state.display ? ' selected' : ''}>${m.label}</option>`).join('')}
             </select>
@@ -66,13 +67,13 @@ function render(outlet, state) {
         </div>
 
         <label class="profile-field">
-          <span class="profile-field__label">Description</span>
+          <span class="profile-field__label">${t('editor.field.description')}</span>
           <input class="profile-field__input" type="text" name="description"
-            value="${escapeHtml(state.description)}" placeholder="optionnel">
+            value="${escapeHtml(state.description)}" placeholder="${t('common.optional')}">
         </label>
 
         <div class="profile-field">
-          <span class="profile-field__label">Zone FC cible <small>(fallback si pas défini par section)</small></span>
+          <span class="profile-field__label">${t('editor.field.hrZone')} <small>${t('editor.field.hrZoneHint')}</small></span>
           <div class="editor__range">
             <input class="profile-field__input" type="number" name="hrZoneLow" inputmode="numeric"
               value="${state.hrZoneLow}" placeholder="min">
@@ -83,16 +84,16 @@ function render(outlet, state) {
         </div>
 
         <div class="section-head">
-          <h2 class="section-head__title">Sections</h2>
+          <h2 class="section-head__title">${t('editor.sections')}</h2>
         </div>
 
         <div class="editor__sections" data-sections>
           ${state.sections.map((s, i) => sectionHtml(s, i)).join('')}
         </div>
 
-        <button type="button" class="btn btn--ghost btn--block" data-add-section>+ Ajouter une section</button>
+        <button type="button" class="btn btn--ghost btn--block" data-add-section>${t('editor.addSection')}</button>
 
-        <button type="submit" class="btn btn--primary btn--block">Enregistrer</button>
+        <button type="submit" class="btn btn--primary btn--block">${t('common.save')}</button>
       </form>
     </main>`;
 
@@ -136,7 +137,7 @@ function render(outlet, state) {
 
 function emptySection(n) {
   return {
-    name: `Section ${n}`,
+    name: t('editor.section.default', { n }),
     targetType: 'duration',
     durationMin: '',
     durationSec: '',
@@ -204,14 +205,14 @@ function sectionHtml(s, idx) {
   return `<div class="editor__section" data-section="${idx}">
     <div class="editor__section-head">
       <input class="profile-field__input" type="text" name="secName_${idx}"
-        value="${escapeHtml(s.name)}" placeholder="Nom de la section">
-      <button type="button" class="btn btn--ghost editor__remove" data-remove-section="${idx}" aria-label="Supprimer">✕</button>
+        value="${escapeHtml(s.name)}" placeholder="${t('editor.field.sectionName')}">
+      <button type="button" class="btn btn--ghost editor__remove" data-remove-section="${idx}" aria-label="${t('common.delete')}">✕</button>
     </div>
 
     <label class="profile-field editor__field">
-      <span class="profile-field__label">Cible</span>
+      <span class="profile-field__label">${t('editor.field.target')}</span>
       <select class="profile-field__input" name="secTarget_${idx}" data-target-type="${idx}">
-        ${TARGET_TYPES.map(t => `<option value="${t.value}"${t.value === s.targetType ? ' selected' : ''}>${t.label}</option>`).join('')}
+        ${TARGET_TYPES.map(tt => `<option value="${tt.value}"${tt.value === s.targetType ? ' selected' : ''}>${t(tt.labelKey)}</option>`).join('')}
       </select>
     </label>
 
@@ -220,7 +221,7 @@ function sectionHtml(s, idx) {
     ${s.targetType === 'hr' ? hrFieldsHtml(s, idx) : ''}
 
     <div class="profile-field">
-      <span class="profile-field__label">Zone FC cible <small>(optionnel)</small></span>
+      <span class="profile-field__label">${t('editor.field.hrZone')} <small>${t('editor.field.hrZoneOptional')}</small></span>
       <div class="editor__range">
         <input class="profile-field__input" type="number" name="secHrZoneLow_${idx}" inputmode="numeric"
           value="${escapeHtml(s.hrZoneLow)}" placeholder="min">
@@ -232,14 +233,14 @@ function sectionHtml(s, idx) {
 
     <div class="editor__row">
       <label class="profile-field editor__field">
-        <span class="profile-field__label">Cadence</span>
+        <span class="profile-field__label">${t('editor.field.cadence')}</span>
         <input class="profile-field__input" type="text" name="secCadence_${idx}"
           value="${escapeHtml(s.cadence)}" placeholder="ex. 24-26 spm">
       </label>
       <label class="profile-field editor__field">
-        <span class="profile-field__label">Note</span>
+        <span class="profile-field__label">${t('editor.field.note')}</span>
         <input class="profile-field__input" type="text" name="secNote_${idx}"
-          value="${escapeHtml(s.note)}" placeholder="optionnel">
+          value="${escapeHtml(s.note)}" placeholder="${t('common.optional')}">
       </label>
     </div>
   </div>`;
@@ -248,12 +249,12 @@ function sectionHtml(s, idx) {
 function durationFieldsHtml(s, idx) {
   return `<div class="editor__row">
     <label class="profile-field editor__field">
-      <span class="profile-field__label">Minutes</span>
+      <span class="profile-field__label">${t('editor.field.minutes')}</span>
       <input class="profile-field__input" type="number" name="secDurMin_${idx}" inputmode="numeric"
         value="${escapeHtml(s.durationMin)}" placeholder="0" min="0">
     </label>
     <label class="profile-field editor__field">
-      <span class="profile-field__label">Secondes</span>
+      <span class="profile-field__label">${t('editor.field.seconds')}</span>
       <input class="profile-field__input" type="number" name="secDurSec_${idx}" inputmode="numeric"
         value="${escapeHtml(s.durationSec)}" placeholder="0" min="0" max="59">
     </label>
@@ -263,12 +264,12 @@ function durationFieldsHtml(s, idx) {
 function distanceFieldsHtml(s, idx) {
   return `<div class="editor__row">
     <label class="profile-field editor__field">
-      <span class="profile-field__label">Distance</span>
+      <span class="profile-field__label">${t('editor.field.distance')}</span>
       <input class="profile-field__input" type="number" name="secDist_${idx}" inputmode="numeric"
         value="${escapeHtml(s.distance)}" placeholder="500" min="0" step="any">
     </label>
     <label class="profile-field editor__field">
-      <span class="profile-field__label">Unité</span>
+      <span class="profile-field__label">${t('editor.field.unit')}</span>
       <select class="profile-field__input" name="secDistUnit_${idx}">
         <option value="m"${s.distanceUnit === 'm' ? ' selected' : ''}>m</option>
         <option value="km"${s.distanceUnit === 'km' ? ' selected' : ''}>km</option>
@@ -301,21 +302,21 @@ function hrFieldsHtml(s, idx) {
 
   return `<div class="editor__row">
     <label class="profile-field editor__field">
-      <span class="profile-field__label">Mode FC</span>
+      <span class="profile-field__label">${t('editor.field.hrMode')}</span>
       <select class="profile-field__input" name="secHrMode_${idx}" data-hr-mode="${idx}">
-        ${HR_MODES.map(m => `<option value="${m.value}"${m.value === s.hrMode ? ' selected' : ''}>${m.label}</option>`).join('')}
+        ${HR_MODES.map(m => `<option value="${m.value}"${m.value === s.hrMode ? ' selected' : ''}>${t(m.labelKey)}</option>`).join('')}
       </select>
     </label>
     ${hrValueField}
   </div>
   <div class="editor__row">
     <label class="profile-field editor__field">
-      <span class="profile-field__label">Plafond min</span>
+      <span class="profile-field__label">${t('editor.field.capMin')}</span>
       <input class="profile-field__input" type="number" name="secDurMin_${idx}" inputmode="numeric"
-        value="${escapeHtml(s.durationMin)}" placeholder="optionnel" min="0">
+        value="${escapeHtml(s.durationMin)}" placeholder="${t('common.optional')}" min="0">
     </label>
     <label class="profile-field editor__field">
-      <span class="profile-field__label">Plafond sec</span>
+      <span class="profile-field__label">${t('editor.field.capSec')}</span>
       <input class="profile-field__input" type="number" name="secDurSec_${idx}" inputmode="numeric"
         value="${escapeHtml(s.durationSec)}" placeholder="0" min="0" max="59">
     </label>
@@ -325,7 +326,7 @@ function hrFieldsHtml(s, idx) {
 // ── Form → Session object ─────────────────────────────────────────────
 
 function formToSession(fd, state) {
-  const title = fd.get('title')?.trim() || 'Séance sans titre';
+  const title = fd.get('title')?.trim() || t('editor.untitled');
   const slug = state.slug || slugify(title);
 
   const hrZoneLow = fd.get('hrZoneLow');
@@ -335,7 +336,7 @@ function formToSession(fd, state) {
     : null;
 
   const sections = state.sections.map((_, i) => {
-    const name = fd.get(`secName_${i}`)?.trim() || `Section ${i + 1}`;
+    const name = fd.get(`secName_${i}`)?.trim() || t('editor.section.default', { n: i + 1 });
     const targetType = fd.get(`secTarget_${i}`);
     const cadence = fd.get(`secCadence_${i}`)?.trim() || null;
     const note = fd.get(`secNote_${i}`)?.trim() || null;

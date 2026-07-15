@@ -3,6 +3,7 @@
 // Export : showSaveFilePicker (desktop) → Web Share API (Android) → download fallback.
 
 import { openDb, getMeta, setMeta } from './store.js';
+import { t } from '../ui/i18n/index.js';
 
 const BACKUP_DAYS = 7;
 const PBKDF2_ITER = 600_000;
@@ -168,17 +169,18 @@ export async function importBackup(file, passphrase) {
 // Remplace prompt() pour préserver la chaîne d'activation utilisateur
 // (nécessaire pour showSaveFilePicker et navigator.share).
 
-export function askPassphrase(label = 'Choisis une passphrase pour chiffrer le backup') {
+export function askPassphrase(label) {
+  const question = label || t('data.passphrase.encrypt');
   return new Promise((resolve) => {
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
     overlay.innerHTML = `
       <div class="modal">
-        <p class="modal__label">${label}</p>
-        <input class="modal__input" type="password" autocomplete="off" placeholder="Passphrase">
+        <p class="modal__label">${question}</p>
+        <input class="modal__input" type="password" autocomplete="off" placeholder="${t('data.passphrase.placeholder')}">
         <div class="modal__actions">
-          <button class="btn" data-cancel>Annuler</button>
-          <button class="btn btn--primary" data-ok>OK</button>
+          <button class="btn" data-cancel>${t('common.cancel')}</button>
+          <button class="btn btn--primary" data-ok>${t('common.ok')}</button>
         </div>
       </div>`;
     document.body.appendChild(overlay);

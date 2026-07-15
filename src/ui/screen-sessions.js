@@ -8,24 +8,25 @@ import { go, back } from './router.js';
 import { Star, ChevronRight, SquarePen, FileDown } from 'lucide';
 import { appBar } from './app-bar.js';
 import { iconHtml } from './icon.js';
+import { t } from './i18n/index.js';
 
 export async function screenSessions(_params, outlet) {
   const defs = (await getDefinitions()).sort((a, b) => a.title.localeCompare(b.title, 'fr'));
 
   outlet.innerHTML = `
-    ${appBar({ title: `${defs.length} séance${defs.length > 1 ? 's' : ''}` })}
+    ${appBar({ title: t('sessions.count', { count: defs.length }) })}
     <main class="screen">
       <ul class="card-list">
         ${defs.length
           ? defs.map(cardHtml).join('')
-          : '<li class="empty">Aucune séance. Crée-en avec <strong>Nouvelle</strong> ou importe un <code>.txt</code>.</li>'}
+          : `<li class="empty">${t('sessions.empty')}</li>`}
       </ul>
 
       <div class="detail-actions">
         <div class="editor__row">
-          <button class="btn btn--block" data-new>${iconHtml(SquarePen)} Nouvelle</button>
+          <button class="btn btn--block" data-new>${iconHtml(SquarePen)} ${t('sessions.new')}</button>
           <label class="btn btn--block import-btn">
-            ${iconHtml(FileDown)} Importer
+            ${iconHtml(FileDown)} ${t('sessions.import')}
             <input id="import" class="import-btn__input" type="file" accept=".txt,text/plain">
           </label>
         </div>
@@ -58,12 +59,12 @@ export async function screenSessions(_params, outlet) {
       try {
         const session = parseSession(reader.result);
         putDefinition(session).then(() => {
-          notify('success', `« ${session.title} » importée`);
+          notify('success', t('sessions.imported', { title: session.title }));
           go(`/session/${session.slug}`);
         });
       } catch (e) {
         console.error('Import échoué :', e);
-        notify('error', 'Import échoué', e.message);
+        notify('error', t('sessions.importFailed'), e.message);
       }
     };
     reader.readAsText(file);
@@ -71,11 +72,11 @@ export async function screenSessions(_params, outlet) {
 }
 
 function cardHtml(s) {
-  const meta = [s.type, `${s.sections.length} sections`].filter(Boolean).join(' · ');
+  const meta = [s.type, t('sessions.sections', { n: s.sections.length })].filter(Boolean).join(' · ');
   const fav = !!s.favorite;
   return `<li class="card" data-slug="${escapeHtml(s.slug)}" role="button" tabindex="0">
     <button class="card__fav${fav ? ' is-active' : ''}" data-fav="${escapeHtml(s.slug)}"
-      aria-pressed="${fav}" aria-label="${fav ? 'Retirer des favoris' : 'Ajouter aux favoris'}">${iconHtml(Star)}</button>
+      aria-pressed="${fav}" aria-label="${fav ? t('sessions.fav.remove') : t('sessions.fav.add')}">${iconHtml(Star)}</button>
     <div class="card__body">
       <h3 class="card__title">${escapeHtml(s.title)}</h3>
       <p class="card__meta">${escapeHtml(meta)}</p>

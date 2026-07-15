@@ -5,35 +5,36 @@ import { fmtDuration, fmtDist, escapeHtml } from './format.js';
 import { go } from './router.js';
 import { confirmDialog } from './modal.js';
 import { appBar } from './app-bar.js';
+import { t, getLang } from './i18n/index.js';
 
 export async function screenSummary({ id }, outlet) {
   const entry = await getHistoryEntry(id);
   if (!entry) {
-    outlet.innerHTML = '<main class="screen"><p class="empty">Séance introuvable.</p></main>';
+    outlet.innerHTML = `<main class="screen"><p class="empty">${t('common.notFound.session')}</p></main>`;
     return;
   }
-  const date = new Date(entry.id).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' });
+  const date = new Date(entry.id).toLocaleString(getLang(), { dateStyle: 'medium', timeStyle: 'short' });
 
   outlet.innerHTML = `
-    ${appBar({ title: entry.session_title, back: { attr: 'home', label: 'Accueil' } })}
+    ${appBar({ title: entry.session_title, back: { attr: 'home', label: t('nav.home') } })}
     <main class="screen">
       <p class="lead">${escapeHtml(date)}</p>
 
       <section class="summary-grid">
-        ${stat(fmtDuration(entry.duration_s), 'durée')}
-        ${stat(fmtDist(entry.distance_m), 'distance')}
-        ${stat(entry.pace_avg_500m ?? '—', 'allure /500m')}
-        ${stat(entry.spm_avg ?? '—', 'cadence moy')}
-        ${stat(entry.hr.avg ?? '—', 'fc moy')}
-        ${stat(entry.hr.max ?? '—', 'fc max')}
+        ${stat(fmtDuration(entry.duration_s), t('summary.duration'))}
+        ${stat(fmtDist(entry.distance_m), t('summary.distance'))}
+        ${stat(entry.pace_avg_500m ?? '—', t('summary.pace'))}
+        ${stat(entry.spm_avg ?? '—', t('summary.spm'))}
+        ${stat(entry.hr.avg ?? '—', t('summary.hrAvg'))}
+        ${stat(entry.hr.max ?? '—', t('summary.hrMax'))}
       </section>
 
       ${hrrBlock(entry.hrr)}
 
-      ${sparkBlock('Fréquence cardiaque', entry.samples, 'hr', 'var(--c-err)')}
-      ${sparkBlock('Allure /500m', entry.samples, 'pace', 'var(--c-accent-2)', true)}
+      ${sparkBlock(t('summary.spark.hr'), entry.samples, 'hr', 'var(--c-err)')}
+      ${sparkBlock(t('summary.spark.pace'), entry.samples, 'pace', 'var(--c-accent-2)', true)}
 
-      <div class="section-head"><h2 class="section-head__title">Sections</h2></div>
+      <div class="section-head"><h2 class="section-head__title">${t('summary.sections')}</h2></div>
       <ul class="recap">
         ${entry.sections.map((s) => `<li class="recap__item">
           <span class="recap__name">${escapeHtml(s.name)}</span>
@@ -42,13 +43,13 @@ export async function screenSummary({ id }, outlet) {
       </ul>
 
       <div class="summary-actions">
-        <button class="btn btn--ghost btn--block" data-delete>Supprimer</button>
+        <button class="btn btn--ghost btn--block" data-delete>${t('summary.delete')}</button>
       </div>
     </main>`;
 
   outlet.querySelector('[data-home]').addEventListener('click', () => go('/'));
   outlet.querySelector('[data-delete]').addEventListener('click', async () => {
-    if (!await confirmDialog("Supprimer cette séance de l\u2019historique ?", { confirmLabel: 'Supprimer', danger: true })) return;
+    if (!await confirmDialog(t('summary.deleteConfirm'), { confirmLabel: t('common.delete'), danger: true })) return;
     await deleteHistory(entry.id);
     go('/');
   });
@@ -69,19 +70,19 @@ function hrrBlock(hrr) {
   const quality120 = hrrQuality(hrr.hrr120);
   return `
     <section class="hrr">
-      <div class="hrr__title">Récupération cardiaque</div>
+      <div class="hrr__title">${t('summary.hrr.title')}</div>
       <div class="hrr__grid">
         <div class="hrr__item">
           <span class="hrr__val">${hrr60}</span>
-          <span class="hrr__key">HRR 1 min${quality60 ? ` · ${quality60}` : ''}</span>
+          <span class="hrr__key">${t('summary.hrr.1min')}${quality60 ? ` · ${quality60}` : ''}</span>
         </div>
         <div class="hrr__item">
           <span class="hrr__val">${hrr120}</span>
-          <span class="hrr__key">HRR 2 min${quality120 ? ` · ${quality120}` : ''}</span>
+          <span class="hrr__key">${t('summary.hrr.2min')}${quality120 ? ` · ${quality120}` : ''}</span>
         </div>
         <div class="hrr__item">
           <span class="hrr__val">${hrr.hrStart ?? '—'} bpm</span>
-          <span class="hrr__key">FC au début récup</span>
+          <span class="hrr__key">${t('summary.hrr.start')}</span>
         </div>
       </div>
     </section>`;
@@ -90,10 +91,10 @@ function hrrBlock(hrr) {
 // Interprétation médicale simplifiée du HRR
 function hrrQuality(val) {
   if (val == null) return '';
-  if (val >= 40) return 'excellent';
-  if (val >= 25) return 'bon';
-  if (val >= 12) return 'moyen';
-  return 'faible';
+  if (val >= 40) return t('quality.excellent');
+  if (val >= 25) return t('quality.good');
+  if (val >= 12) return t('quality.average');
+  return t('quality.poor');
 }
 
 function sparkBlock(title, samples, key, color, invert = false) {

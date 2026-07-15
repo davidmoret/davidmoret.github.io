@@ -3,26 +3,27 @@
 import { go } from './router.js';
 import { User, Layers, Database, Settings, ChevronRight, X } from 'lucide';
 import { iconHtml } from './icon.js';
+import { t } from './i18n/index.js';
 
 const ENTRIES = [
-  { path: '/profile', label: 'Profil', icon: User },
-  { path: '/sessions', label: 'Séances', icon: Layers },
-  { path: '/data', label: 'Gestion des données', icon: Database },
-  { path: '/prefs', label: 'Préférences', icon: Settings },
+  { path: '/profile', labelKey: 'menu.profile', icon: User },
+  { path: '/sessions', labelKey: 'menu.sessions', icon: Layers },
+  { path: '/data', labelKey: 'menu.data', icon: Database },
+  { path: '/prefs', labelKey: 'menu.prefs', icon: Settings },
 ];
 
 export function openMenu() {
   const overlay = document.createElement('div');
   overlay.className = 'menu-overlay';
   overlay.innerHTML = `
-    <nav class="menu-sheet" role="menu" aria-label="Menu">
-      <button class="menu-sheet__close" data-menu-close aria-label="Fermer">${iconHtml(X)}</button>
+    <nav class="menu-sheet" role="menu" aria-label="${t('common.menu')}">
+      <button class="menu-sheet__close" data-menu-close aria-label="${t('common.close')}">${iconHtml(X)}</button>
       <ul class="menu-list">
         ${ENTRIES.map((e) => `
           <li>
             <button class="menu-item" data-go="${e.path}" role="menuitem">
               <span class="menu-item__icon">${iconHtml(e.icon)}</span>
-              <span class="menu-item__label">${e.label}</span>
+              <span class="menu-item__label">${t(e.labelKey)}</span>
               <span class="menu-item__go" aria-hidden="true">${iconHtml(ChevronRight)}</span>
             </button>
           </li>`).join('')}

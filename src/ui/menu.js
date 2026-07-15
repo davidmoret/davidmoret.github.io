@@ -19,7 +19,9 @@ export function openMenu() {
   overlay.innerHTML = `
     <nav class="menu-sheet" role="menu" aria-label="${t('common.menu')}">
       <button class="menu-sheet__close" data-menu-close aria-label="${t('common.close')}">${iconHtml(X)}</button>
-      <div class="menu-sheet__brand brand">${escapeHtml(t('app.brand'))}</div>
+      <div class="menu-sheet__brand">
+        <img src="/ramerame-icon.svg" alt="${escapeHtml(t('app.brand'))}" class="menu-sheet__logo">
+      </div>
       <ul class="menu-list">
         ${ENTRIES.map((e) => `
           <li>

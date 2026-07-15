@@ -91,7 +91,7 @@ code {
     padding: var(--sp-2);
     cursor: pointer;
 
-    svg { width: 22px; height: 22px; }
+    svg { width: 24px; height: 24px; }
     &:active { color: var(--c-txt); }
   }
 
@@ -113,23 +113,21 @@ code {
   font-weight: 600;
   color: var(--c-txt);
   background: var(--c-panel-2);
-  border: 1px solid var(--c-border);
+  border: none;
   border-radius: var(--radius-sm);
   padding: var(--sp-3) var(--sp-4);
   cursor: pointer;
   touch-action: manipulation;
 
   &--primary {
-    background: var(--c-accent-2);
-    border-color: transparent;
-    color: #fff;
+    background: var(--c-accent);
+    color: var(--c-bg);
   }
 
   &--ghost { background: none; }
 
   &--danger {
     background: var(--c-err);
-    border-color: transparent;
     color: #fff;
   }
 
@@ -165,7 +163,6 @@ code {
   font-size: 0.8rem;
   color: var(--c-muted);
   background: var(--c-panel-2);
-  border: 1px solid var(--c-border);
   border-radius: 999px;
   padding: var(--sp-1) var(--sp-3);
 }
@@ -297,13 +294,17 @@ code {
     &:active { color: var(--c-txt); }
   }
 
-  // Logo wordmark centré en tête du menu.
+  // Logo centré en tête du menu.
   &__brand {
-    padding: var(--sp-4) var(--sp-5) var(--sp-2);
-    text-align: center;
-    font-size: 1.5rem;
-    border-bottom: 1px solid var(--c-border);
-    margin-bottom: var(--sp-2);
+    padding: var(--sp-5) var(--sp-5) var(--sp-3);
+    display: flex;
+    justify-content: center;
+  }
+
+  &__logo {
+    width: 96px;
+    height: 96px;
+    border-radius: var(--radius);
   }
 
   .app-version { margin-top: auto; padding: 0 var(--sp-5); }
@@ -311,10 +312,16 @@ code {
 
 .menu-list {
   list-style: none;
-  margin: var(--sp-2) 0 0;
-  padding: 0;
+  margin: var(--sp-4) 0 0;
+  padding: 0 var(--sp-4);
   display: flex;
   flex-direction: column;
+
+  // Grouped card effect : arrondi premier/dernier, séparateur entre items.
+  li:first-child .menu-item { border-radius: var(--radius) var(--radius) 0 0; }
+  li:last-child  .menu-item { border-radius: 0 0 var(--radius) var(--radius); }
+  li:only-child  .menu-item { border-radius: var(--radius); }
+  li:not(:last-child) .menu-item { box-shadow: inset 0 -1px 0 var(--c-border); }
 }
 
 .menu-item {
@@ -322,9 +329,10 @@ code {
   align-items: center;
   gap: var(--sp-4);
   width: 100%;
-  padding: var(--sp-4) var(--sp-5);
-  background: none;
+  padding: var(--sp-4) var(--sp-4);
+  background: var(--c-panel-2);
   border: 0;
+  border-radius: 0;
   color: var(--c-txt);
   font-size: 1.05rem;
   font-weight: 600;
@@ -353,7 +361,7 @@ code {
   }
 
   &:active {
-    background: var(--c-panel-2);
+    opacity: 0.75;
   }
 }
 
@@ -372,45 +380,47 @@ code {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   z-index: 100;
-  padding: var(--sp-4);
 }
 
 .modal {
-  background: var(--c-panel);
-  border: 1px solid var(--c-border);
-  border-radius: var(--radius);
-  padding: var(--sp-5);
   width: 100%;
-  max-width: 360px;
+  height: 100%;
+  background: var(--c-panel);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-5);
+  padding: var(--sp-6);
 
   &__label {
-    margin: 0 0 var(--sp-4);
-    font-size: 0.95rem;
+    margin: 0;
+    font-size: 1.15rem;
     font-weight: 600;
+    text-align: center;
+    max-width: 320px;
   }
 
   &__input {
     width: 100%;
+    max-width: 320px;
     background: var(--c-bg);
     border: 1px solid var(--c-border);
     border-radius: var(--radius-sm);
     color: var(--c-txt);
     font-size: 1.1rem;
     padding: var(--sp-3);
-    margin-bottom: var(--sp-4);
 
     &:focus { outline: none; border-color: var(--c-accent-2); }
   }
 
   &__actions {
     display: flex;
-    gap: var(--sp-2);
-    justify-content: flex-end;
+    gap: var(--sp-3);
+    justify-content: center;
+
+    .btn { min-width: 120px; }
   }
 }
 
@@ -437,9 +447,8 @@ code {
   gap: var(--sp-3);
   padding: var(--sp-3);
   border-radius: var(--radius);
-  background: color-mix(in srgb, var(--c) 14%, var(--c-panel));
-  border: 1px solid color-mix(in srgb, var(--c) 34%, var(--c-border));
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  background: color-mix(in srgb, var(--c) 20%, var(--c-panel));
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
   animation: notif-in 0.22s ease-out;
 
   &[data-leaving] { animation: notif-out 0.25s ease-in forwards; }
@@ -448,6 +457,13 @@ code {
   &--success { --c: var(--c-success); }
   &--warning { --c: var(--c-warning); }
   &--error   { --c: var(--c-error); }
+
+  // Le bouton d'action doit contraster avec le fond teinté de la notif
+  // quelle que soit sa couleur sémantique → inversion text/panel.
+  .btn--primary {
+    background: var(--c-txt);
+    color: var(--c-panel);
+  }
 
   &__icon {
     flex: none;
@@ -552,14 +568,16 @@ code {
   align-items: center;
   padding: var(--sp-4) var(--sp-2);
   background: var(--c-panel);
-  border: 1px solid var(--c-border);
+  border: 2px solid transparent;
   border-radius: var(--radius);
+  color: var(--c-txt);
   cursor: pointer;
   touch-action: manipulation;
 
   &.is-active {
     border-color: var(--c-accent-2);
     background: color-mix(in srgb, var(--c-accent-2) 12%, var(--c-panel));
+    color: var(--c-accent-2);
   }
 
   &-label { font-weight: 600; font-size: 1rem; }

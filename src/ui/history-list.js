@@ -34,7 +34,9 @@ export function historyListHtml(entries) {
 export function historyListGroupedHtml(entries) {
   const lang = getLang();
   const currentYear = new Date().getFullYear();
-  let html = '';
+
+  // Regroupe les entrées par mois pour produire groupes + bandeaux séparés
+  const groups = [];
   let lastKey = null;
   for (const h of entries) {
     const d = new Date(h.id);
@@ -45,11 +47,17 @@ export function historyListGroupedHtml(entries) {
       const label = d.getFullYear() === currentYear
         ? month.toUpperCase()
         : `${month.toUpperCase()} ${d.getFullYear()}`;
-      html += `<li class="history__month" role="separator">${escapeHtml(label)}</li>`;
+      groups.push({ label, items: [] });
     }
-    html += historyItemHtml(h);
+    groups[groups.length - 1].items.push(h);
   }
-  return `<ul class="history">${html}</ul>`;
+
+  const groupsHtml = groups.map(({ label, items }) => `
+    <div class="history__month-band">${escapeHtml(label)}</div>
+    <ul class="history">${items.map(historyItemHtml).join('')}</ul>
+  `).join('');
+
+  return `<div class="history-grouped">${groupsHtml}</div>`;
 }
 
 // Câble ouverture (clic sur l'item) + suppression (clic sur ✕) pour tous les

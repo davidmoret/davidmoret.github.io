@@ -308,7 +308,6 @@
 
   &--1 { grid-template-columns: 1fr; }
   &--3 { grid-template-columns: repeat(3, 1fr); }
-  &--6 { grid-template-columns: repeat(3, 1fr); }
 }
 
 .tile {
@@ -336,9 +335,6 @@
 
   &__u { font-size: 0.55em; font-weight: 400; color: var(--c-muted); }
 }
-
-// Mode complet : la grille de 6 tuiles occupe la place, pas de héro géant.
-.live[data-mode='complet'] .tiles { flex: 1; align-content: center; }
 
 .controls {
   display: grid;

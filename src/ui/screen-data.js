@@ -1,8 +1,9 @@
 // Écran Gestion des données : sauvegarde (export chiffré) et restauration (import) du backup global.
 import { exportBackup, importBackup, askPassphrase, getLastBackupDate, getLastImportDate } from '../data/backup.js';
 import { notify, setFlash } from './notify.js';
-import { go, back } from './router.js';
-import { FileDown, ArchiveRestore, ArrowLeft, Menu } from 'lucide';
+import { go } from './router.js';
+import { FileDown, ArchiveRestore } from 'lucide';
+import { appBar } from './app-bar.js';
 import { iconHtml } from './icon.js';
 
 function fmtBackupDate(iso) {
@@ -15,11 +16,7 @@ export async function screenData(_params, outlet) {
   const [lastBackup, lastImport] = await Promise.all([getLastBackupDate(), getLastImportDate()]);
 
   outlet.innerHTML = `
-    <header class="app-bar app-bar--detail">
-      <button class="app-bar__back" data-back aria-label="Retour">${iconHtml(ArrowLeft)}</button>
-      <h1 class="app-bar__title">Gestion des données</h1>
-      <button class="app-bar__action" data-menu aria-label="Menu">${iconHtml(Menu)}</button>
-    </header>
+    ${appBar({ title: 'Gestion des données' })}
     <main class="screen">
       <div class="section-head">
         <h2 class="section-head__title">Sauvegarde</h2>
@@ -35,7 +32,7 @@ export async function screenData(_params, outlet) {
       ${lastImport ? `<p class="lead">Dernière restauration le ${fmtBackupDate(lastImport)}.</p>` : ''}
     </main>`;
 
-  outlet.querySelector('[data-back]').addEventListener('click', () => back());
+  outlet.querySelector('[data-back]').addEventListener('click', () => go('/'));
 
   // Export backup
   outlet.querySelector('[data-export-backup]').addEventListener('click', async () => {

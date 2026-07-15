@@ -2,19 +2,11 @@
 // sans écrire de Markdown. Produit le même objet session que le parser.
 
 import { getDefinition, putDefinition } from '../data/store.js';
-import { parseSession, slugify } from '../data/session-parser.js';
+import { slugify } from '../data/session-parser.js';
+import { DISPLAY_MODES } from '../data/display-modes.js';
 import { escapeHtml } from './format.js';
 import { go } from './router.js';
-import { ArrowLeft, Menu } from 'lucide';
-import { iconHtml } from './icon.js';
-
-const DISPLAY_MODES = [
-  { value: 'perf', label: 'Perf' },
-  { value: 'cardio', label: 'Cardio' },
-  { value: 'complet', label: 'Complet' },
-  { value: 'zen', label: 'Zen' },
-  { value: 'cad', label: 'Cadence' },
-];
+import { appBar } from './app-bar.js';
 
 const TARGET_TYPES = [
   { value: 'duration', label: 'Durée' },
@@ -50,11 +42,7 @@ export async function screenEditor({ slug }, outlet) {
 
 function render(outlet, state) {
   outlet.innerHTML = `
-    <header class="app-bar app-bar--detail">
-      <button class="app-bar__back" data-back aria-label="Retour">${iconHtml(ArrowLeft)}</button>
-      <h1 class="app-bar__title">${state.slug ? 'Modifier' : 'Nouvelle'} séance</h1>
-      <button class="app-bar__action" data-menu aria-label="Menu">${iconHtml(Menu)}</button>
-    </header>
+    ${appBar({ title: `${state.slug ? 'Modifier' : 'Nouvelle'} séance` })}
     <main class="screen">
       <form class="editor" data-form>
         <label class="profile-field">

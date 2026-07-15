@@ -2,6 +2,7 @@
 // l'écran historique complet et le détail d'une séance.
 import { fmtDuration, fmtDist, escapeHtml } from './format.js';
 import { deleteHistory } from '../data/store.js';
+import { confirmDialog } from './modal.js';
 import { go } from './router.js';
 
 // Filtre l'historique d'une séance (par slug, avec repli titre pour les
@@ -39,7 +40,7 @@ export function bindHistoryList(outlet, onChange) {
   outlet.querySelectorAll('[data-history-delete]').forEach((btn) => {
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
-      if (!confirm("Supprimer cette séance de l’historique ?")) return;
+      if (!await confirmDialog('Supprimer cette séance de l’historique ?', { confirmLabel: 'Supprimer', danger: true })) return;
       await deleteHistory(btn.dataset.historyDelete);
       if (onChange) onChange();
     });

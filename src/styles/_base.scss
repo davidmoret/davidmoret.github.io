@@ -105,6 +105,12 @@ code {
 
   &--ghost { background: none; }
 
+  &--danger {
+    background: var(--c-err);
+    border-color: transparent;
+    color: #fff;
+  }
+
   &--block {
     width: 100%;
     padding: var(--sp-4);

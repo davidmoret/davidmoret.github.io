@@ -17,11 +17,15 @@ import { fmtDuration, fmtPace, fmtDist, escapeHtml, prettyDeviceName } from './f
 import { initAudio, cue, beepShort, beepLong } from './feedback.js';
 import { Heart, Gauge, Activity, Leaf, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide';
 import { icon, iconHtml } from './icon.js';
+import { DISPLAY_MODES } from '../data/display-modes.js';
+import { confirmDialog } from './modal.js';
 import { go } from './router.js';
 
 const BLE_OK = typeof navigator !== 'undefined' && !!navigator.bluetooth;
 
-const MODES = ['cardio', 'perf', 'cad', 'zen'];
+// Ordre du sélecteur de modes = source unique (data/display-modes.js). Chaque
+// valeur doit avoir une entrée LAYOUT + MODE_META ci-dessous.
+const MODES = DISPLAY_MODES.map((m) => m.value);
 
 const LONG_PRESS_MS = 1500;
 
@@ -333,9 +337,9 @@ export async function screenLive({ slug }, outlet) {
 
   els.recoverySkip.addEventListener('click', () => engine.next());
 
-  els.quit.addEventListener('click', () => {
+  els.quit.addEventListener('click', async () => {
     if (sessionStarted && engine.status !== 'finished') {
-      if (!confirm('Quitter la séance ? Les données seront sauvegardées.')) return;
+      if (!await confirmDialog('Quitter la séance ? Les données seront sauvegardées.', { confirmLabel: 'Quitter' })) return;
       finishAndSave();
     } else {
       go(`/session/${slug}`);

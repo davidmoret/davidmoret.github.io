@@ -3,7 +3,7 @@
 // Session = frontmatter (métadonnées) + liste de sections.
 // Chaque section a une cible de fin : durée, distance, hr, ou manuelle.
 
-const DISPLAY_MODES = ['perf', 'cardio', 'zen', 'cad'];
+import { DISPLAY_MODE_VALUES } from './display-modes.js';
 
 export function parseSession(md, slug = '') {
   const { data, body } = extractFrontmatter(md);
@@ -14,7 +14,7 @@ export function parseSession(md, slug = '') {
     type: data.type || '',
     description: data.description || '',
     targetHrZone: parseZone(data.target_hr_zone),
-    display: DISPLAY_MODES.includes(data.display) ? data.display : 'perf',
+    display: DISPLAY_MODE_VALUES.includes(data.display) ? data.display : 'perf',
     sections,
     raw: md,
   };

@@ -4,19 +4,16 @@ import { getDefinitions, putDefinition, setFavorite } from '../data/store.js';
 import { parseSession } from '../data/session-parser.js';
 import { escapeHtml } from './format.js';
 import { notify } from './notify.js';
-import { go, back } from './router.js';
-import { ArrowLeft, Menu, Star, ChevronRight } from 'lucide';
+import { go } from './router.js';
+import { Star, ChevronRight } from 'lucide';
+import { appBar } from './app-bar.js';
 import { iconHtml } from './icon.js';
 
 export async function screenSessions(_params, outlet) {
   const defs = (await getDefinitions()).sort((a, b) => a.title.localeCompare(b.title, 'fr'));
 
   outlet.innerHTML = `
-    <header class="app-bar app-bar--detail">
-      <button class="app-bar__back" data-back aria-label="Retour">${iconHtml(ArrowLeft)}</button>
-      <h1 class="app-bar__title">Toutes les séances</h1>
-      <button class="app-bar__action" data-menu aria-label="Menu">${iconHtml(Menu)}</button>
-    </header>
+    ${appBar({ title: 'Toutes les séances' })}
     <main class="screen">
       <div class="section-head">
         <h2 class="section-head__title">${defs.length} séance${defs.length > 1 ? 's' : ''}</h2>
@@ -36,7 +33,7 @@ export async function screenSessions(_params, outlet) {
       </ul>
     </main>`;
 
-  outlet.querySelector('[data-back]').addEventListener('click', () => back());
+  outlet.querySelector('[data-back]').addEventListener('click', () => go('/'));
   outlet.querySelector('[data-new]').addEventListener('click', () => go('/edit'));
   outlet.querySelectorAll('[data-slug]').forEach((el) => {
     el.addEventListener('click', (e) => {

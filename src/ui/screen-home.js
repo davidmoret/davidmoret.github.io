@@ -5,7 +5,8 @@ import { fmtDuration, fmtDist, escapeHtml } from './format.js';
 import { notify, flushFlash } from './notify.js';
 import { historyListHtml, bindHistoryList } from './history-list.js';
 import { go } from './router.js';
-import { Star, History, Menu, ChevronRight } from 'lucide';
+import { Star, History, ChevronRight } from 'lucide';
+import { appBar } from './app-bar.js';
 import { iconHtml } from './icon.js';
 import { getLastBackupDate, shouldRemindBackup, daysSinceBackup, exportBackup, askPassphrase } from '../data/backup.js';
 
@@ -25,10 +26,7 @@ export async function screenHome(_params, outlet) {
   const days = lastBackup ? Math.floor(daysSinceBackup(lastBackup)) : null;
 
   outlet.innerHTML = `
-    <header class="app-bar">
-      <h1 class="app-bar__title">rame rame</h1>
-      <button class="app-bar__action" data-menu aria-label="Menu">${iconHtml(Menu)}</button>
-    </header>
+    ${appBar({ title: 'rame rame', back: false })}
     <main class="screen">
       <section class="stats" aria-label="Statistiques globales">
         ${statItem(stats.count, 'séances')}

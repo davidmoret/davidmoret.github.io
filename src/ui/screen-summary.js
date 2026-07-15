@@ -3,8 +3,8 @@
 import { getHistoryEntry, deleteHistory } from '../data/store.js';
 import { fmtDuration, fmtDist, escapeHtml } from './format.js';
 import { go } from './router.js';
-import { ArrowLeft, Menu } from 'lucide';
-import { iconHtml } from './icon.js';
+import { confirmDialog } from './modal.js';
+import { appBar } from './app-bar.js';
 
 export async function screenSummary({ id }, outlet) {
   const entry = await getHistoryEntry(id);
@@ -15,11 +15,7 @@ export async function screenSummary({ id }, outlet) {
   const date = new Date(entry.id).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' });
 
   outlet.innerHTML = `
-    <header class="app-bar app-bar--detail">
-      <button class="app-bar__back" data-home aria-label="Accueil">${iconHtml(ArrowLeft)}</button>
-      <h1 class="app-bar__title">${escapeHtml(entry.session_title)}</h1>
-      <button class="app-bar__action" data-menu aria-label="Menu">${iconHtml(Menu)}</button>
-    </header>
+    ${appBar({ title: entry.session_title, back: { attr: 'home', label: 'Accueil' } })}
     <main class="screen">
       <p class="lead">${escapeHtml(date)}</p>
 
@@ -52,7 +48,7 @@ export async function screenSummary({ id }, outlet) {
 
   outlet.querySelector('[data-home]').addEventListener('click', () => go('/'));
   outlet.querySelector('[data-delete]').addEventListener('click', async () => {
-    if (!confirm("Supprimer cette séance de l\u2019historique ?")) return;
+    if (!await confirmDialog("Supprimer cette séance de l\u2019historique ?", { confirmLabel: 'Supprimer', danger: true })) return;
     await deleteHistory(entry.id);
     go('/');
   });

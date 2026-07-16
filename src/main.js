@@ -52,12 +52,15 @@ const router = createRouter([
 ], outlet);
 
 initTheme().catch((e) => console.error('Init thème échoué :', e));
-initLang()
-  .catch((e) => console.error('Init langue échoué :', e))
-  .finally(() => {
-    if (!location.hash) location.hash = '/';
-    router.start();
-  });
+// Langue et séances d'exemple en parallèle, mais tous deux résolus AVANT le
+// premier rendu (Home lit getDefinitions() → le seed doit être terminé).
+Promise.all([
+  initLang().catch((e) => console.error('Init langue échoué :', e)),
+  seedSessions().catch((e) => console.error('Seed séances échoué :', e)),
+]).finally(() => {
+  if (!location.hash) location.hash = '/';
+  router.start();
+});
 
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));

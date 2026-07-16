@@ -93,7 +93,7 @@ function render(outlet, state) {
 
         <button type="button" class="btn btn--ghost btn--block" data-add-section>${t('editor.addSection')}</button>
 
-        <button type="submit" class="btn btn--primary btn--block">${t('common.save')}</button>
+        <button type="submit" class="btn btn--block">${t('common.save')}</button>
       </form>
     </main>`;
 

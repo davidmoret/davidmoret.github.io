@@ -49,7 +49,7 @@ export async function screenProfile(_params, outlet) {
           <span class="profile-field__hint" data-reserve-hint>${reserveHint(profile.age, profile.hrMax, profile.hrRest)}</span>
         </label>
 
-        <button class="btn btn--primary btn--block" type="submit">${t('common.save')}</button>
+        <button class="btn btn--block" type="submit">${t('common.save')}</button>
       </form>
     </main>`;
 

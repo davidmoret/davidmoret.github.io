@@ -557,9 +557,16 @@ Audit du 2026-07-16. Corrigé dans la foulée (v0.16.1) :
 
 ### À faire une prochaine fois (non bloquant)
 - ⏳ **Découper `screen-live.js`** (~540 lignes, module « à tout faire ») en
-  contrôleurs : `live/wake-lock.js`, `live/long-press.js`, `live/recovery.js`
-  (breath pacer + jauge), le screen devenant chef d'orchestre. **Prérequis :
-  poser un filet de tests avant** (refonte risquée à nu).
+  contrôleurs : `live/wake-lock.js`, `live/recovery.js` (breath pacer + jauge),
+  le screen devenant chef d'orchestre. **Prérequis : poser un filet de tests
+  avant** (refonte risquée à nu).
+  - 🗑️ Au passage, **retirer l'appui long « Terminer »** sur le bouton principal
+    (comportement inutilisé) : bloc `startLongPress`/`cancelLongPress`/
+    `updateLongPressProgress` + listeners `pointer*`, garde `!longPressActive`
+    dans `render()`, `clearTimeout(longPressTimer)` du cleanup, constante
+    `LONG_PRESS_MS`, icône `Flag` (import Lucide), classes SCSS `.is-finishing`
+    / `--hold-pct` (`_live.scss`) et clé i18n `live.finishing`. La sortie
+    anticipée reste couverte par la croix (data-quit) avec confirmation.
 - ⏳ **ESLint + Prettier** (config flat + script `lint`) : cohérence de style
   entre passages LLM. Tooling, à traiter séparément.
 - 💡 **Factoriser format ↔ parse** : `session-parser` (parse) et `export.js`

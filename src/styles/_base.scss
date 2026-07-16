@@ -160,7 +160,7 @@ code {
   &--block {
     width: 100%;
     padding: var(--sp-4);
-    font-size: 1.1rem;
+    font-size: 1rem;
     margin-top: var(--sp-5);
   }
 
@@ -224,6 +224,21 @@ code {
     svg { width: 18px; height: 18px; color: var(--c-icon); }
   }
   &__meta { font-size: 0.78rem; color: var(--c-muted); }
+
+  &--spaced { margin-top: calc(var(--sp-5) + 10px); }
+
+  &__link {
+    background: none;
+    border: 0;
+    padding: 0;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--c-accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    &:active { opacity: 0.7; }
+  }
 }
 
 // ── Profil ───────────────────────────────────────────────────────────────

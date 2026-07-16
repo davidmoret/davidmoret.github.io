@@ -5,7 +5,7 @@ import { parseSession } from '../data/session-parser.js';
 import { escapeHtml } from './format.js';
 import { notify } from './notify.js';
 import { go } from './router.js';
-import { Star, ChevronRight, Plus, FileDown } from 'lucide';
+import { Star, ChevronRight, CirclePlus, FileDown } from 'lucide';
 import { appBar } from './app-bar.js';
 import { iconHtml } from './icon.js';
 import { t } from './i18n/index.js';
@@ -14,11 +14,11 @@ export async function screenSessions(_params, outlet) {
   const defs = (await getDefinitions()).sort((a, b) => a.title.localeCompare(b.title, 'fr'));
 
   outlet.innerHTML = `
-    ${appBar({ title: t('sessions.title') })}
+    ${appBar({ title: t('sessions.title', { count: defs.length }) })}
     <main class="screen">
       <div class="detail-actions">
         <div class="editor__row">
-          <button class="btn btn--block" data-new>${iconHtml(Plus)} ${t('sessions.new')}</button>
+          <button class="btn btn--block" data-new>${iconHtml(CirclePlus)} ${t('sessions.new')}</button>
           <label class="btn btn--block import-btn">
             ${iconHtml(FileDown)} ${t('sessions.import')}
             <input id="import" class="import-btn__input" type="file" accept=".txt,text/plain">

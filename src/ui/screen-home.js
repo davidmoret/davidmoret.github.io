@@ -36,6 +36,7 @@ export async function screenHome(_params, outlet) {
 
       <div class="section-head">
         <h2 class="section-head__title">${iconHtml(Star)} ${t('home.favorites')}</h2>
+        <button class="section-head__link" data-add-session>${t('home.add')}</button>
       </div>
 
       <ul class="card-list">
@@ -45,9 +46,11 @@ export async function screenHome(_params, outlet) {
       </ul>
 
       ${recent.length ? `
-        <div class="section-head"><h2 class="section-head__title">${iconHtml(History)} ${t('home.recent')}</h2></div>
+        <div class="section-head section-head--spaced">
+          <h2 class="section-head__title">${iconHtml(History)} ${t('home.recent')}</h2>
+          ${sorted.length > 5 ? `<button class="section-head__link" data-all-history>${t('home.seePast')}</button>` : ''}
+        </div>
         ${historyListHtml(recent)}
-        ${sorted.length > 5 ? `<button class="btn btn--ghost btn--block" data-all-history>${t('home.seePast')}</button>` : ''}
       ` : ''}
     </main>`;
 
@@ -55,6 +58,8 @@ export async function screenHome(_params, outlet) {
   if (statsHistoryBtn) statsHistoryBtn.addEventListener('click', () => go('/history'));
   const allBtn = outlet.querySelector('[data-all-history]');
   if (allBtn) allBtn.addEventListener('click', () => go('/history'));
+  const addBtn = outlet.querySelector('[data-add-session]');
+  if (addBtn) addBtn.addEventListener('click', () => go('/sessions'));
   outlet.querySelectorAll('[data-slug]').forEach((el) => {
     el.addEventListener('click', () => go(`/session/${el.dataset.slug}`));
   });

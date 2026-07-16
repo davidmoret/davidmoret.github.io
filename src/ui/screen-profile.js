@@ -49,7 +49,7 @@ export async function screenProfile(_params, outlet) {
           <span class="profile-field__hint" data-reserve-hint>${reserveHint(profile.age, profile.hrMax, profile.hrRest)}</span>
         </label>
 
-        <button class="btn btn--block" type="submit">${t('common.save')}</button>
+        <button class="btn btn--block" type="submit" data-submit disabled>${t('common.save')}</button>
       </form>
     </main>`;
 
@@ -60,6 +60,14 @@ export async function screenProfile(_params, outlet) {
   const hrMaxEl = form.querySelector('[name=hrMax]');
   const hrRestEl = form.querySelector('[name=hrRest]');
   const reserveEl = form.querySelector('[data-reserve-hint]');
+  const submitBtn = form.querySelector('[data-submit]');
+
+  const initial = { age: ageEl.value, hrMax: hrMaxEl.value, hrRest: hrRestEl.value };
+
+  function checkDirty() {
+    const dirty = ageEl.value !== initial.age || hrMaxEl.value !== initial.hrMax || hrRestEl.value !== initial.hrRest;
+    submitBtn.disabled = !dirty;
+  }
 
   // Recalcul en continu des valeurs dérivées pendant la saisie.
   form.addEventListener('input', () => {
@@ -68,6 +76,7 @@ export async function screenProfile(_params, outlet) {
     const hrRest = Number(hrRestEl.value) || null;
     hrMaxEl.placeholder = maxPlaceholder(age);
     reserveEl.textContent = reserveHint(age, hrMax, hrRest);
+    checkDirty();
   });
 
   form.addEventListener('submit', async (e) => {

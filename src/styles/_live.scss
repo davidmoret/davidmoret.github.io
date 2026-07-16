@@ -70,14 +70,12 @@
   &__zone {
     text-align: center;
     font-weight: 600;
-    font-size: 0.9rem;
-    padding: var(--sp-2) var(--sp-4);
-    border-radius: 999px;
-    color: #fff;
+    font-size: 0.85rem;
+    letter-spacing: 0.03em;
 
-    &[data-state='low'] { background: var(--c-zone-low); }
-    &[data-state='in'] { background: var(--c-zone-in); }
-    &[data-state='high'] { background: var(--c-zone-high); }
+    &[data-state='low'] { color: var(--c-zone-low); }
+    &[data-state='in'] { color: var(--c-zone-in); }
+    &[data-state='high'] { color: var(--c-zone-high); }
   }
 }
 
@@ -289,8 +287,6 @@
   text-align: center;
   padding: var(--sp-4) 0;
   position: relative;
-  // Halo coloré centré derrière le chiffre principal
-  background: radial-gradient(ellipse at center 38%, color-mix(in srgb, var(--c-accent) 10%, transparent) 0%, transparent 65%);
 
   &[hidden] { display: none; }
 

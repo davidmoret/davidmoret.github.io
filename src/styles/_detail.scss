@@ -110,7 +110,7 @@
   align-items: center;
   gap: var(--sp-2);
 
-  input { flex: 1; }
+  input { flex: 1; min-width: 0; }
 }
 
 .editor__range-sep {

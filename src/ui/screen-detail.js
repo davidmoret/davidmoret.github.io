@@ -7,7 +7,7 @@ import { historyListHtml, bindHistoryList, historyForSession } from './history-l
 import { go } from './router.js';
 import { confirmDialog } from './modal.js';
 import { appBar } from './app-bar.js';
-import { SquarePen, Share2, Trash, History, Play } from 'lucide';
+import { Pencil, Share2, Trash, History, Play } from 'lucide';
 import { iconHtml } from './icon.js';
 import { t } from './i18n/index.js';
 
@@ -39,7 +39,7 @@ export async function screenDetail({ slug }, outlet) {
       <ol class="steps">${s.sections.map(stepHtml).join('')}</ol>
       <div class="detail-actions">
         <div class="editor__row">
-          <button class="btn btn--block" data-edit>${iconHtml(SquarePen)} ${t('common.edit')}</button>
+          <button class="btn btn--block" data-edit>${iconHtml(Pencil)} ${t('common.edit')}</button>
           ${canShare ? `<button class="btn btn--block" data-share>${iconHtml(Share2)} ${t('detail.share')}</button>` : ''}
         </div>
         <button class="btn btn--ghost btn--block" data-delete>${iconHtml(Trash)} ${t('detail.delete')}</button>

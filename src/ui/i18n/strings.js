@@ -32,9 +32,10 @@ export const STRINGS = {
     'stats.hrAvg': 'fc moy',
 
     'home.favorites': 'Séances favorites',
+    'home.add': 'Ajouter',
     'home.favoritesEmpty': 'Aucune séance favorite. Ajoutes-en via <strong>Menu → Séances</strong>.',
     'home.recent': 'Dernières séances',
-    'home.seePast': 'Voir tout l\'historique',
+    'home.seePast': 'Voir tout',
     'home.backup.none': 'Aucune sauvegarde',
     'home.backup.daysAgo': 'Dernière sauvegarde il y a {n} j',
     'home.backup.remind': 'Pense à sauvegarder tes données.',
@@ -43,7 +44,8 @@ export const STRINGS = {
 
     'sessions.count': '{count} séance',
     'sessions.count_plural': '{count} séances',
-    'sessions.title': 'Séances disponibles',
+    'sessions.title': '{count} séance disponible',
+    'sessions.title_plural': '{count} séances disponibles',
     'sessions.empty': 'Aucune séance. Crée-en avec <strong>Nouvelle</strong> ou importe un <code>.txt</code>.',
     'sessions.new': 'Créer',
     'sessions.import': 'Importer',
@@ -231,9 +233,10 @@ export const STRINGS = {
     'stats.hrAvg': 'avg hr',
 
     'home.favorites': 'Favorite sessions',
+    'home.add': 'Add',
     'home.favoritesEmpty': 'No favorite session. Add one via <strong>Menu → Sessions</strong>.',
     'home.recent': 'Recent sessions',
-    'home.seePast': 'See all history',
+    'home.seePast': 'See all',
     'home.backup.none': 'No backup',
     'home.backup.daysAgo': 'Last backup {n} d ago',
     'home.backup.remind': 'Remember to back up your data.',
@@ -242,7 +245,8 @@ export const STRINGS = {
 
     'sessions.count': '{count} session',
     'sessions.count_plural': '{count} sessions',
-    'sessions.title': 'Available sessions',
+    'sessions.title': '{count} session available',
+    'sessions.title_plural': '{count} sessions available',
     'sessions.empty': 'No session. Create one with <strong>New</strong> or import a <code>.txt</code>.',
     'sessions.new': 'Create',
     'sessions.import': 'Import',

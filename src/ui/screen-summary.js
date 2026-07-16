@@ -37,7 +37,9 @@ export async function screenSummary({ id }, outlet) {
       <div class="section-head"><h2 class="section-head__title">${t('summary.sections')}</h2></div>
       <ul class="recap">
         ${entry.sections.map((s) => `<li class="recap__item">
-          <span class="recap__name">${escapeHtml(s.name)}</span>
+          <div class="recap__body">
+            <span class="recap__name">${escapeHtml(s.name)}</span>
+          </div>
           <span class="recap__val">${fmtDuration(s.duration_s)} · ${fmtDist(s.distance_m)}</span>
         </li>`).join('')}
       </ul>

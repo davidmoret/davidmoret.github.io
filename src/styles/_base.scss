@@ -165,6 +165,10 @@ code {
   &:disabled { opacity: 0.5; }
 }
 
+// Boutons de suppression : couleur d'accent (violet en light, orange en dark),
+// alignée sur les chevrons et icônes d'action.
+[data-delete] { color: var(--c-accent); }
+
 // Bouton import : l'input file est superposé invisible sur le label
 // (pas hidden/clip/display:none — ces méthodes empêchent le change event
 // sur Chrome Android après sélection d'un fichier).
@@ -375,7 +379,7 @@ code {
   gap: var(--sp-4);
   width: 100%;
   padding: var(--sp-4) var(--sp-4);
-  background: var(--c-panel-2);
+  background: none;
   border: 0;
   border-radius: 0;
   color: var(--c-txt);

@@ -118,3 +118,15 @@
   font-size: 1.2rem;
   padding-top: var(--sp-4);
 }
+
+// Rond numéro de section en light : fond plus clair.
+html[data-theme='light'] .step::before,
+html[data-theme='auto'] .step::before {
+  background: color-mix(in srgb, var(--c-accent) 6%, var(--c-panel-2));
+}
+
+@media (prefers-color-scheme: light) {
+  html:not([data-theme='dark']) .step::before {
+    background: color-mix(in srgb, var(--c-accent) 6%, var(--c-panel-2));
+  }
+}

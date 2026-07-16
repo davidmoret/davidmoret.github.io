@@ -24,6 +24,9 @@ import { t } from './i18n/index.js';
 
 const BLE_OK = typeof navigator !== 'undefined' && !!navigator.bluetooth;
 const isLocal = import.meta.env.DEV;
+// Mode démo proposé quand aucun capteur BLE n'est possible (iOS / Safari) ou en
+// dev : sans lui l'écran Live serait inutilisable sur ces plateformes.
+const DEMO_AVAILABLE = isLocal || !BLE_OK;
 
 // Ordre du sélecteur de modes = source unique (data/display-modes.js). Chaque
 // valeur doit avoir une entrée LAYOUT + MODE_META ci-dessous.
@@ -75,7 +78,7 @@ export async function screenLive({ slug }, outlet) {
 
   const profile = await getProfile();
   let mode = session.display || MODES[0];
-  let demo = !BLE_OK && isLocal;
+  let demo = !BLE_OK;
   const bus = createMetricBus();
   const engine = createSessionEngine(session, profile);
   const sim = createSimulator(bus);
@@ -431,7 +434,11 @@ export async function screenLive({ slug }, outlet) {
   const unsubBus = bus.subscribe((m) => {
     engine.pushDistance(m.dist);
     engine.pushHr(m.hr);
-    render();
+    // En course, le tick 10 Hz de l'engine pilote déjà le rendu : inutile de
+    // reconstruire le DOM à chaque paquet BLE (rameur > 1 Hz). Hors course
+    // (idle / pause / récup avant démarrage), aucun tick → on rend ici pour
+    // refléter les métriques entrantes.
+    if (engine.status !== 'running') render();
   });
   const unsubEngine = engine.subscribe((type) => {
     if (type === 'section-auto' || type === 'section-change') {
@@ -499,7 +506,7 @@ function template() {
     <div class="sources">
       <button class="sources__btn" data-connect-rower><span class="sources__dot" data-dot-rower></span>${t('live.rower')}</button>
       <button class="sources__btn" data-connect-hr><span class="sources__dot" data-dot-hr></span>${t('live.hr')}</button>
-      ${isLocal ? `<button class="sources__btn" data-demo>${t('live.demo')}</button>` : ''}
+      ${DEMO_AVAILABLE ? `<button class="sources__btn" data-demo>${t('live.demo')}</button>` : ''}
     </div>
 
     <div class="hero" data-hero>

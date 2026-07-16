@@ -18,7 +18,7 @@ export function sessionToMarkdown(s) {
     if (sec.target.type === 'hr') {
       const hrVal = formatHrTarget(sec.target);
       lines.push(`- cible_fc: ${hrVal}`);
-      if (sec.target.cap) lines.push(`- duree: ${fmtCap(sec.target.cap)}`);
+      if (sec.target.cap) lines.push(`- duree: ${fmtSec(sec.target.cap)}`);
     } else if (sec.target.type === 'duration') {
       lines.push(`- duree: ${fmtSec(sec.target.value)}`);
     } else if (sec.target.type === 'distance') {
@@ -44,10 +44,6 @@ function fmtSec(s) {
   const m = Math.floor(s / 60);
   const sec = s % 60;
   return `${m}:${String(sec).padStart(2, '0')}`;
-}
-
-function fmtCap(s) {
-  return `${Math.floor(s / 60)}min`;
 }
 
 function fmtDistMd(m) {

@@ -539,3 +539,30 @@ Quand la section courante a `target.type === 'hr'`, l'écran Live bascule automa
   **zen = vert**, perf = bleu, cardio = rouge, cadence = orange.
 - ⏳ **Dark/Light** : défaut système + override Menu → Préférences.
 - 🐛 **Bugs Live** 13.6-a (flèches) & 13.6-b (héro `[hidden]`) — à corriger.
+
+---
+
+## 14. Audit code (v0.16.1) — dette restante
+
+Audit du 2026-07-16. Corrigé dans la foulée (v0.16.1) :
+- ✅ **Bug régression** : `seedSessions()` n'était plus appelé (chaîne de boot
+  rebranchée sur `initLang()` lors du commit i18n du 15/07) → séances d'exemple
+  non semées au 1er lancement. Rétabli via `Promise.all` avant `router.start()`.
+- ✅ **Perf Live** : le rendu n'est plus reconstruit à chaque paquet BLE ; en
+  course le tick 10 Hz suffit (rendu bus uniquement hors course).
+- ✅ **iOS/Safari** : mode démo exposé quand aucun BLE possible (`DEMO_AVAILABLE`),
+  l'écran Live n'est plus inutilisable sur ces plateformes.
+- ✅ **Round-trip export** : cap FC exporté en `mm:ss` (`fmtSec`) au lieu de
+  `fmtCap` qui arrondissait à la minute (90 s → « 1min »).
+
+### À faire une prochaine fois (non bloquant)
+- ⏳ **Découper `screen-live.js`** (~540 lignes, module « à tout faire ») en
+  contrôleurs : `live/wake-lock.js`, `live/long-press.js`, `live/recovery.js`
+  (breath pacer + jauge), le screen devenant chef d'orchestre. **Prérequis :
+  poser un filet de tests avant** (refonte risquée à nu).
+- ⏳ **ESLint + Prettier** (config flat + script `lint`) : cohérence de style
+  entre passages LLM. Tooling, à traiter séparément.
+- 💡 **Factoriser format ↔ parse** : `session-parser` (parse) et `export.js`
+  (sérialise) sont deux sources de vérité pour durée/distance/cible FC.
+- ℹ️ `strokes` : métrique décodée (`rower.js`) et émise mais non affichée —
+  **volontairement conservée** dans le contrat du bus (ne pas retirer).

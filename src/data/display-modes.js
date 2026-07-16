@@ -5,9 +5,9 @@
 // listée ici DOIT y avoir un LAYOUT, sous peine de crash au rendu.
 export const DISPLAY_MODES = [
   { value: 'perf', label: 'Perf' },
+  { value: 'cad', label: 'Cadence' },
   { value: 'cardio', label: 'Cardio' },
   { value: 'zen', label: 'Zen' },
-  { value: 'cad', label: 'Cadence' },
 ];
 
 export const DISPLAY_MODE_VALUES = DISPLAY_MODES.map((m) => m.value);

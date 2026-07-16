@@ -15,7 +15,7 @@ import { createSessionEngine } from '../engine/session-engine.js';
 import { createRecorder } from '../engine/recorder.js';
 import { fmtDuration, fmtPace, fmtDist, escapeHtml, prettyDeviceName } from './format.js';
 import { initAudio, cue, beepShort, beepLong } from './feedback.js';
-import { Heart, Gauge, Activity, Leaf, ArrowLeft, ChevronLeft, ChevronRight, Play, Pause, Check, Flag } from 'lucide';
+import { Heart, Gauge, Activity, Leaf, LogOut, ChevronLeft, ChevronRight, Play, Pause, Check, Flag, FlagTriangleRight } from 'lucide';
 import { icon, iconHtml } from './icon.js';
 import { DISPLAY_MODES } from '../data/display-modes.js';
 import { confirmDialog } from './modal.js';
@@ -23,6 +23,7 @@ import { go } from './router.js';
 import { t } from './i18n/index.js';
 
 const BLE_OK = typeof navigator !== 'undefined' && !!navigator.bluetooth;
+const isLocal = import.meta.env.DEV;
 
 // Ordre du sélecteur de modes = source unique (data/display-modes.js). Chaque
 // valeur doit avoir une entrée LAYOUT + MODE_META ci-dessous.
@@ -74,7 +75,7 @@ export async function screenLive({ slug }, outlet) {
 
   const profile = await getProfile();
   let mode = session.display || MODES[0];
-  let demo = !BLE_OK;
+  let demo = !BLE_OK && isLocal;
   const bus = createMetricBus();
   const engine = createSessionEngine(session, profile);
   const sim = createSimulator(bus);
@@ -86,8 +87,10 @@ export async function screenLive({ slug }, outlet) {
   const els = {
     root: outlet.querySelector('.live'),
     global: outlet.querySelector('[data-global]'),
-    counter: outlet.querySelector('[data-counter]'),
+    counterCur: outlet.querySelector('[data-counter-cur]'),
+    counterTot: outlet.querySelector('[data-counter-tot]'),
     sectionName: outlet.querySelector('[data-section-name]'),
+    sectionNote: outlet.querySelector('[data-section-note]'),
     next: outlet.querySelector('[data-next-label]'),
     progress: outlet.querySelector('[data-progress]'),
     zone: outlet.querySelector('[data-zone]'),
@@ -184,10 +187,22 @@ export async function screenLive({ slug }, outlet) {
     const s = engine.snapshot();
 
     els.global.textContent = fmtDuration(s.globalMs / 1000);
-    els.counter.textContent = `${Math.min(s.index + 1, s.total)}/${s.total}`;
+    els.counterCur.textContent = Math.min(s.index + 1, s.total);
+    els.counterTot.textContent = s.total;
     els.sectionName.textContent = s.section ? s.section.name : '—';
-    els.next.textContent = s.status === 'finished' ? t('live.done')
-      : s.next ? t('live.next', { name: s.next.name }) : t('live.lastSection');
+    if (s.section && s.section.note) {
+      els.sectionNote.textContent = s.section.note;
+      els.sectionNote.hidden = false;
+    } else {
+      els.sectionNote.hidden = true;
+    }
+    if (s.status === 'finished') {
+      els.next.textContent = t('live.done');
+    } else if (s.next) {
+      els.next.textContent = t('live.next', { name: s.next.name });
+    } else {
+      els.next.textContent = '';
+    }
     els.progress.style.transform = `scaleX(${s.progress || 0})`;
 
     // Toujours mettre à jour le bouton principal, quelle que soit la section.
@@ -373,7 +388,7 @@ export async function screenLive({ slug }, outlet) {
   // --- Sources de données ------------------------------------------------
   function setDemo(on) {
     demo = on;
-    els.demo.classList.toggle('is-active', on);
+    if (els.demo) els.demo.classList.toggle('is-active', on);
     if (on) sim.start(); else sim.stop();
   }
 
@@ -409,7 +424,7 @@ export async function screenLive({ slug }, outlet) {
     els.connectRower.disabled = true;
     els.connectHr.disabled = true;
   }
-  els.demo.addEventListener('click', () => setDemo(!demo));
+  if (els.demo) els.demo.addEventListener('click', () => setDemo(!demo));
   if (demo) setDemo(true);
 
   // --- Moteur / boucle ---------------------------------------------------
@@ -466,13 +481,16 @@ function template() {
   return `
   <div class="live" data-mode="perf">
     <div class="live__bar">
-      <button class="live__quit" data-quit aria-label="${t('live.quit')}">${iconHtml(ArrowLeft)}</button>
+      <button class="live__quit" data-quit aria-label="${t('live.quit')}">${iconHtml(LogOut)}</button>
       <span class="live__global" data-global>0:00</span>
-      <span class="live__counter" data-counter></span>
+      <span class="live__counter" data-counter><span class="live__counter-cur" data-counter-cur></span><span class="live__counter-sep">/</span><span class="live__counter-tot" data-counter-tot></span></span>
     </div>
 
     <div class="live__section">
-      <span class="live__section-name" data-section-name>—</span>
+      <div class="live__section-head">
+        <span class="live__section-name" data-section-name>—</span>
+        <span class="live__section-note" data-section-note hidden></span>
+      </div>
       <span class="live__next" data-next-label></span>
     </div>
     <div class="live__progress"><span class="live__progress-fill" data-progress></span></div>
@@ -481,7 +499,7 @@ function template() {
     <div class="sources">
       <button class="sources__btn" data-connect-rower><span class="sources__dot" data-dot-rower></span>${t('live.rower')}</button>
       <button class="sources__btn" data-connect-hr><span class="sources__dot" data-dot-hr></span>${t('live.hr')}</button>
-      <button class="sources__btn" data-demo>${t('live.demo')}</button>
+      ${isLocal ? `<button class="sources__btn" data-demo>${t('live.demo')}</button>` : ''}
     </div>
 
     <div class="hero" data-hero>

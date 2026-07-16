@@ -15,7 +15,7 @@ import { createSessionEngine } from '../engine/session-engine.js';
 import { createRecorder } from '../engine/recorder.js';
 import { fmtDuration, fmtPace, fmtDist, escapeHtml, prettyDeviceName } from './format.js';
 import { initAudio, cue, beepShort, beepLong } from './feedback.js';
-import { Heart, Gauge, Activity, Leaf, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide';
+import { Heart, Gauge, Activity, Leaf, ArrowLeft, ChevronLeft, ChevronRight, Play, Pause, Check, Flag } from 'lucide';
 import { icon, iconHtml } from './icon.js';
 import { DISPLAY_MODES } from '../data/display-modes.js';
 import { confirmDialog } from './modal.js';
@@ -73,7 +73,7 @@ export async function screenLive({ slug }, outlet) {
   }
 
   const profile = await getProfile();
-  let mode = session.display;
+  let mode = session.display || MODES[0];
   let demo = !BLE_OK;
   const bus = createMetricBus();
   const engine = createSessionEngine(session, profile);
@@ -190,6 +190,15 @@ export async function screenLive({ slug }, outlet) {
       : s.next ? t('live.next', { name: s.next.name }) : t('live.lastSection');
     els.progress.style.transform = `scaleX(${s.progress || 0})`;
 
+    // Toujours mettre à jour le bouton principal, quelle que soit la section.
+    if (!longPressActive) {
+      if (s.status === 'idle') setPauseBtn(Play, t('live.start'));
+      else if (s.status === 'running') setPauseBtn(Pause, t('live.pause'));
+      else if (s.status === 'paused') setPauseBtn(Play, t('live.resume'));
+      else setPauseBtn(Check, t('live.finish'));
+      els.pause.disabled = s.status === 'finished';
+    }
+
     if (isHrSection()) {
       renderRecovery();
       return;
@@ -210,14 +219,6 @@ export async function screenLive({ slug }, outlet) {
 
     applyZone(m.hr, s.section);
     maybeCountdownBeep(s);
-
-    if (longPressActive) return;
-
-    if (s.status === 'idle') els.pause.textContent = t('live.start');
-    else if (s.status === 'running') els.pause.textContent = t('live.pause');
-    else if (s.status === 'paused') els.pause.textContent = t('live.resume');
-    else els.pause.textContent = t('live.finish');
-    els.pause.disabled = s.status === 'finished';
   }
 
   // Décompte sonore quand la section se clôt au temps : bip court à −3/−2/−1 s,
@@ -246,6 +247,7 @@ export async function screenLive({ slug }, outlet) {
   function setMode(next) {
     mode = next;
     els.root.dataset.mode = next;
+    els.root.style.setProperty('--mode-c', MODE_META[next].color);
     outlet.querySelectorAll('.modes__btn').forEach((b) => {
       const active = b.dataset.mode === next;
       b.classList.toggle('is-active', active);
@@ -273,6 +275,12 @@ export async function screenLive({ slug }, outlet) {
     catch (e) { console.error('Sauvegarde historique échouée :', e); go(`/session/${slug}`); }
   }
 
+  // Bouton principal : icône seule (Play/Pause/Check/Flag) + libellé accessible.
+  function setPauseBtn(node, label) {
+    els.pause.innerHTML = iconHtml(node);
+    els.pause.setAttribute('aria-label', label);
+  }
+
   // --- Appui long sur Pause → Terminer -----------------------------------
   let longPressTimer = null;
   let longPressActive = false;
@@ -282,7 +290,7 @@ export async function screenLive({ slug }, outlet) {
     if (engine.status === 'idle' || engine.status === 'finished') return;
     longPressActive = true;
     longPressStart = Date.now();
-    els.pause.textContent = t('live.finishing');
+    setPauseBtn(Flag, t('live.finishing'));
     els.pause.classList.add('is-finishing');
     longPressTimer = setTimeout(() => {
       longPressActive = false;
@@ -500,7 +508,7 @@ function template() {
 
     <div class="controls">
       <button class="controls__btn" data-prev aria-label="${t('live.prevSection')}">${iconHtml(ChevronLeft)}</button>
-      <button class="controls__btn controls__btn--main" data-pause>${t('live.start')}</button>
+      <button class="controls__btn controls__btn--main" data-pause aria-label="${t('live.start')}">${iconHtml(Play)}</button>
       <button class="controls__btn" data-next aria-label="${t('live.nextSection')}">${iconHtml(ChevronRight)}</button>
     </div>
 

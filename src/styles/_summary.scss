@@ -99,7 +99,7 @@
     display: flex;
     align-items: center;
     gap: var(--sp-2);
-    padding: var(--sp-3) var(--sp-4);
+    padding: var(--sp-3) 0;
     cursor: pointer;
 
     // Séparateur simple entre items
@@ -108,21 +108,21 @@
     &:active { background: var(--c-panel-2); }
   }
 
-  &__body { flex: 1; min-width: 0; }
+  &__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
   &__title { font-weight: 600; }
   &__meta { color: var(--c-muted); font-size: 0.82rem; font-variant-numeric: tabular-nums; }
 
   &__del {
     flex: 0 0 auto;
+    display: inline-flex;
     background: none;
     border: 0;
-    color: var(--c-muted);
-    font-size: 1.1rem;
+    color: var(--c-err);
     padding: var(--sp-2);
     cursor: pointer;
     line-height: 1;
 
-    &:hover { color: var(--c-err); }
+    svg { width: 16px; height: 16px; }
   }
 }
 

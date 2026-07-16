@@ -19,26 +19,33 @@ export function openMenu() {
   overlay.innerHTML = `
     <nav class="menu-sheet" role="menu" aria-label="${t('common.menu')}">
       <button class="menu-sheet__close" data-menu-close aria-label="${t('common.close')}">${iconHtml(X)}</button>
-      <div class="menu-sheet__brand">
-        <img src="/ramerame-icon.svg" alt="${escapeHtml(t('app.brand'))}" class="menu-sheet__logo">
+      <div class="menu-sheet__body">
+        <div class="menu-sheet__brand">
+          <button class="menu-sheet__logo-btn" data-go="/" aria-label="${escapeHtml(t('common.home'))}">
+            <img src="/ramerame-icon.svg" alt="${escapeHtml(t('app.brand'))}" class="menu-sheet__logo">
+          </button>
+        </div>
+        <ul class="menu-list">
+          ${ENTRIES.map((e) => `
+            <li>
+              <button class="menu-item" data-go="${e.path}" role="menuitem">
+                <span class="menu-item__icon">${iconHtml(e.icon)}</span>
+                <span class="menu-item__label">${t(e.labelKey)}</span>
+                <span class="menu-item__go" aria-hidden="true">${iconHtml(ChevronRight)}</span>
+              </button>
+            </li>`).join('')}
+        </ul>
       </div>
-      <ul class="menu-list">
-        ${ENTRIES.map((e) => `
-          <li>
-            <button class="menu-item" data-go="${e.path}" role="menuitem">
-              <span class="menu-item__icon">${iconHtml(e.icon)}</span>
-              <span class="menu-item__label">${t(e.labelKey)}</span>
-              <span class="menu-item__go" aria-hidden="true">${iconHtml(ChevronRight)}</span>
-            </button>
-          </li>`).join('')}
-      </ul>
       <footer class="app-version">${__APP_VERSION__}</footer>
     </nav>`;
   document.body.appendChild(overlay);
 
+  const sheet = overlay.querySelector('.menu-sheet');
+
   function close() {
-    overlay.remove();
     document.removeEventListener('keydown', onKey);
+    sheet.classList.add('menu-sheet--closing');
+    sheet.addEventListener('animationend', () => overlay.remove(), { once: true });
   }
   function onKey(e) {
     if (e.key === 'Escape') close();
@@ -48,7 +55,7 @@ export function openMenu() {
     if (e.target === overlay || e.target.closest('[data-menu-close]')) close();
   });
   overlay.querySelectorAll('[data-go]').forEach((btn) => {
-    btn.addEventListener('click', () => { close(); go(btn.dataset.go); });
+    btn.addEventListener('click', () => { go(btn.dataset.go); requestAnimationFrame(close); });
   });
   document.addEventListener('keydown', onKey);
 }

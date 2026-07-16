@@ -28,7 +28,7 @@
     border-radius: 999px;
     font-size: 0.8rem;
     font-weight: 700;
-    color: var(--c-accent);
+    color: var(--c-icon);
   }
 
   &__main { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
@@ -40,7 +40,7 @@
     flex: 0 0 auto;
     font-variant-numeric: tabular-nums;
     font-weight: 600;
-    color: var(--c-accent);
+    color: var(--c-icon);
     align-self: center;
   }
 }

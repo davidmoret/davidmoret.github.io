@@ -5,6 +5,10 @@
 html,
 body { margin: 0; }
 
+// Supprime le flash bleu WebKit au toucher (mobile) sur liens/boutons.
+// N'affecte pas le focus clavier (outline géré au cas par cas).
+html { -webkit-tap-highlight-color: transparent; }
+
 body {
   background: var(--c-bg);
   color: var(--c-txt);
@@ -48,13 +52,21 @@ code {
   max-width: 720px;
   margin: 0 auto;
 
+  &__center {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+
+    &.brand { justify-content: flex-start; }
+  }
+
   &__title {
     display: flex;
     align-items: center;
     gap: var(--sp-2);
     font-size: 1.4rem;
-    flex: 1;
-    justify-content: center;
     text-align: center;
 
     svg { width: 22px; height: 22px; }
@@ -87,18 +99,29 @@ code {
     align-items: center;
     background: none;
     border: 0;
-    color: var(--c-muted);
+    color: var(--c-txt);
     padding: var(--sp-2);
     cursor: pointer;
 
     svg { width: 24px; height: 24px; }
-    &:active { color: var(--c-txt); }
+    &:active { opacity: 0.7; }
   }
 
   &__start {
     flex: 0 0 auto;
-    font-size: 0.85rem;
-    padding: var(--sp-2) var(--sp-3);
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--c-accent);
+    color: var(--c-bg);
+    cursor: pointer;
+
+    svg { width: 16px; height: 16px; fill: currentColor; }
+    &:active { opacity: 0.85; }
   }
 }
 
@@ -191,7 +214,7 @@ code {
     font-size: 1.1rem;
     font-weight: 700;
 
-    svg { width: 18px; height: 18px; color: var(--c-accent); }
+    svg { width: 18px; height: 18px; color: var(--c-icon); }
   }
   &__meta { font-size: 0.78rem; color: var(--c-muted); }
 }
@@ -287,24 +310,46 @@ code {
     background: transparent;
     border: 0;
     border-radius: var(--radius-sm);
-    color: var(--c-muted);
+    color: var(--c-txt);
     cursor: pointer;
 
     svg { width: 22px; height: 22px; }
-    &:active { color: var(--c-txt); }
+    &:active { opacity: 0.7; }
   }
 
-  // Logo centré en tête du menu.
+  // Groupe logo + liens : justify-content center sur le body.
+  // padding-bottom = hauteur logo (120px) + gap (sp-4) pour que le centre
+  // de la liste coïncide avec le centre de l'écran, pas le centre logo+liste.
+  &__body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--sp-4);
+    padding-bottom: calc(120px + var(--sp-4));
+  }
+
   &__brand {
-    padding: var(--sp-5) var(--sp-5) var(--sp-3);
     display: flex;
     justify-content: center;
+    padding: 0 var(--sp-5);
+  }
+
+  &__logo-btn {
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    border-radius: var(--radius);
+    &:active { opacity: 0.7; }
   }
 
   &__logo {
-    width: 96px;
-    height: 96px;
+    width: 120px;
+    height: 120px;
     border-radius: var(--radius);
+    filter: brightness(0) invert(1);
   }
 
   .app-version { margin-top: auto; padding: 0 var(--sp-5); }
@@ -355,9 +400,9 @@ code {
     display: flex;
     align-items: center;
     flex: none;
-    color: var(--c-muted);
+    color: var(--c-accent);
 
-    svg { width: 24px; height: 24px; }
+    svg { width: 20px; height: 20px; }
   }
 
   &:active {
@@ -373,6 +418,15 @@ code {
 @keyframes menu-slide {
   from { transform: translateX(100%); }
   to   { transform: translateX(0); }
+}
+
+@keyframes menu-slide-out {
+  from { transform: translateX(0); }
+  to   { transform: translateX(100%); }
+}
+
+.menu-sheet--closing {
+  animation: menu-slide-out 0.2s ease-in forwards;
 }
 
 // ── Modal passphrase ──────────────────────────────────────────────────
@@ -582,4 +636,14 @@ code {
 
   &-label { font-weight: 600; font-size: 1rem; }
   &-hint { font-size: 0.75rem; color: var(--c-muted); }
+}
+
+// Logo menu : SVG noir par défaut (filter → blanc en dark). En light, on retire le filter.
+html[data-theme='light'] .menu-sheet__logo,
+html[data-theme='auto'] .menu-sheet__logo {
+  filter: none;
+}
+
+@media (prefers-color-scheme: light) {
+  html:not([data-theme='dark']) .menu-sheet__logo { filter: none; }
 }

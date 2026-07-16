@@ -25,8 +25,10 @@ export function appBar({ title, brand = false, home = true, extra = '', menu = t
   const menuBtn = menu ? `<button class="app-bar__action" data-menu aria-label="${t('common.menu')}">${iconHtml(Menu)}</button>` : '';
   return `<header class="app-bar${detail ? ' app-bar--detail' : ''}">
       ${homeBtn}
-      <h1 class="${titleClass}">${titleHtml}</h1>
-      ${extra}
+      <div class="app-bar__center${brand ? ' brand' : ''}">
+        <h1 class="${titleClass}">${titleHtml}</h1>
+        ${extra}
+      </div>
       ${menuBtn}
     </header>`;
 }

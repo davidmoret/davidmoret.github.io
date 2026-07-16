@@ -34,7 +34,7 @@ export const STRINGS = {
     'home.favorites': 'Séances favorites',
     'home.favoritesEmpty': 'Aucune séance favorite. Ajoutes-en via <strong>Menu → Séances</strong>.',
     'home.recent': 'Dernières séances',
-    'home.seePast': 'Voir toutes les séances effectuées',
+    'home.seePast': 'Voir tout l\'historique',
     'home.backup.none': 'Aucune sauvegarde',
     'home.backup.daysAgo': 'Dernière sauvegarde il y a {n} j',
     'home.backup.remind': 'Pense à sauvegarder tes données.',
@@ -53,9 +53,7 @@ export const STRINGS = {
     'sessions.fav.remove': 'Retirer des favoris',
     'sessions.sections': '{n} sections',
 
-    'history.title': 'Séances effectuées',
-    'history.count': '{count} séance effectuée',
-    'history.count_plural': '{count} séances effectuées',
+    'history.title': 'Historique',
     'history.empty': 'Aucune séance enregistrée.',
     'history.deleteConfirm': 'Supprimer cette séance de l\u2019historique ?',
 
@@ -234,7 +232,7 @@ export const STRINGS = {
     'home.favorites': 'Favorite sessions',
     'home.favoritesEmpty': 'No favorite session. Add one via <strong>Menu → Sessions</strong>.',
     'home.recent': 'Recent sessions',
-    'home.seePast': 'See all completed sessions',
+    'home.seePast': 'See all history',
     'home.backup.none': 'No backup',
     'home.backup.daysAgo': 'Last backup {n} d ago',
     'home.backup.remind': 'Remember to back up your data.',
@@ -253,9 +251,7 @@ export const STRINGS = {
     'sessions.fav.remove': 'Remove from favorites',
     'sessions.sections': '{n} sections',
 
-    'history.title': 'Completed sessions',
-    'history.count': '{count} session completed',
-    'history.count_plural': '{count} sessions completed',
+    'history.title': 'History',
     'history.empty': 'No recorded session.',
     'history.deleteConfirm': 'Delete this session from history?',
 

@@ -8,6 +8,7 @@
   --c-muted: #8898c0;
   --c-accent: #f07048;
   --c-accent-2: #38bdf8;
+  --c-icon: #a78bfa;
   --c-warn: #f59e0b;
   --c-err: #f87171;
 
@@ -52,6 +53,7 @@ html[data-theme='light'] {
   --c-muted: #6a6560;
   --c-accent: #a83d20;
   --c-accent-2: #0284c7;
+  --c-icon: var(--c-accent);
   --c-warn: #d97706;
   --c-err: #dc2626;
 

@@ -198,6 +198,7 @@
     font-weight: 600;
     color: var(--c-txt);
     background: var(--c-panel-2);
+    border: 0;
     border-radius: var(--radius);
     padding: var(--sp-4) var(--sp-6);
     cursor: pointer;
@@ -244,6 +245,7 @@
     font-size: 0.82rem;
     color: var(--c-muted);
     background: var(--c-panel);
+    border: 0;
     border-radius: var(--radius-sm);
     padding: var(--sp-2) var(--sp-3);
     cursor: pointer;
@@ -293,7 +295,7 @@
     line-height: 1;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.02em;
-    color: var(--c-accent);
+    color: var(--mode-c, var(--c-accent));
   }
 
   &__u { font-size: 0.28em; font-weight: 500; color: var(--c-muted); }
@@ -352,6 +354,7 @@
     font-weight: 700;
     color: var(--c-txt);
     background: var(--c-panel-2);
+    border: 0;
     border-radius: var(--radius);
     padding: var(--sp-4) var(--sp-2);
     cursor: pointer;
@@ -361,7 +364,17 @@
 
     svg { width: 28px; height: 28px; }
 
-    &--main { background: var(--c-accent); color: var(--c-bg); border-radius: var(--radius-lg); }
+    &--main {
+      justify-self: center;
+      width: 68px;
+      height: 68px;
+      padding: 0;
+      border-radius: 50%;
+      background: var(--c-accent);
+      color: var(--c-bg);
+
+      svg { fill: currentColor; }
+    }
 
     // Progression appui long → terminer
     &--main.is-finishing {

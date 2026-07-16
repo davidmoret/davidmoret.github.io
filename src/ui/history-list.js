@@ -1,9 +1,11 @@
 // Rendu + câblage d'une liste d'entrées d'historique, partagé entre l'accueil,
 // l'écran historique complet et le détail d'une séance.
+import { Trash2 } from 'lucide';
 import { fmtDuration, fmtDist, escapeHtml } from './format.js';
 import { deleteHistory } from '../data/store.js';
 import { confirmDialog } from './modal.js';
 import { go } from './router.js';
+import { iconHtml } from './icon.js';
 import { t, getLang } from './i18n/index.js';
 
 // Filtre l'historique d'une séance (par slug, avec repli titre pour les
@@ -21,7 +23,7 @@ export function historyItemHtml(h) {
       <span class="history__title">${escapeHtml(h.session_title)}</span>
       <span class="history__meta">${escapeHtml(date)} — ${escapeHtml(meta)}</span>
     </div>
-    <button class="history__del" data-history-delete="${escapeHtml(h.id)}" aria-label="${t('common.delete')}">✕</button>
+    <button class="history__del" data-history-delete="${escapeHtml(h.id)}" aria-label="${t('common.delete')}">${iconHtml(Trash2)}</button>
   </li>`;
 }
 

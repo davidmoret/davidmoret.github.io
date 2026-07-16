@@ -7,7 +7,7 @@ import { historyListHtml, bindHistoryList, historyForSession } from './history-l
 import { go } from './router.js';
 import { confirmDialog } from './modal.js';
 import { appBar } from './app-bar.js';
-import { SquarePen, Share2, Trash, History } from 'lucide';
+import { SquarePen, Share2, Trash, History, Play } from 'lucide';
 import { iconHtml } from './icon.js';
 import { t } from './i18n/index.js';
 
@@ -27,7 +27,7 @@ export async function screenDetail({ slug }, outlet) {
   const canShare = canShareFiles();
 
   outlet.innerHTML = `
-    ${appBar({ title: s.title, extra: `<button class="app-bar__start btn btn--primary" data-start>${t('detail.start')}</button>` })}
+    ${appBar({ title: s.title, extra: `<button class="app-bar__start" data-start aria-label="${t('detail.start')}">${iconHtml(Play)}</button>` })}
     <main class="screen">
       ${s.description ? `<p class="lead">${escapeHtml(s.description)}</p>` : ''}
       <div class="chips">

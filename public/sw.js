@@ -2,7 +2,7 @@
 // - précache la coquille + icônes
 // - runtime cache (cache-first) des GET same-origin (assets Vite hashés inclus)
 // - fallback navigation : hors-ligne, toute navigation sert l'app depuis le cache
-const CACHE = 'ram-shell-v3';
+const CACHE = 'ram-shell-v4';
 const CORE = [
   '/', '/index.html', '/manifest.webmanifest',
   '/icon.svg', '/icon-192.png', '/icon-512.png',

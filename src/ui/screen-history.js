@@ -12,9 +12,9 @@ export async function screenHistory({ slug }, outlet) {
   const [history, def] = await Promise.all([getHistory(), slug ? getDefinition(slug) : null]);
   const sorted = [...history].sort((a, b) => b.id.localeCompare(a.id));
   const entries = slug ? historyForSession(sorted, { slug, title: def && def.title }) : sorted;
-  const heading = slug
-    ? (def ? escapeHtml(def.title) : escapeHtml(t('history.title')))
-    : { html: t('history.count', { count: `<span class="app-bar__num">${entries.length}</span>` }) };
+  const heading = slug && def
+    ? escapeHtml(def.title)
+    : escapeHtml(t('history.title'));
 
   outlet.innerHTML = `
     ${appBar({ title: heading })}

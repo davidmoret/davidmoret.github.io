@@ -46,26 +46,26 @@
 // Scoping sur html uniquement : évite que les boutons .prefs__opt (qui portent
 // eux aussi data-theme="light/dark/auto") héritent accidentellement des tokens.
 html[data-theme='light'] {
-  --c-bg: #f5f2ec;
+  --c-bg: #eaf1fb;
   --c-panel: #ffffff;
-  --c-panel-2: #ece8e0;
-  --c-border: #ddd8ce;
-  --c-txt: #1e1b18;
-  --c-muted: #6a6560;
-  --c-accent: #a83d20;
-  --c-accent-2: #0284c7;
-  --c-icon: var(--c-accent);
+  --c-panel-2: #dbe6f5;
+  --c-border: #ccdcec;
+  --c-txt: #0f172a;
+  --c-muted: #64748b;
+  --c-accent: #6366f1;
+  --c-accent-2: #0ea5e9;
+  --c-icon: #0d9488;
   --c-warn: #d97706;
   --c-err: #dc2626;
   --c-zen: #2da44e;
 
-  --c-neutral: #6a6560;
-  --c-info: #0284c7;
-  --c-success: #a83d20;
+  --c-neutral: #64748b;
+  --c-info: #0ea5e9;
+  --c-success: #6366f1;
   --c-warning: #d97706;
   --c-error: #dc2626;
 
-  --c-zone-low: #0284c7;
-  --c-zone-in: #a83d20;
+  --c-zone-low: #0ea5e9;
+  --c-zone-in: #6366f1;
   --c-zone-high: #dc2626;
 }

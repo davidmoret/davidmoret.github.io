@@ -43,7 +43,7 @@ const MODE_META = {
   cardio: { color: "var(--c-err)", icon: Heart, labelKey: 'mode.cardio' },
   perf:   { color: "var(--c-accent-2)", icon: Gauge, labelKey: 'mode.perf' },
   cad:    { color: "var(--c-warn)", icon: Activity, labelKey: 'mode.cad' },
-  zen:    { color: "var(--c-accent)", icon: Leaf, labelKey: 'mode.zen' },
+  zen:    { color: "var(--c-zen)", icon: Leaf, labelKey: 'mode.zen' },
 };
 // Chrono de section : décompte si la section se clôt au temps (cible durée),
 // sinon temps écoulé.

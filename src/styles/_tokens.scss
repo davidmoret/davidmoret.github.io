@@ -11,6 +11,7 @@
   --c-icon: #a78bfa;
   --c-warn: #f59e0b;
   --c-err: #f87171;
+  --c-zen: #3fb950;
 
   // Notifications (couleur d'accent par type)
   --c-neutral: #8898c0;
@@ -56,6 +57,7 @@ html[data-theme='light'] {
   --c-icon: var(--c-accent);
   --c-warn: #d97706;
   --c-err: #dc2626;
+  --c-zen: #2da44e;
 
   --c-neutral: #6a6560;
   --c-info: #0284c7;

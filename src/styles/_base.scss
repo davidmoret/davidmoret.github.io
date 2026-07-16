@@ -622,16 +622,18 @@ code {
   align-items: center;
   padding: var(--sp-4) var(--sp-2);
   background: var(--c-panel);
-  border: 2px solid transparent;
+  border: 1px solid transparent;
   border-radius: var(--radius);
   color: var(--c-txt);
   cursor: pointer;
   touch-action: manipulation;
 
   &.is-active {
-    border-color: var(--c-accent-2);
-    background: color-mix(in srgb, var(--c-accent-2) 12%, var(--c-panel));
-    color: var(--c-accent-2);
+    border-color: var(--c-accent);
+    background: color-mix(in srgb, var(--c-accent) 12%, var(--c-panel));
+    color: var(--c-accent);
+
+    .prefs__opt-hint { color: var(--c-txt); }
   }
 
   &-label { font-weight: 600; font-size: 1rem; }

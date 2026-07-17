@@ -1,7 +1,7 @@
 // Écran Accueil : stats globales + séances favorites + dernières séances.
 import { getDefinitions, getHistory } from '../data/store.js';
 import { aggregate } from '../stats/aggregate.js';
-import { fmtDuration, fmtDist, escapeHtml } from './format.js';
+import { escapeHtml } from './format.js';
 import { notify, flushFlash } from './notify.js';
 import { historyListHtml, bindHistoryList } from './history-list.js';
 import { go } from './router.js';

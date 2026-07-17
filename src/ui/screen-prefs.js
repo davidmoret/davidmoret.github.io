@@ -1,7 +1,6 @@
 // Écran Préférences : thème (dark / light / auto) + langue (fr / en).
 import { getThemePref, changeTheme } from './theme.js';
 import { getLang, changeLang } from './i18n/index.js';
-import { go } from './router.js';
 import { appBar } from './app-bar.js';
 import { t } from './i18n/index.js';
 

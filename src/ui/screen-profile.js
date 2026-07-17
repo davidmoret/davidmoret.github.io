@@ -3,7 +3,6 @@
 // s'affichent en continu dans le formulaire et sont persistées à l'enregistrement.
 import { getProfile, putProfile } from '../data/profile.js';
 import { escapeHtml } from './format.js';
-import { go } from './router.js';
 import { appBar } from './app-bar.js';
 import { t } from './i18n/index.js';
 

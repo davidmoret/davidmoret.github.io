@@ -377,23 +377,6 @@
       svg { fill: currentColor; }
     }
 
-    // Progression appui long → terminer
-    &--main.is-finishing {
-      background: var(--c-err);
-      color: #fff;
-
-      &::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: var(--c-panel-2);
-        transform: scaleX(calc(1 - var(--hold-pct, 0) / 100));
-        transform-origin: right;
-        transition: none;
-        pointer-events: none;
-      }
-    }
-
     &:active { transform: translateY(1px); }
     &:disabled { opacity: 0.5; }
   }

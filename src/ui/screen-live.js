@@ -15,12 +15,14 @@ import { createSessionEngine } from '../engine/session-engine.js';
 import { createRecorder } from '../engine/recorder.js';
 import { fmtDuration, fmtPace, fmtDist, escapeHtml, prettyDeviceName } from './format.js';
 import { initAudio, cue, beepShort, beepLong } from './feedback.js';
-import { Heart, Gauge, Activity, Leaf, LogOut, ChevronLeft, ChevronRight, Play, Pause, Check, Flag, FlagTriangleRight } from 'lucide';
+import { Heart, Gauge, Activity, Leaf, LogOut, ChevronLeft, ChevronRight, Play, Pause, Check } from 'lucide';
 import { icon, iconHtml } from './icon.js';
 import { DISPLAY_MODES } from '../data/display-modes.js';
 import { confirmDialog } from './modal.js';
 import { go } from './router.js';
 import { t } from './i18n/index.js';
+import { createWakeLock } from './live/wake-lock.js';
+import { createRecovery } from './live/recovery.js';
 
 const BLE_OK = typeof navigator !== 'undefined' && !!navigator.bluetooth;
 const isLocal = import.meta.env.DEV;
@@ -31,8 +33,6 @@ const DEMO_AVAILABLE = isLocal || !BLE_OK;
 // Ordre du sélecteur de modes = source unique (data/display-modes.js). Chaque
 // valeur doit avoir une entrée LAYOUT + MODE_META ci-dessous.
 const MODES = DISPLAY_MODES.map((m) => m.value);
-
-const LONG_PRESS_MS = 1500;
 
 const LAYOUT = {
   perf:    { hero: 'pace', tiles: ['spm', 'hr', 'sdist'] },
@@ -119,70 +119,15 @@ export async function screenLive({ slug }, outlet) {
 
   let sessionStarted = false;
   let saved = false;
-  let breathTimers = [];
   let lastCountdownSec = null;   // dernière seconde de décompte bipée
   let countdownArmed = false;    // décompte en cours → bip long à la fin
+
+  const wakeLock = createWakeLock(() => engine.status === 'running');
+  const recovery = createRecovery({ root: els.root, els, bus, engine });
 
   function isHrSection() {
     const s = engine.snapshot().section;
     return s && s.target.type === 'hr';
-  }
-
-  function startBreathCycle() {
-    stopBreathCycle();
-    setBreathPhase('inhale');
-  }
-
-  function setBreathPhase(phase) {
-    els.root.dataset.recoveryPhase = phase;
-    const ms = phase === 'inhale' ? 4000 : 6000;
-    const next = phase === 'inhale' ? 'exhale' : 'inhale';
-    const id = setTimeout(() => setBreathPhase(next), ms);
-    breathTimers.push(id);
-  }
-
-  function stopBreathCycle() {
-    for (const id of breathTimers) clearTimeout(id);
-    breathTimers = [];
-    delete els.root.dataset.recoveryPhase;
-  }
-
-  function renderRecovery() {
-    const m = bus.latest;
-    const s = engine.snapshot();
-    const threshold = s.hrThreshold;
-    const hr = m.hr;
-    const hasHr = hr != null;
-
-    els.recoveryHrVal.textContent = hasHr ? hr : '—';
-    els.recoveryHrVal.dataset.state = hasHr && threshold != null && hr <= threshold ? 'below' : 'above';
-    els.recoveryNoHr.hidden = hasHr;
-
-    const gaugeMax = (threshold || 180) + 40;
-    if (threshold != null) {
-      const pct = Math.min(100, Math.max(0, (threshold / gaugeMax) * 100));
-      els.recoveryGaugeMark.style.left = `${pct}%`;
-      els.recoveryGaugeLabel.style.left = `${pct}%`;
-      els.recoveryGaugeLabel.textContent = threshold;
-    }
-    if (hasHr) {
-      const hrPct = Math.min(100, Math.max(0, (hr / gaugeMax) * 100));
-      els.recoveryGaugeFill.style.width = `${hrPct}%`;
-      els.recoveryGaugeFill.style.background =
-        threshold != null && hr <= threshold ? 'var(--c-accent)' : 'var(--c-err)';
-    } else {
-      els.recoveryGaugeFill.style.width = '0%';
-    }
-  }
-
-  function updateRecoveryMode() {
-    if (isHrSection()) {
-      els.root.dataset.recovery = '';
-      startBreathCycle();
-    } else {
-      delete els.root.dataset.recovery;
-      stopBreathCycle();
-    }
   }
 
   function render() {
@@ -209,16 +154,14 @@ export async function screenLive({ slug }, outlet) {
     els.progress.style.transform = `scaleX(${s.progress || 0})`;
 
     // Toujours mettre à jour le bouton principal, quelle que soit la section.
-    if (!longPressActive) {
-      if (s.status === 'idle') setPauseBtn(Play, t('live.start'));
-      else if (s.status === 'running') setPauseBtn(Pause, t('live.pause'));
-      else if (s.status === 'paused') setPauseBtn(Play, t('live.resume'));
-      else setPauseBtn(Check, t('live.finish'));
-      els.pause.disabled = s.status === 'finished';
-    }
+    if (s.status === 'idle') setPauseBtn(Play, t('live.start'));
+    else if (s.status === 'running') setPauseBtn(Pause, t('live.pause'));
+    else if (s.status === 'paused') setPauseBtn(Play, t('live.resume'));
+    else setPauseBtn(Check, t('live.finish'));
+    els.pause.disabled = s.status === 'finished';
 
     if (isHrSection()) {
-      renderRecovery();
+      recovery.render();
       return;
     }
 
@@ -291,8 +234,8 @@ export async function screenLive({ slug }, outlet) {
     saved = true;
     sim.stop();
     recorder.stop();
-    stopBreathCycle();
-    releaseWakeLock();
+    recovery.stop();
+    wakeLock.release();
     const snap = engine.snapshot();
     if (engine.status !== 'finished') engine.finish();
     if (!recorder.samples.length) { go(`/session/${slug}`); return; }
@@ -301,73 +244,25 @@ export async function screenLive({ slug }, outlet) {
     catch (e) { console.error('Sauvegarde historique échouée :', e); go(`/session/${slug}`); }
   }
 
-  // Bouton principal : icône seule (Play/Pause/Check/Flag) + libellé accessible.
+  // Bouton principal : icône seule (Play/Pause/Check) + libellé accessible.
   function setPauseBtn(node, label) {
     els.pause.innerHTML = iconHtml(node);
     els.pause.setAttribute('aria-label', label);
   }
 
-  // --- Appui long sur Pause → Terminer -----------------------------------
-  let longPressTimer = null;
-  let longPressActive = false;
-  let longPressStart = 0;
-
-  function startLongPress() {
-    if (engine.status === 'idle' || engine.status === 'finished') return;
-    longPressActive = true;
-    longPressStart = Date.now();
-    setPauseBtn(Flag, t('live.finishing'));
-    els.pause.classList.add('is-finishing');
-    longPressTimer = setTimeout(() => {
-      longPressActive = false;
-      els.pause.classList.remove('is-finishing');
-      els.pause.style.removeProperty('--hold-pct');
-      finishAndSave();
-    }, LONG_PRESS_MS);
-  }
-
-  function cancelLongPress() {
-    if (!longPressActive) return;
-    clearTimeout(longPressTimer);
-    longPressActive = false;
-    els.pause.classList.remove('is-finishing');
-    els.pause.style.removeProperty('--hold-pct');
-    render();
-  }
-
-  function updateLongPressProgress() {
-    if (!longPressActive) return;
-    const elapsed = Date.now() - longPressStart;
-    const pct = Math.min(100, (elapsed / LONG_PRESS_MS) * 100);
-    els.pause.style.setProperty('--hold-pct', `${pct}%`);
-    requestAnimationFrame(updateLongPressProgress);
-  }
-
-  els.pause.addEventListener('pointerdown', (e) => {
-    if (e.button && e.button !== 0) return;
-    if (engine.status === 'running' || engine.status === 'paused') {
-      startLongPress();
-      requestAnimationFrame(updateLongPressProgress);
-    }
-  });
-  els.pause.addEventListener('pointerup', cancelLongPress);
-  els.pause.addEventListener('pointerleave', cancelLongPress);
-  els.pause.addEventListener('pointercancel', cancelLongPress);
-
   els.pause.addEventListener('click', () => {
-    if (longPressActive) { cancelLongPress(); return; }
     const st = engine.status;
     if (st === 'idle') {
       initAudio();
       engine.start();
       recorder.start();
       recorder.markSectionEntry(0, engine.snapshot().globalMs);
-      acquireWakeLock();
+      wakeLock.acquire();
       sessionStarted = true;
       if (demo) sim.start();
     }
-    else if (st === 'running') { engine.pause(); recorder.pause(); releaseWakeLock(); if (demo) sim.stop(); }
-    else if (st === 'paused') { engine.resume(); recorder.resume(); acquireWakeLock(); if (demo) sim.start(); }
+    else if (st === 'running') { engine.pause(); recorder.pause(); wakeLock.release(); if (demo) sim.stop(); }
+    else if (st === 'paused') { engine.resume(); recorder.resume(); wakeLock.acquire(); if (demo) sim.start(); }
   });
 
   els.recoverySkip.addEventListener('click', () => engine.next());
@@ -380,21 +275,6 @@ export async function screenLive({ slug }, outlet) {
       go(`/session/${slug}`);
     }
   });
-
-  // --- Wake Lock ---------------------------------------------------------
-  let wakeLock = null;
-  async function acquireWakeLock() {
-    if (!('wakeLock' in navigator) || wakeLock) return;
-    try { wakeLock = await navigator.wakeLock.request('screen'); }
-    catch { wakeLock = null; }
-  }
-  function releaseWakeLock() {
-    if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; }
-  }
-  function onVisibility() {
-    if (document.visibilityState === 'visible' && engine.status === 'running') acquireWakeLock();
-  }
-  document.addEventListener('visibilitychange', onVisibility);
 
   // --- Sources de données ------------------------------------------------
   function setDemo(on) {
@@ -457,9 +337,9 @@ export async function screenLive({ slug }, outlet) {
       recorder.markSectionEntry(snap.index, snap.globalMs);
       applySectionDisplay(snap.section);
       sim.setRecoveryMode(isHrSection());
-      updateRecoveryMode();
+      recovery.update(isHrSection());
     }
-    if (type === 'finished') { stopBreathCycle(); finishAndSave(); return; }
+    if (type === 'finished') { recovery.stop(); finishAndSave(); return; }
     render();
   });
 
@@ -471,12 +351,10 @@ export async function screenLive({ slug }, outlet) {
 
   return {
     cleanup() {
-      clearTimeout(longPressTimer);
-      stopBreathCycle();
+      recovery.stop();
       unsubBus();
       unsubEngine();
-      document.removeEventListener('visibilitychange', onVisibility);
-      releaseWakeLock();
+      wakeLock.dispose();
       sim.stop();
       recorder.stop();
       rower.disconnect();

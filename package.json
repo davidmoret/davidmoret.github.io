@@ -1,18 +1,28 @@
 {
   "name": "ram",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "private": true,
   "type": "module",
   "description": "RAM — Rowing Assistant : PWA hors-ligne de suivi de séances de rameur.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview --host"
+    "preview": "vite preview --host",
+    "test": "vitest run",
+    "lint": "eslint src test",
+    "format": "prettier --write src test"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.7.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.7.0",
+    "jsdom": "^29.1.1",
+    "prettier": "^3.9.5",
     "sass": "^1.77.8",
     "sharp": "^0.35.3",
-    "vite": "^5.4.8"
+    "vite": "^5.4.8",
+    "vitest": "^4.1.10"
   },
   "dependencies": {
     "lucide": "^1.24.0"

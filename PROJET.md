@@ -556,20 +556,23 @@ Audit du 2026-07-16. Corrigé dans la foulée (v0.16.1) :
   `fmtCap` qui arrondissait à la minute (90 s → « 1min »).
 
 ### À faire une prochaine fois (non bloquant)
-- ⏳ **Découper `screen-live.js`** (~540 lignes, module « à tout faire ») en
-  contrôleurs : `live/wake-lock.js`, `live/recovery.js` (breath pacer + jauge),
-  le screen devenant chef d'orchestre. **Prérequis : poser un filet de tests
-  avant** (refonte risquée à nu).
-  - 🗑️ Au passage, **retirer l'appui long « Terminer »** sur le bouton principal
-    (comportement inutilisé) : bloc `startLongPress`/`cancelLongPress`/
-    `updateLongPressProgress` + listeners `pointer*`, garde `!longPressActive`
-    dans `render()`, `clearTimeout(longPressTimer)` du cleanup, constante
-    `LONG_PRESS_MS`, icône `Flag` (import Lucide), classes SCSS `.is-finishing`
-    / `--hold-pct` (`_live.scss`) et clé i18n `live.finishing`. La sortie
-    anticipée reste couverte par la croix (data-quit) avec confirmation.
-- ⏳ **ESLint + Prettier** (config flat + script `lint`) : cohérence de style
-  entre passages LLM. Tooling, à traiter séparément.
-- 💡 **Factoriser format ↔ parse** : `session-parser` (parse) et `export.js`
-  (sérialise) sont deux sources de vérité pour durée/distance/cible FC.
+- ✅ **Filet de tests** (prérequis) : Vitest + jsdom, script `test`. Tests de
+  caractérisation round-trip parse↔format (`test/session-format.test.js`) et
+  math pure de la jauge récup (`test/recovery.test.js`). (v0.18.0)
+- ✅ **Découper `screen-live.js`** en contrôleurs : `ui/live/wake-lock.js`
+  (Wake Lock + réacquisition au retour d'onglet) et `ui/live/recovery.js`
+  (breath pacer + jauge FC, `recoveryGauge` pure testable). Le screen devient
+  chef d'orchestre. (v0.18.0)
+  - ✅ **Appui long « Terminer » retiré** : bloc `startLongPress`/`cancelLongPress`/
+    `updateLongPressProgress` + listeners `pointer*`, garde `!longPressActive`,
+    `LONG_PRESS_MS`, icônes `Flag`/`FlagTriangleRight`, SCSS `.is-finishing` /
+    `--hold-pct`, clé i18n `live.finishing`. Sortie anticipée toujours couverte
+    par la croix (`data-quit`) avec confirmation.
+- ✅ **Factoriser format ↔ parse** : nouveau `data/session-format.js` — paire
+  parse↔format par champ (durée / distance / cible FC / zone). `session-parser`
+  importe les `parse*`, `export.js` les `format*`. Plus de double vérité. (v0.18.0)
+- ✅ **ESLint + Prettier** : flat config (`eslint.config.js`) + `.prettierrc`,
+  scripts `lint` / `format`. Corrigé au passage : clé i18n `editor.field.display`
+  dupliquée (valeur `'Affichage'`/`'Display'` morte), imports inutilisés. (v0.18.0)
 - ℹ️ `strokes` : métrique décodée (`rower.js`) et émise mais non affichée —
   **volontairement conservée** dans le contrat du bus (ne pas retirer).

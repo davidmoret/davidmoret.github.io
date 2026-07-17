@@ -2,7 +2,7 @@
 import { exportBackup, importBackup, askPassphrase, getLastBackupDate, getLastImportDate } from '../data/backup.js';
 import { notify, setFlash } from './notify.js';
 import { go } from './router.js';
-import { FileDown, ArchiveRestore } from 'lucide';
+import { Upload, Download } from 'lucide';
 import { appBar } from './app-bar.js';
 import { iconHtml } from './icon.js';
 import { t, getLang } from './i18n/index.js';
@@ -24,9 +24,9 @@ export async function screenData(_params, outlet) {
       </div>
       <p class="lead">${lastBackup ? t('data.lastBackup', { date: fmtBackupDate(lastBackup) }) + ' ' + t('data.encrypted') : t('data.noBackup') + ' ' + t('data.encrypted')}</p>
       <div class="backup-actions">
-        <button class="btn btn--block" data-export-backup>${iconHtml(FileDown)} ${t('data.export')}</button>
+        <button class="btn btn--block" data-export-backup>${iconHtml(Upload)} ${t('data.export')}</button>
         <label class="btn btn--block import-btn">
-          ${iconHtml(ArchiveRestore)} ${t('data.restore')}
+          ${iconHtml(Download)} ${t('data.restore')}
           <input class="import-btn__input" type="file" accept=".rambak" data-import-backup>
         </label>
       </div>

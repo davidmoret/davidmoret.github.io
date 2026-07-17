@@ -1,8 +1,11 @@
-// Écran Gestion des données : sauvegarde (export chiffré) et restauration (import) du backup global.
+// Écran Gestion des données : sauvegarde (export chiffré), restauration (import)
+// et synchronisation cloud (Dropbox / Google Drive) du backup global.
 import { exportBackup, importBackup, askPassphrase, getLastBackupDate, getLastImportDate } from '../data/backup.js';
+import { PROVIDERS, getProvider } from '../data/cloud/index.js';
+import { syncProvider } from '../data/cloud/sync.js';
 import { notify, setFlash } from './notify.js';
 import { go } from './router.js';
-import { Upload, Download } from 'lucide';
+import { Upload, Download, Cloud, RefreshCw } from 'lucide';
 import { appBar } from './app-bar.js';
 import { iconHtml } from './icon.js';
 import { t, getLang } from './i18n/index.js';
@@ -13,8 +16,30 @@ function fmtBackupDate(iso) {
   return d.toLocaleDateString(getLang(), { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
+async function cloudStates() {
+  return Promise.all(PROVIDERS.map(async (p) => ({
+    id: p.id,
+    label: p.label,
+    configured: p.isConfigured(),
+    connected: p.isConfigured() ? await p.isConnected() : false,
+  })));
+}
+
+function providerRow(s) {
+  if (!s.configured) {
+    return `<button class="btn btn--block" disabled>${s.label} — ${t('cloud.notConfigured')}</button>`;
+  }
+  const action = s.connected ? t('cloud.disconnect') : t('cloud.connect');
+  return `<button class="btn btn--block" data-cloud-toggle="${s.id}">${iconHtml(Cloud)} ${s.label} — ${action}</button>`;
+}
+
 export async function screenData(_params, outlet) {
-  const [lastBackup, lastImport] = await Promise.all([getLastBackupDate(), getLastImportDate()]);
+  const [lastBackup, lastImport, states] = await Promise.all([
+    getLastBackupDate(),
+    getLastImportDate(),
+    cloudStates(),
+  ]);
+  const anyConnected = states.some((s) => s.connected);
 
   outlet.innerHTML = `
     ${appBar({ title: t('data.title') })}
@@ -31,6 +56,15 @@ export async function screenData(_params, outlet) {
         </label>
       </div>
       ${lastImport ? `<p class="lead">${t('data.lastImport', { date: fmtBackupDate(lastImport) })}</p>` : ''}
+
+      <div class="section-head">
+        <h2 class="section-head__title">${t('cloud.title')}</h2>
+      </div>
+      <p class="lead">${t('cloud.intro')}</p>
+      <div class="backup-actions">
+        ${states.map(providerRow).join('')}
+        ${anyConnected ? `<button class="btn btn--block btn--primary" data-cloud-sync>${iconHtml(RefreshCw)} ${t('cloud.syncNow')}</button>` : ''}
+      </div>
     </main>`;
 
   // Bouton accueil géré globalement (data-home -> go('/')).
@@ -64,5 +98,40 @@ export async function screenData(_params, outlet) {
       notify('error', t('data.restoreFailed'), t('data.restoreFailedHint'));
       e.target.value = '';
     }
+  });
+
+  // Connexion / déconnexion d'un fournisseur cloud
+  outlet.querySelectorAll('[data-cloud-toggle]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const provider = getProvider(btn.dataset.cloudToggle);
+      const connected = await provider.isConnected();
+      try {
+        if (connected) {
+          await provider.disconnect();
+          notify('success', t('cloud.disconnected', { provider: provider.label }));
+        } else {
+          await provider.authorize();
+        }
+        screenData(_params, outlet);
+      } catch (e) {
+        console.error('Cloud toggle échoué :', e);
+        notify('error', t('cloud.connectFailed'));
+      }
+    });
+  });
+
+  // Synchronisation manuelle (tous les fournisseurs connectés)
+  outlet.querySelector('[data-cloud-sync]')?.addEventListener('click', async () => {
+    for (const s of states.filter((x) => x.connected)) {
+      const provider = getProvider(s.id);
+      try {
+        const { status } = await syncProvider(provider, { silent: false });
+        if (status !== 'skipped') notify('success', t(`cloud.${status === 'up-to-date' ? 'upToDate' : status}`, { provider: provider.label }));
+      } catch (e) {
+        console.error('Sync manuelle échouée :', e);
+        notify('error', t('cloud.syncFailed'), provider.label);
+      }
+    }
+    screenData(_params, outlet);
   });
 }

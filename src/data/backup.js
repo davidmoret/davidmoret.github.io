@@ -20,6 +20,10 @@ export async function getLastBackupDate() {
 
 const setLastBackupDate = (date = new Date()) => setMeta(META_KEY, date.toISOString());
 
+// Aligne la date de backup locale sur une valeur connue (ex. après un download
+// cloud : la donnée locale correspond désormais au fichier distant).
+export const markBackupDate = (iso) => setMeta(META_KEY, iso);
+
 export async function getLastImportDate() {
   return (await getMeta(META_IMPORT_KEY)) ?? null;
 }
@@ -91,11 +95,42 @@ async function decrypt(buf, passphrase) {
   return JSON.parse(new TextDecoder().decode(plain));
 }
 
+// ── Blob chiffré réutilisable (fichier local + sync cloud) ────────────
+
+// Sérialise tout IndexedDB en un blob chiffré prêt à écrire (fichier ou cloud).
+export async function buildBackupBlob(passphrase) {
+  const data = await dumpAll();
+  return encrypt(data, passphrase);
+}
+
+// Restaure IndexedDB depuis un buffer chiffré (import fichier ou download cloud).
+export async function restoreFromBuffer(buf, passphrase) {
+  const data = await decrypt(buf, passphrase);
+  const db = await openDb();
+  const stores = ['definitions', 'history', 'profile'];
+  await new Promise((resolve, reject) => {
+    const tx = db.transaction(stores, 'readwrite');
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+    for (const name of stores) {
+      const os = tx.objectStore(name);
+      const items = data[name];
+      if (!Array.isArray(items)) continue;
+      // Le store `profile` a une clé hors-ligne ('me') : put() exige la clé explicite.
+      const outOfLine = !os.keyPath;
+      for (const item of items) {
+        if (outOfLine) os.put(item, 'me');
+        else os.put(item);
+      }
+    }
+  });
+  await setLastImportDate();
+}
+
 // ── Export ────────────────────────────────────────────────────────────
 
 export async function exportBackup(passphrase) {
-  const data = await dumpAll();
-  const encrypted = await encrypt(data, passphrase);
+  const encrypted = await buildBackupBlob(passphrase);
   const blob = new Blob([encrypted], { type: 'application/octet-stream' });
   const date = new Date().toISOString().slice(0, 10);
   const filename = `ram-backup-${date}.rambak`;
@@ -143,26 +178,7 @@ export async function exportBackup(passphrase) {
 
 export async function importBackup(file, passphrase) {
   const buf = new Uint8Array(await file.arrayBuffer());
-  const data = await decrypt(buf, passphrase);
-  const db = await openDb();
-  const stores = ['definitions', 'history', 'profile'];
-  await new Promise((resolve, reject) => {
-    const tx = db.transaction(stores, 'readwrite');
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-    for (const name of stores) {
-      const os = tx.objectStore(name);
-      const items = data[name];
-      if (!Array.isArray(items)) continue;
-      // Le store `profile` a une clé hors-ligne ('me') : put() exige la clé explicite.
-      const outOfLine = !os.keyPath;
-      for (const item of items) {
-        if (outOfLine) os.put(item, 'me');
-        else os.put(item);
-      }
-    }
-  });
-  await setLastImportDate();
+  await restoreFromBuffer(buf, passphrase);
 }
 
 // ── Modal passphrase ──────────────────────────────────────────────────

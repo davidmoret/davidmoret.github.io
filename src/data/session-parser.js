@@ -4,6 +4,7 @@
 // Chaque section a une cible de fin : durée, distance, hr, ou manuelle.
 
 import { DISPLAY_MODE_VALUES } from './display-modes.js';
+import { parseDuration, parseDistance, parseHrTarget, parseZone } from './session-format.js';
 
 export function parseSession(md, slug = '') {
   const { data, body } = extractFrontmatter(md);
@@ -29,12 +30,6 @@ function extractFrontmatter(md) {
     if (kv) data[kv[1].trim()] = kv[2].replace(/\s*#.*$/, '').trim();
   }
   return { data, body: m[2] };
-}
-
-function parseZone(v) {
-  if (!v) return null;
-  const nums = String(v).match(/\d+/g);
-  return nums && nums.length >= 2 ? [Number(nums[0]), Number(nums[1])] : null;
 }
 
 function parseSections(body) {
@@ -70,43 +65,6 @@ function parseSections(body) {
       target,
     };
   });
-}
-
-// "max-40"          → { mode: 'dynamic', delta: 40 }
-// "100"             → { mode: 'fixed', value: 100 }
-// "55%"             → { mode: 'pct', pct: 55 }
-// "karvonen-50%"    → { mode: 'karvonen', pct: 50 }
-function parseHrTarget(v) {
-  if (!v) return null;
-  const karvonen = v.match(/^karvonen-(\d+)%$/i);
-  if (karvonen) return { mode: 'karvonen', pct: Number(karvonen[1]) };
-  const pct = v.match(/^(\d+)%$/);
-  if (pct) return { mode: 'pct', pct: Number(pct[1]) };
-  const dyn = v.match(/^max-(\d+)$/i);
-  if (dyn) return { mode: 'dynamic', delta: Number(dyn[1]) };
-  const num = Number(v);
-  if (!isNaN(num) && num > 0) return { mode: 'fixed', value: num };
-  return null;
-}
-
-// "m:ss" / "mm:ss" → secondes ; "Nmin" / "Ns" tolérés.
-function parseDuration(v) {
-  if (!v) return null;
-  const clock = v.match(/^(\d+):(\d{1,2})$/);
-  if (clock) return Number(clock[1]) * 60 + Number(clock[2]);
-  const unit = v.match(/^(\d+)\s*(min|s)?$/i);
-  if (unit) return unit[2] && unit[2].toLowerCase() === 'min' ? Number(unit[1]) * 60 : Number(unit[1]);
-  return null;
-}
-
-// "500m" / "1.5km" → mètres.
-function parseDistance(v) {
-  if (!v) return null;
-  const km = v.match(/^([\d.]+)\s*km$/i);
-  if (km) return Math.round(parseFloat(km[1]) * 1000);
-  const m = v.match(/^([\d.]+)\s*m$/i);
-  if (m) return Math.round(parseFloat(m[1]));
-  return null;
 }
 
 export function slugify(s) {

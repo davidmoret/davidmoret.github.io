@@ -1,6 +1,8 @@
 // Partage d'une séance (définition) en fichier texte lisible via Web Share API.
 // Pas d'export d'historique ici : la sauvegarde/restauration passe par le backup global.
 
+import { formatDuration, formatDistance, formatHrTarget, formatZone } from './session-format.js';
+
 // ── Séance → texte ────────────────────────────────────────────────────
 
 export function sessionToMarkdown(s) {
@@ -8,7 +10,7 @@ export function sessionToMarkdown(s) {
   lines.push(`title: ${s.title}`);
   if (s.type) lines.push(`type: ${s.type}`);
   if (s.description) lines.push(`description: ${s.description}`);
-  if (s.targetHrZone) lines.push(`target_hr_zone: [${s.targetHrZone[0]}, ${s.targetHrZone[1]}]`);
+  if (s.targetHrZone) lines.push(`target_hr_zone: ${formatZone(s.targetHrZone)}`);
   if (s.display && s.display !== 'perf') lines.push(`display: ${s.display}`);
   lines.push('---');
 
@@ -16,40 +18,20 @@ export function sessionToMarkdown(s) {
     lines.push('');
     lines.push(`## ${sec.name}`);
     if (sec.target.type === 'hr') {
-      const hrVal = formatHrTarget(sec.target);
-      lines.push(`- cible_fc: ${hrVal}`);
-      if (sec.target.cap) lines.push(`- duree: ${fmtSec(sec.target.cap)}`);
+      lines.push(`- cible_fc: ${formatHrTarget(sec.target)}`);
+      if (sec.target.cap) lines.push(`- duree: ${formatDuration(sec.target.cap)}`);
     } else if (sec.target.type === 'duration') {
-      lines.push(`- duree: ${fmtSec(sec.target.value)}`);
+      lines.push(`- duree: ${formatDuration(sec.target.value)}`);
     } else if (sec.target.type === 'distance') {
-      lines.push(`- distance: ${fmtDistMd(sec.target.value)}`);
+      lines.push(`- distance: ${formatDistance(sec.target.value)}`);
     }
-    if (sec.targetHrZone) lines.push(`- target_hr_zone: [${sec.targetHrZone[0]}, ${sec.targetHrZone[1]}]`);
+    if (sec.targetHrZone) lines.push(`- target_hr_zone: ${formatZone(sec.targetHrZone)}`);
     if (sec.cadence) lines.push(`- cadence: ${sec.cadence}`);
     if (sec.display) lines.push(`- display: ${sec.display}`);
     if (sec.note) lines.push(`- note: ${sec.note}`);
   }
 
   return lines.join('\n') + '\n';
-}
-
-function formatHrTarget(t) {
-  if (t.mode === 'dynamic') return `max-${t.delta}`;
-  if (t.mode === 'fixed') return String(t.value);
-  if (t.mode === 'pct') return `${t.pct}%`;
-  if (t.mode === 'karvonen') return `karvonen-${t.pct}%`;
-  return '100';
-}
-
-function fmtSec(s) {
-  const m = Math.floor(s / 60);
-  const sec = s % 60;
-  return `${m}:${String(sec).padStart(2, '0')}`;
-}
-
-function fmtDistMd(m) {
-  if (m >= 1000 && m % 1000 === 0) return `${m / 1000}km`;
-  return `${m}m`;
 }
 
 // ── Partager un fichier séance ────────────────────────────────────────

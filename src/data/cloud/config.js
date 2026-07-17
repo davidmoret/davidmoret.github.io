@@ -13,13 +13,13 @@ export const REMOTE_FILENAME = 'ram-backup.rambak';
 export const REDIRECT_URI = `${location.origin}/`;
 
 export const DROPBOX = {
-  clientId: '', // App key Dropbox
+  clientId: '55nh1es71lgqt4z', // App key Dropbox
   authUrl: 'https://www.dropbox.com/oauth2/authorize',
   tokenUrl: 'https://api.dropboxapi.com/oauth2/token',
 };
 
 export const GOOGLE = {
-  clientId: '', // Client ID Google (OAuth Web)
+  clientId: '1029047383812-sjif18vqoja04qnjlgprhh16n2kgreid.apps.googleusercontent.com', // Client ID Google (OAuth Web)
   scope: 'https://www.googleapis.com/auth/drive.appdata',
 };
 

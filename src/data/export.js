@@ -26,6 +26,7 @@ export function sessionToMarkdown(s) {
     }
     if (sec.targetHrZone) lines.push(`- target_hr_zone: [${sec.targetHrZone[0]}, ${sec.targetHrZone[1]}]`);
     if (sec.cadence) lines.push(`- cadence: ${sec.cadence}`);
+    if (sec.display) lines.push(`- display: ${sec.display}`);
     if (sec.note) lines.push(`- note: ${sec.note}`);
   }
 

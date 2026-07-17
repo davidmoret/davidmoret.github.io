@@ -147,6 +147,7 @@ function emptySection(n) {
     hrZoneLow: '',
     hrZoneHigh: '',
     cadence: '',
+    display: '',
     note: '',
   };
 }
@@ -166,6 +167,7 @@ function sectionToForm(s) {
     hrZoneLow: s.targetHrZone?.[0] ?? '',
     hrZoneHigh: s.targetHrZone?.[1] ?? '',
     cadence: s.cadence || '',
+    display: s.display || '',
     note: s.note || '',
   };
 
@@ -235,11 +237,19 @@ function sectionHtml(s, idx) {
           value="${escapeHtml(s.cadence)}" placeholder="ex. 24-26 spm">
       </label>
       <label class="profile-field editor__field">
-        <span class="profile-field__label">${t('editor.field.note')}</span>
-        <input class="profile-field__input" type="text" name="secNote_${idx}"
-          value="${escapeHtml(s.note)}" placeholder="${t('common.optional')}">
+        <span class="profile-field__label">${t('editor.field.display')}</span>
+        <select class="profile-field__input" name="secDisplay_${idx}">
+          <option value="">${t('editor.field.displayInherit')}</option>
+          ${DISPLAY_MODES.map(m => `<option value="${m.value}"${m.value === s.display ? ' selected' : ''}>${m.label}</option>`).join('')}
+        </select>
       </label>
     </div>
+
+    <label class="profile-field editor__field">
+      <span class="profile-field__label">${t('editor.field.note')}</span>
+      <input class="profile-field__input" type="text" name="secNote_${idx}"
+        value="${escapeHtml(s.note)}" placeholder="${t('common.optional')}">
+    </label>
   </div>`;
 }
 
@@ -336,6 +346,7 @@ function formToSession(fd, state) {
     const name = fd.get(`secName_${i}`)?.trim() || t('editor.section.default', { n: i + 1 });
     const targetType = fd.get(`secTarget_${i}`);
     const cadence = fd.get(`secCadence_${i}`)?.trim() || null;
+    const display = fd.get(`secDisplay_${i}`) || null;
     const note = fd.get(`secNote_${i}`)?.trim() || null;
 
     const secHrZoneLow = fd.get(`secHrZoneLow_${i}`);
@@ -381,7 +392,7 @@ function formToSession(fd, state) {
     let distance = null;
     if (targetType === 'distance') distance = target.value;
 
-    return { name, duree, distance, cadence, targetHrZone: sectionHrZone, note, target };
+    return { name, duree, distance, cadence, display, targetHrZone: sectionHrZone, note, target };
   });
 
   const display = fd.get('display') || 'perf';

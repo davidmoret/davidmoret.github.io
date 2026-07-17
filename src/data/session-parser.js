@@ -64,6 +64,7 @@ function parseSections(body) {
       duree,
       distance,
       cadence: props.cadence || null,
+      display: DISPLAY_MODE_VALUES.includes(props.display) ? props.display : null,
       targetHrZone: parseZone(props.target_hr_zone),
       note: props.note || null,
       target,

@@ -77,7 +77,7 @@ export async function screenLive({ slug }, outlet) {
   }
 
   const profile = await getProfile();
-  let mode = session.display || MODES[0];
+  let mode = (session.sections[0] && session.sections[0].display) || session.display || MODES[0];
   let demo = !BLE_OK;
   const bus = createMetricBus();
   const engine = createSessionEngine(session, profile);
@@ -278,6 +278,14 @@ export async function screenLive({ slug }, outlet) {
     render();
   }
 
+  // À l'entrée d'une section, on applique son `display:` s'il est défini, sinon
+  // on revient au mode global de la séance. Un changement de mode manuel tient
+  // donc jusqu'à la section suivante, puis la séance reprend la main.
+  function applySectionDisplay(section) {
+    const target = (section && section.display) || session.display || MODES[0];
+    if (target !== mode) setMode(target);
+  }
+
   async function finishAndSave() {
     if (saved) return;
     saved = true;
@@ -447,6 +455,7 @@ export async function screenLive({ slug }, outlet) {
       lastCountdownSec = null;
       const snap = engine.snapshot();
       recorder.markSectionEntry(snap.index, snap.globalMs);
+      applySectionDisplay(snap.section);
       sim.setRecoveryMode(isHrSection());
       updateRecoveryMode();
     }

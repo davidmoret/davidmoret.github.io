@@ -1,0 +1,81 @@
+---
+title: Morning
+type: routine
+description: Mise en route musculaire
+target_hr_zone: [130, 160]
+display: zen
+---
+
+## 1/4 coulisse
+- duree: 1:00
+- note: mains en supination
+
+## 1/2 coulisse
+- duree: 1:00
+- note: mains en pronation
+
+## 3/4 coulisse
+- duree: 1:00
+- note: mains en supination
+
+## longueur
+- duree: 1:00
+- note: mains en pronation
+
+## 1/4 + longueur
+- duree: 1:00
+- note: alterner 1/4 coulisse et longueur
+
+## 1/2 + longueur
+- duree: 1:00
+- note: alterner 1/2 coulisse et longueur
+
+## 3/4 + longueur
+- duree: 1:00
+- note: alterner 3/4 coulisse et longueur
+
+## longueur
+- duree: 1:00
+
+## longueur
+- duree: 1:00
+- note: accentuer les bras
+
+## longueur
+- duree: 1:00
+- note: accentuer 1/4 arrière
+
+## longueur
+- duree: 1:00
+- note: accentuer 1/2 arrière
+
+## longueur 26
+- duree: 1:00
+- cadence: 26
+- display: cad
+- note: longueur en cadence 26
+
+## Récupération
+- duree: 0:30
+
+## longueur 28
+- duree: 1:00
+- cadence: 28
+- display: cad
+- note: longueur en cadence 28
+
+## Récupération
+- duree: 0:30
+
+## longueur 30
+- duree: 1:00
+- cadence: 30
+- display: cad
+- note: longueur en cadence 30
+
+## Récupération
+- duree: 0:30
+
+## Retour au calme
+- cible_fc: max-40
+- duree: 5:00

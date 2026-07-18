@@ -98,6 +98,7 @@ function render(outlet, state) {
     </main>`;
 
   outlet.querySelector('[data-add-section]').addEventListener('click', () => {
+    syncStateFromDom(outlet, state);
     state.sections.push(emptySection(state.sections.length + 1));
     render(outlet, state);
   });
@@ -105,6 +106,7 @@ function render(outlet, state) {
   outlet.querySelector('[data-sections]').addEventListener('click', (e) => {
     const btn = e.target.closest('[data-remove-section]');
     if (!btn) return;
+    syncStateFromDom(outlet, state);
     state.sections.splice(Number(btn.dataset.removeSection), 1);
     render(outlet, state);
   });
@@ -112,11 +114,13 @@ function render(outlet, state) {
   outlet.querySelector('[data-sections]').addEventListener('change', (e) => {
     const sel = e.target.closest('[data-target-type]');
     if (sel) {
+      syncStateFromDom(outlet, state);
       state.sections[Number(sel.dataset.targetType)].targetType = sel.value;
       render(outlet, state);
     }
     const hr = e.target.closest('[data-hr-mode]');
     if (hr) {
+      syncStateFromDom(outlet, state);
       state.sections[Number(hr.dataset.hrMode)].hrMode = hr.value;
       render(outlet, state);
     }
@@ -127,6 +131,41 @@ function render(outlet, state) {
     const fd = new FormData(e.target);
     const session = formToSession(fd, state);
     putDefinition(session).then(() => go(`/session/${session.slug}`));
+  });
+}
+
+// Recopie les valeurs saisies dans le DOM vers `state` avant un re-render,
+// sinon l'ajout/suppression de section réinitialiserait tout le formulaire.
+function syncStateFromDom(outlet, state) {
+  const form = outlet.querySelector('[data-form]');
+  if (!form) return;
+  const fd = new FormData(form);
+  const g = (k) => fd.get(k) ?? '';
+
+  state.title = g('title');
+  state.type = g('type');
+  state.description = g('description');
+  state.display = g('display') || state.display;
+  state.hrZoneLow = g('hrZoneLow');
+  state.hrZoneHigh = g('hrZoneHigh');
+
+  state.sections.forEach((s, i) => {
+    s.name = g(`secName_${i}`);
+    s.targetType = g(`secTarget_${i}`) || s.targetType;
+    s.hrZoneLow = g(`secHrZoneLow_${i}`);
+    s.hrZoneHigh = g(`secHrZoneHigh_${i}`);
+    s.cadence = g(`secCadence_${i}`);
+    s.display = g(`secDisplay_${i}`);
+    s.note = g(`secNote_${i}`);
+    s.hrMode = g(`secHrMode_${i}`) || s.hrMode;
+    // Champs conditionnels : présents dans le DOM seulement si leur mode est actif.
+    if (fd.has(`secDurMin_${i}`)) s.durationMin = g(`secDurMin_${i}`);
+    if (fd.has(`secDurSec_${i}`)) s.durationSec = g(`secDurSec_${i}`);
+    if (fd.has(`secDist_${i}`)) s.distance = g(`secDist_${i}`);
+    if (fd.has(`secDistUnit_${i}`)) s.distanceUnit = g(`secDistUnit_${i}`);
+    if (fd.has(`secHrDelta_${i}`)) s.hrDelta = g(`secHrDelta_${i}`);
+    if (fd.has(`secHrFixed_${i}`)) s.hrFixed = g(`secHrFixed_${i}`);
+    if (fd.has(`secHrPct_${i}`)) s.hrPct = g(`secHrPct_${i}`);
   });
 }
 

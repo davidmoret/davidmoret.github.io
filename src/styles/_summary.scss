@@ -42,6 +42,17 @@
     color: var(--c-muted);
     margin-top: var(--sp-1);
   }
+
+  &--insignificant {
+    opacity: 0.55;
+  }
+
+  &__note {
+    margin: var(--sp-2) 0 0;
+    font-size: 0.72rem;
+    color: var(--c-muted);
+    text-align: center;
+  }
 }
 
 .spark {

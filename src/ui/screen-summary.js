@@ -66,12 +66,14 @@ function stat(value, key) {
 
 function hrrBlock(hrr) {
   if (!hrr) return '';
+  // Fail-open sur les anciennes entrées sans le champ significant.
+  const insignificant = hrr.significant === false;
   const hrr60 = hrr.hrr60 != null ? `${hrr.hrr60} bpm` : '—';
   const hrr120 = hrr.hrr120 != null ? `${hrr.hrr120} bpm` : '—';
-  const quality60 = hrrQuality(hrr.hrr60);
-  const quality120 = hrrQuality(hrr.hrr120);
+  const quality60 = insignificant ? '' : hrrQuality(hrr.hrr60);
+  const quality120 = insignificant ? '' : hrrQuality(hrr.hrr120);
   return `
-    <section class="hrr">
+    <section class="hrr${insignificant ? ' hrr--insignificant' : ''}">
       <div class="hrr__title">${t('summary.hrr.title')}</div>
       <div class="hrr__grid">
         <div class="hrr__item">
@@ -87,6 +89,7 @@ function hrrBlock(hrr) {
           <span class="hrr__key">${t('summary.hrr.start')}</span>
         </div>
       </div>
+      ${insignificant ? `<p class="hrr__note">${t('summary.hrr.insignificant')}</p>` : ''}
     </section>`;
 }
 

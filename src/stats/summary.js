@@ -2,8 +2,13 @@
 // au format JSON de PROJET.md §7, à partir des échantillons du recorder.
 // Calcule aussi le HRR (Heart Rate Recovery) si une section hr est présente.
 import { fmtPace } from '../ui/format.js';
+import { hrMax } from '../data/profile.js';
 
-export function buildSummary(session, samples, globalMs, sectionEntryTs = {}) {
+// Sous ce % de la FCmax à l'entrée en récup, la chute de FC n'est pas
+// physiologiquement significative (cf. score de récupération parasympathique).
+const HRR_MIN_INTENSITY = 0.70;
+
+export function buildSummary(session, samples, globalMs, sectionEntryTs = {}, profile = null) {
   const duration_s = Math.round(globalMs / 1000);
   const distance_m = lastNonNull(samples, 'dist') ?? 0;
 
@@ -11,7 +16,7 @@ export function buildSummary(session, samples, globalMs, sectionEntryTs = {}) {
   const spmValues = pluck(samples, 'spm');
   const paceAvgSec = distance_m > 0 ? (duration_s / distance_m) * 500 : mean(pluck(samples, 'pace'));
 
-  const hrr = computeHRR(session, samples, sectionEntryTs);
+  const hrr = computeHRR(session, samples, sectionEntryTs, profile);
 
   return {
     id: new Date().toISOString(),
@@ -33,7 +38,7 @@ export function buildSummary(session, samples, globalMs, sectionEntryTs = {}) {
 
 // Heart Rate Recovery : chute de FC à +60s et +120s après l'entrée
 // dans la première section de type hr.
-function computeHRR(session, samples, sectionEntryTs) {
+function computeHRR(session, samples, sectionEntryTs, profile) {
   const hrSectionIdx = session.sections.findIndex((s) => s.target.type === 'hr');
   if (hrSectionIdx < 0) return null;
   const entrySec = sectionEntryTs[hrSectionIdx];
@@ -46,15 +51,20 @@ function computeHRR(session, samples, sectionEntryTs) {
   const hr60 = hrAt(samples, entrySec + 60);
   const hr120 = hrAt(samples, entrySec + 120);
 
+  // Fail-open : sans FCmax connue, on ne peut juger la significativité → on affiche.
+  const max = profile ? hrMax(profile) : null;
+  const significant = !max || hrAtEntry >= max * HRR_MIN_INTENSITY;
+
   return {
     hrStart: hrAtEntry,
     hrr60: hr60 != null ? hrAtEntry - hr60 : null,
     hrr120: hr120 != null ? hrAtEntry - hr120 : null,
+    significant,
   };
 }
 
 function hrAt(samples, t) {
-  // Trouve le sample le plus proche à t±1s
+  // Trouve le sample le plus proche à t±2s
   let best = null;
   let bestDist = Infinity;
   for (const s of samples) {

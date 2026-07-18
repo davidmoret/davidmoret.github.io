@@ -253,7 +253,7 @@ export async function screenLive({ slug }, outlet) {
     const snap = engine.snapshot();
     if (engine.status !== 'finished') engine.finish();
     if (!recorder.samples.length) { go(`/session/${slug}`); return; }
-    const entry = buildSummary(session, recorder.samples, snap.globalMs, recorder.sectionEntryTs);
+    const entry = buildSummary(session, recorder.samples, snap.globalMs, recorder.sectionEntryTs, profile);
     try { await putHistory(entry); go(`/summary/${encodeURIComponent(entry.id)}`); }
     catch (e) { console.error('Sauvegarde historique échouée :', e); go(`/session/${slug}`); }
   }

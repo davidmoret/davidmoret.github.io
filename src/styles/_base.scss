@@ -274,10 +274,28 @@ code {
     &::placeholder { color: var(--c-muted); }
   }
 
+  // Flèche native masquée + chevron custom décollé de la bordure.
+  select#{&}__input {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: var(--sp-6);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right var(--sp-3) center;
+  }
+
   &__hint {
     font-size: 0.75rem;
     color: var(--c-muted);
   }
+}
+
+.profile-row {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: flex-start;
+
+  .profile-field { flex: 1; min-width: 0; }
 }
 
 .profile-ok {

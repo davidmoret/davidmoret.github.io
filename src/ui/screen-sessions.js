@@ -5,7 +5,7 @@ import { parseSession } from '../data/session-parser.js';
 import { escapeHtml } from './format.js';
 import { notify } from './notify.js';
 import { go } from './router.js';
-import { Star, ChevronRight, CirclePlus, FileDown } from 'lucide';
+import { Star, ChevronRight, Pencil, FileDown } from 'lucide';
 import { appBar } from './app-bar.js';
 import { iconHtml } from './icon.js';
 import { t } from './i18n/index.js';
@@ -18,7 +18,7 @@ export async function screenSessions(_params, outlet) {
     <main class="screen">
       <div class="detail-actions">
         <div class="editor__row">
-          <button class="btn btn--block" data-new>${iconHtml(CirclePlus)} ${t('sessions.new')}</button>
+          <button class="btn btn--block" data-new>${iconHtml(Pencil)} ${t('sessions.new')}</button>
           <label class="btn btn--block import-btn">
             ${iconHtml(FileDown)} ${t('sessions.import')}
             <input id="import" class="import-btn__input" type="file" accept=".txt,text/plain">
@@ -72,7 +72,7 @@ export async function screenSessions(_params, outlet) {
 }
 
 function cardHtml(s) {
-  const meta = [s.type, t('sessions.sections', { n: s.sections.length })].filter(Boolean).join(' · ');
+  const meta = t('sessions.sections', { n: s.sections.length });
   const fav = !!s.favorite;
   return `<li class="card" data-slug="${escapeHtml(s.slug)}" role="button" tabindex="0">
     <button class="card__fav${fav ? ' is-active' : ''}" data-fav="${escapeHtml(s.slug)}"

@@ -99,7 +99,7 @@ export async function screenHome(_params, outlet) {
 }
 
 function cardHtml(s) {
-  const meta = [s.type, t('sessions.sections', { n: s.sections.length })].filter(Boolean).join(' · ');
+  const meta = t('sessions.sections', { n: s.sections.length });
   return `<li class="card" data-slug="${escapeHtml(s.slug)}" role="button" tabindex="0">
     <div class="card__body">
       <h3 class="card__title">${escapeHtml(s.title)}</h3>

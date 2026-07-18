@@ -13,6 +13,10 @@
   --c-err: #f87171;
   --c-zen: #3fb950;
 
+  // Couleurs métriques (hue stable, non redéfini par thème)
+  --c-cadence: #f07048;
+  --c-hr: #ec4899;
+
   // Notifications (couleur d'accent par type)
   --c-neutral: #8898c0;
   --c-info: #38bdf8;
@@ -46,8 +50,8 @@
 // Scoping sur html uniquement : évite que les boutons .prefs__opt (qui portent
 // eux aussi data-theme="light/dark/auto") héritent accidentellement des tokens.
 html[data-theme='light'] {
-  --c-bg: #eaf1fb;
-  --c-panel: #ffffff;
+  --c-bg: #ffffff;
+  --c-panel: #eaf1fb;
   --c-panel-2: #dbe6f5;
   --c-border: #ccdcec;
   --c-txt: #0f172a;

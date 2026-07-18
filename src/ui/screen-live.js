@@ -93,6 +93,8 @@ export async function screenLive({ slug }, outlet) {
     counterCur: outlet.querySelector('[data-counter-cur]'),
     counterTot: outlet.querySelector('[data-counter-tot]'),
     sectionName: outlet.querySelector('[data-section-name]'),
+    sectionCadence: outlet.querySelector('[data-section-cadence]'),
+    sectionHr: outlet.querySelector('[data-section-hr]'),
     sectionNote: outlet.querySelector('[data-section-note]'),
     next: outlet.querySelector('[data-next-label]'),
     progress: outlet.querySelector('[data-progress]'),
@@ -138,6 +140,18 @@ export async function screenLive({ slug }, outlet) {
     els.counterCur.textContent = Math.min(s.index + 1, s.total);
     els.counterTot.textContent = s.total;
     els.sectionName.textContent = s.section ? s.section.name : '—';
+    if (s.section && s.section.cadence) {
+      els.sectionCadence.textContent = `${t('detail.cadence')} ${s.section.cadence}`;
+      els.sectionCadence.hidden = false;
+    } else {
+      els.sectionCadence.hidden = true;
+    }
+    if (s.section && s.section.targetHrZone) {
+      els.sectionHr.textContent = t('detail.targetHr', { lo: s.section.targetHrZone[0], hi: s.section.targetHrZone[1] });
+      els.sectionHr.hidden = false;
+    } else {
+      els.sectionHr.hidden = true;
+    }
     if (s.section && s.section.note) {
       els.sectionNote.textContent = s.section.note;
       els.sectionNote.hidden = false;
@@ -383,6 +397,8 @@ function template() {
     <div class="live__section">
       <div class="live__section-head">
         <span class="live__section-name" data-section-name>—</span>
+        <span class="live__section-cadence" data-section-cadence hidden></span>
+        <span class="live__section-hr" data-section-hr hidden></span>
         <span class="live__section-note" data-section-note hidden></span>
       </div>
       <span class="live__next" data-next-label></span>

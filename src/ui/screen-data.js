@@ -8,6 +8,7 @@ import { go } from './router.js';
 import { Upload, Download, Cloud, RefreshCw } from 'lucide';
 import { appBar } from './app-bar.js';
 import { iconHtml } from './icon.js';
+import { brandIconHtml, hasBrandIcon } from './brand-icons.js';
 import { t, getLang } from './i18n/index.js';
 
 function fmtBackupDate(iso) {
@@ -30,7 +31,8 @@ function providerRow(s) {
     return `<button class="btn btn--block" disabled>${s.label} — ${t('cloud.notConfigured')}</button>`;
   }
   const action = s.connected ? t('cloud.disconnect') : t('cloud.connect');
-  return `<button class="btn btn--block" data-cloud-toggle="${s.id}">${iconHtml(Cloud)} ${s.label} — ${action}</button>`;
+  const icon = hasBrandIcon(s.id) ? brandIconHtml(s.id) : iconHtml(Cloud);
+  return `<button class="btn btn--block" data-cloud-toggle="${s.id}">${icon} ${s.label} — ${action}</button>`;
 }
 
 export async function screenData(_params, outlet) {

@@ -2,6 +2,7 @@
 // sans écrire de Markdown. Produit le même objet session que le parser.
 
 import { getDefinition, putDefinition } from '../data/store.js';
+import { getProfile, karvonenBase } from '../data/profile.js';
 import { slugify } from '../data/session-parser.js';
 import { DISPLAY_MODES } from '../data/display-modes.js';
 import { escapeHtml } from './format.js';
@@ -18,25 +19,38 @@ const TARGET_TYPES = [
 
 const HR_MODES = [
   { value: 'dynamic', labelKey: 'hrMode.dynamic' },
-  { value: 'fixed', labelKey: 'hrMode.fixed' },
   { value: 'pct', labelKey: 'hrMode.pct' },
   { value: 'karvonen', labelKey: 'hrMode.karvonen' },
 ];
 
+// Karvonen par défaut si le profil le permet (FCmax + FCrepos), sinon max−N.
+function defaultHrMode(profile) {
+  return karvonenBase(profile) ? 'karvonen' : 'dynamic';
+}
+
+// Normalise un mode hérité : 'fixed' (option retirée) retombe sur le défaut.
+function normalizeHrMode(mode, defHr) {
+  return HR_MODES.some((m) => m.value === mode) ? mode : defHr;
+}
+
 export async function screenEditor({ slug }, outlet) {
-  const existing = slug ? await getDefinition(slug) : null;
+  const [existing, profile] = await Promise.all([
+    slug ? getDefinition(slug) : null,
+    getProfile(),
+  ]);
+  const defHr = defaultHrMode(profile);
   const sections = existing
-    ? existing.sections.map(sectionToForm)
-    : [emptySection(1)];
+    ? existing.sections.map((s) => sectionToForm(s, defHr))
+    : [emptySection(1, defHr)];
 
   render(outlet, {
     title: existing?.title || '',
-    type: existing?.type || '',
     description: existing?.description || '',
     display: existing?.display || 'perf',
     hrZoneLow: existing?.targetHrZone?.[0] ?? '',
     hrZoneHigh: existing?.targetHrZone?.[1] ?? '',
     sections,
+    defaultHrMode: defHr,
     slug: existing?.slug || '',
   });
 }
@@ -53,24 +67,18 @@ function render(outlet, state) {
         </label>
 
         <div class="editor__row">
-          <label class="profile-field editor__field">
-            <span class="profile-field__label">${t('editor.field.type')}</span>
-            <input class="profile-field__input" type="text" name="type"
-              value="${escapeHtml(state.type)}" placeholder="ex. intervalles">
-          </label>
-          <label class="profile-field editor__field">
+          <label class="profile-field editor__field editor__field--25">
             <span class="profile-field__label">${t('editor.field.display')}</span>
             <select class="profile-field__input" name="display">
               ${DISPLAY_MODES.map(m => `<option value="${m.value}"${m.value === state.display ? ' selected' : ''}>${m.label}</option>`).join('')}
             </select>
           </label>
+          <label class="profile-field editor__field editor__field--75">
+            <span class="profile-field__label">${t('editor.field.description')}</span>
+            <input class="profile-field__input" type="text" name="description"
+              value="${escapeHtml(state.description)}" placeholder="${t('common.optional')}">
+          </label>
         </div>
-
-        <label class="profile-field">
-          <span class="profile-field__label">${t('editor.field.description')}</span>
-          <input class="profile-field__input" type="text" name="description"
-            value="${escapeHtml(state.description)}" placeholder="${t('common.optional')}">
-        </label>
 
         <div class="profile-field">
           <span class="profile-field__label">${t('editor.field.hrZone')} <small>${t('editor.field.hrZoneHint')}</small></span>
@@ -99,7 +107,7 @@ function render(outlet, state) {
 
   outlet.querySelector('[data-add-section]').addEventListener('click', () => {
     syncStateFromDom(outlet, state);
-    state.sections.push(emptySection(state.sections.length + 1));
+    state.sections.push(emptySection(state.sections.length + 1, state.defaultHrMode));
     render(outlet, state);
   });
 
@@ -143,7 +151,6 @@ function syncStateFromDom(outlet, state) {
   const g = (k) => fd.get(k) ?? '';
 
   state.title = g('title');
-  state.type = g('type');
   state.description = g('description');
   state.display = g('display') || state.display;
   state.hrZoneLow = g('hrZoneLow');
@@ -152,8 +159,8 @@ function syncStateFromDom(outlet, state) {
   state.sections.forEach((s, i) => {
     s.name = g(`secName_${i}`);
     s.targetType = g(`secTarget_${i}`) || s.targetType;
-    s.hrZoneLow = g(`secHrZoneLow_${i}`);
-    s.hrZoneHigh = g(`secHrZoneHigh_${i}`);
+    if (fd.has(`secHrZoneLow_${i}`)) s.hrZoneLow = g(`secHrZoneLow_${i}`);
+    if (fd.has(`secHrZoneHigh_${i}`)) s.hrZoneHigh = g(`secHrZoneHigh_${i}`);
     s.cadence = g(`secCadence_${i}`);
     s.display = g(`secDisplay_${i}`);
     s.note = g(`secNote_${i}`);
@@ -164,14 +171,13 @@ function syncStateFromDom(outlet, state) {
     if (fd.has(`secDist_${i}`)) s.distance = g(`secDist_${i}`);
     if (fd.has(`secDistUnit_${i}`)) s.distanceUnit = g(`secDistUnit_${i}`);
     if (fd.has(`secHrDelta_${i}`)) s.hrDelta = g(`secHrDelta_${i}`);
-    if (fd.has(`secHrFixed_${i}`)) s.hrFixed = g(`secHrFixed_${i}`);
     if (fd.has(`secHrPct_${i}`)) s.hrPct = g(`secHrPct_${i}`);
   });
 }
 
 // ── Form state helpers ────────────────────────────────────────────────
 
-function emptySection(n) {
+function emptySection(n, defHr = 'dynamic') {
   return {
     name: t('editor.section.default', { n }),
     targetType: 'duration',
@@ -179,9 +185,8 @@ function emptySection(n) {
     durationSec: '',
     distance: '',
     distanceUnit: 'm',
-    hrMode: 'dynamic',
+    hrMode: defHr,
     hrDelta: '40',
-    hrFixed: '',
     hrPct: '',
     hrZoneLow: '',
     hrZoneHigh: '',
@@ -191,7 +196,7 @@ function emptySection(n) {
   };
 }
 
-function sectionToForm(s) {
+function sectionToForm(s, defHr = 'dynamic') {
   const sec = {
     name: s.name || '',
     targetType: s.target.type,
@@ -199,9 +204,8 @@ function sectionToForm(s) {
     durationSec: '',
     distance: '',
     distanceUnit: 'm',
-    hrMode: s.target.mode || 'dynamic',
+    hrMode: normalizeHrMode(s.target.mode, defHr),
     hrDelta: '',
-    hrFixed: '',
     hrPct: '',
     hrZoneLow: s.targetHrZone?.[0] ?? '',
     hrZoneHigh: s.targetHrZone?.[1] ?? '',
@@ -224,10 +228,8 @@ function sectionToForm(s) {
     }
   }
   if (s.target.type === 'hr') {
-    sec.hrMode = s.target.mode || 'dynamic';
-    if (s.target.mode === 'dynamic') sec.hrDelta = String(s.target.delta || 40);
-    if (s.target.mode === 'fixed') sec.hrFixed = String(s.target.value || '');
-    if (s.target.mode === 'pct' || s.target.mode === 'karvonen') sec.hrPct = String(s.target.pct || '');
+    if (sec.hrMode === 'dynamic') sec.hrDelta = String(s.target.delta || 40);
+    if (sec.hrMode === 'pct' || sec.hrMode === 'karvonen') sec.hrPct = String(s.target.pct || '');
     if (s.target.cap) {
       sec.durationMin = String(Math.floor(s.target.cap / 60));
       sec.durationSec = String(s.target.cap % 60).padStart(2, '0');
@@ -247,18 +249,41 @@ function sectionHtml(s, idx) {
       <button type="button" class="btn btn--ghost editor__remove" data-remove-section="${idx}" aria-label="${t('common.delete')}">✕</button>
     </div>
 
+    <div class="editor__row editor__row--pad-y">
+      <label class="profile-field editor__field editor__field--25">
+        <span class="profile-field__label">${t('editor.field.display')}</span>
+        <select class="profile-field__input" name="secDisplay_${idx}">
+          <option value="">${t('editor.field.displayInherit')}</option>
+          ${DISPLAY_MODES.map(m => `<option value="${m.value}"${m.value === s.display ? ' selected' : ''}>${m.label}</option>`).join('')}
+        </select>
+      </label>
+      <label class="profile-field editor__field editor__field--75">
+        <span class="profile-field__label">${t('editor.field.note')}</span>
+        <input class="profile-field__input" type="text" name="secNote_${idx}"
+          value="${escapeHtml(s.note)}" placeholder="${t('common.optional')}">
+      </label>
+    </div>
+
+    <div class="editor__target">
+      <label class="profile-field editor__field">
+        <span class="profile-field__label">${t('editor.field.target')}</span>
+        <select class="profile-field__input" name="secTarget_${idx}" data-target-type="${idx}">
+          ${TARGET_TYPES.map(tt => `<option value="${tt.value}"${tt.value === s.targetType ? ' selected' : ''}>${t(tt.labelKey)}</option>`).join('')}
+        </select>
+      </label>
+
+      ${s.targetType === 'duration' ? durationFieldsHtml(s, idx) : ''}
+      ${s.targetType === 'distance' ? distanceFieldsHtml(s, idx) : ''}
+      ${s.targetType === 'hr' ? hrFieldsHtml(s, idx) : ''}
+    </div>
+
     <label class="profile-field editor__field">
-      <span class="profile-field__label">${t('editor.field.target')}</span>
-      <select class="profile-field__input" name="secTarget_${idx}" data-target-type="${idx}">
-        ${TARGET_TYPES.map(tt => `<option value="${tt.value}"${tt.value === s.targetType ? ' selected' : ''}>${t(tt.labelKey)}</option>`).join('')}
-      </select>
+      <span class="profile-field__label">${t('editor.field.cadence')}</span>
+      <input class="profile-field__input" type="text" name="secCadence_${idx}"
+        value="${escapeHtml(s.cadence)}" placeholder="ex. 24-26 spm">
     </label>
 
-    ${s.targetType === 'duration' ? durationFieldsHtml(s, idx) : ''}
-    ${s.targetType === 'distance' ? distanceFieldsHtml(s, idx) : ''}
-    ${s.targetType === 'hr' ? hrFieldsHtml(s, idx) : ''}
-
-    <div class="profile-field">
+    ${s.targetType === 'hr' ? '' : `<div class="profile-field">
       <span class="profile-field__label">${t('editor.field.hrZone')} <small>${t('editor.field.hrZoneOptional')}</small></span>
       <div class="editor__range">
         <input class="profile-field__input" type="number" name="secHrZoneLow_${idx}" inputmode="numeric"
@@ -267,28 +292,7 @@ function sectionHtml(s, idx) {
         <input class="profile-field__input" type="number" name="secHrZoneHigh_${idx}" inputmode="numeric"
           value="${escapeHtml(s.hrZoneHigh)}" placeholder="max">
       </div>
-    </div>
-
-    <div class="editor__row">
-      <label class="profile-field editor__field">
-        <span class="profile-field__label">${t('editor.field.cadence')}</span>
-        <input class="profile-field__input" type="text" name="secCadence_${idx}"
-          value="${escapeHtml(s.cadence)}" placeholder="ex. 24-26 spm">
-      </label>
-      <label class="profile-field editor__field">
-        <span class="profile-field__label">${t('editor.field.display')}</span>
-        <select class="profile-field__input" name="secDisplay_${idx}">
-          <option value="">${t('editor.field.displayInherit')}</option>
-          ${DISPLAY_MODES.map(m => `<option value="${m.value}"${m.value === s.display ? ' selected' : ''}>${m.label}</option>`).join('')}
-        </select>
-      </label>
-    </div>
-
-    <label class="profile-field editor__field">
-      <span class="profile-field__label">${t('editor.field.note')}</span>
-      <input class="profile-field__input" type="text" name="secNote_${idx}"
-        value="${escapeHtml(s.note)}" placeholder="${t('common.optional')}">
-    </label>
+    </div>`}
   </div>`;
 }
 
@@ -332,12 +336,6 @@ function hrFieldsHtml(s, idx) {
       <input class="profile-field__input" type="number" name="secHrDelta_${idx}" inputmode="numeric"
         value="${escapeHtml(s.hrDelta)}" placeholder="40" min="1">
     </label>`;
-  } else if (s.hrMode === 'fixed') {
-    hrValueField = `<label class="profile-field editor__field">
-      <span class="profile-field__label">BPM</span>
-      <input class="profile-field__input" type="number" name="secHrFixed_${idx}" inputmode="numeric"
-        value="${escapeHtml(s.hrFixed)}" placeholder="100" min="30">
-    </label>`;
   } else {
     hrValueField = `<label class="profile-field editor__field">
       <span class="profile-field__label">%</span>
@@ -355,18 +353,7 @@ function hrFieldsHtml(s, idx) {
     </label>
     ${hrValueField}
   </div>
-  <div class="editor__row">
-    <label class="profile-field editor__field">
-      <span class="profile-field__label">${t('editor.field.capMin')}</span>
-      <input class="profile-field__input" type="number" name="secDurMin_${idx}" inputmode="numeric"
-        value="${escapeHtml(s.durationMin)}" placeholder="${t('common.optional')}" min="0">
-    </label>
-    <label class="profile-field editor__field">
-      <span class="profile-field__label">${t('editor.field.capSec')}</span>
-      <input class="profile-field__input" type="number" name="secDurSec_${idx}" inputmode="numeric"
-        value="${escapeHtml(s.durationSec)}" placeholder="0" min="0" max="59">
-    </label>
-  </div>`;
+  <p class="editor__hint">${t(`hrMode.${s.hrMode || 'dynamic'}.help`)}</p>`;
 }
 
 // ── Form → Session object ─────────────────────────────────────────────
@@ -407,27 +394,21 @@ function formToSession(fd, state) {
       target = value > 0 ? { type: 'distance', value } : { type: 'manual', value: null };
     } else if (targetType === 'hr') {
       const hrMode = fd.get(`secHrMode_${i}`);
-      const capMin = Number(fd.get(`secDurMin_${i}`) || 0);
-      const capSec = Number(fd.get(`secDurSec_${i}`) || 0);
-      const cap = capMin * 60 + capSec || null;
       let hrTarget;
       if (hrMode === 'dynamic') {
         hrTarget = { mode: 'dynamic', delta: Number(fd.get(`secHrDelta_${i}`) || 40) };
-      } else if (hrMode === 'fixed') {
-        hrTarget = { mode: 'fixed', value: Number(fd.get(`secHrFixed_${i}`) || 0) };
       } else if (hrMode === 'pct') {
         hrTarget = { mode: 'pct', pct: Number(fd.get(`secHrPct_${i}`) || 0) };
       } else {
         hrTarget = { mode: 'karvonen', pct: Number(fd.get(`secHrPct_${i}`) || 0) };
       }
-      target = { type: 'hr', ...hrTarget, cap };
+      target = { type: 'hr', ...hrTarget };
     } else {
       target = { type: 'manual', value: null };
     }
 
     let duree = null;
     if (targetType === 'duration') duree = target.value;
-    if (targetType === 'hr' && target.cap) duree = target.cap;
     let distance = null;
     if (targetType === 'distance') distance = target.value;
 

@@ -76,13 +76,17 @@ function stepHtml(x) {
     : x.target.type === 'distance' ? fmtDist(x.target.value)
     : x.target.type === 'hr' ? fmtHrTarget(x.target)
     : t('target.manual');
-  const extra = x.cadence ? `${x.cadence}` : '';
-  const zone = x.targetHrZone ? t('detail.targetHr', { lo: x.targetHrZone[0], hi: x.targetHrZone[1] }) : '';
-  const extras = [extra, zone].filter(Boolean).join(' · ');
+  const cadence = x.cadence
+    ? `<span class="step__cadence">${t('detail.cadence')} ${escapeHtml(x.cadence)}</span>`
+    : '';
+  const zone = x.targetHrZone
+    ? `<span class="step__zone">${escapeHtml(t('detail.targetHr', { lo: x.targetHrZone[0], hi: x.targetHrZone[1] }))}</span>`
+    : '';
   return `<li class="step">
     <div class="step__main">
       <span class="step__name">${escapeHtml(x.name)}</span>
-      ${extras ? `<span class="step__extra">${escapeHtml(extras)}</span>` : ''}
+      ${cadence}
+      ${zone}
       ${x.note ? `<span class="step__note">${escapeHtml(x.note)}</span>` : ''}
     </div>
     <span class="step__target">${escapeHtml(target)}</span>

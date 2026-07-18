@@ -12,7 +12,6 @@ export function parseSession(md, slug = '') {
   return {
     slug: slug || slugify(data.title || 'seance'),
     title: data.title || 'Séance sans titre',
-    type: data.type || '',
     description: data.description || '',
     targetHrZone: parseZone(data.target_hr_zone),
     display: DISPLAY_MODE_VALUES.includes(data.display) ? data.display : 'perf',

@@ -35,18 +35,21 @@ export async function screenProfile(_params, outlet) {
           <span class="profile-field__hint">${t('profile.ageHint')}</span>
         </label>
 
-        <label class="profile-field">
-          <span class="profile-field__label">${t('profile.hrMax')} <small>${t('profile.hrMaxHint')}</small></span>
-          <input class="profile-field__input" type="number" name="hrMax" min="80" max="230"
-            value="${escapeHtml(String(profile.hrMax ?? ''))}" placeholder="${maxPlaceholder(profile.age)}" inputmode="numeric">
-        </label>
+        <div class="profile-row">
+          <label class="profile-field">
+            <span class="profile-field__label">${t('profile.hrMax')}</span>
+            <input class="profile-field__input" type="number" name="hrMax" min="80" max="230"
+              value="${escapeHtml(String(profile.hrMax ?? ''))}" placeholder="${maxPlaceholder(profile.age)}" inputmode="numeric">
+            <span class="profile-field__hint">${t('profile.hrMaxHint')}</span>
+          </label>
 
-        <label class="profile-field">
-          <span class="profile-field__label">${t('profile.hrRest')}</span>
-          <input class="profile-field__input" type="number" name="hrRest" min="30" max="100"
-            value="${escapeHtml(String(profile.hrRest ?? ''))}" placeholder="ex. 60" inputmode="numeric">
-          <span class="profile-field__hint" data-reserve-hint>${reserveHint(profile.age, profile.hrMax, profile.hrRest)}</span>
-        </label>
+          <label class="profile-field">
+            <span class="profile-field__label">${t('profile.hrRest')}</span>
+            <input class="profile-field__input" type="number" name="hrRest" min="30" max="100"
+              value="${escapeHtml(String(profile.hrRest ?? ''))}" placeholder="ex. 60" inputmode="numeric">
+            <span class="profile-field__hint" data-reserve-hint>${reserveHint(profile.age, profile.hrMax, profile.hrRest)}</span>
+          </label>
+        </div>
 
         <button class="btn btn--block" type="submit" data-submit disabled>${t('common.save')}</button>
       </form>

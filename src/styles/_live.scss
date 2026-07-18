@@ -47,6 +47,8 @@
 
   &__section-head { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
   &__section-name { font-size: 1.15rem; font-weight: 600; }
+  &__section-cadence { color: var(--c-cadence); font-size: 0.85rem; font-weight: 600; }
+  &__section-hr { color: var(--c-hr); font-size: 0.85rem; font-weight: 600; }
   &__section-note { color: var(--c-muted); font-size: 0.85rem; }
   &__next { color: var(--c-muted); font-size: 0.9rem; text-align: right; }
 

@@ -179,7 +179,7 @@ function syncStateFromDom(outlet, state) {
 
 function emptySection(n, defHr = 'dynamic') {
   return {
-    name: t('editor.section.default', { n }),
+    name: '',
     targetType: 'duration',
     durationMin: '',
     durationSec: '',

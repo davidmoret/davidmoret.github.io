@@ -8,10 +8,10 @@
 ## 1. Objectifs & principes
 
 - **Simple** : pas de backend, pas de compte, pas d'analytics. Tout tourne dans le navigateur du téléphone.
-- **Privacy-first** : données stockées en local (IndexedDB). Sauvegarde/synchro = fichiers exportés vers **Proton Drive** via le partage Android.
+- **Privacy-first** : données stockées en local (IndexedDB). Sauvegarde chiffrée optionnelle en fichier `.rambak` (local) ou synchronisée sur Dropbox / Google Drive ; export séance `.txt` via le partage Android (Proton Drive, etc.).
 - **Offline-first** : PWA installable, utilisable sans réseau (service worker).
-- **Séances éditables à la main** : les plans de séance sont des fichiers **Markdown** que je peux écrire/modifier au clavier.
-- **Historique exploitable** : chaque séance jouée produit un résumé **JSON** + des stats globales.
+- **Séances éditables** : plans de séance au format texte (frontmatter + sections), créés dans l'app ou importés depuis un fichier `.txt`.
+- **Historique exploitable** : chaque séance jouée produit un résumé JSON (timeline + HRR) et alimente les stats globales.
 
 ### Décisions actées
 | Sujet | Choix |
@@ -20,199 +20,175 @@
 | Lecture capteurs | **Web Bluetooth** (Chrome Android) |
 | Stack | **Vite + Vanilla JS + SCSS** (BEM, nesting max 3) |
 | Stockage runtime | **IndexedDB** |
-| Synchro | Export fichiers → app **Proton Drive** (Web Share API) ; import via sélecteur de fichier |
+| Icônes | **Lucide** (SVG) |
+| Sauvegarde | Export séance `.txt` (Web Share API) · backup chiffré `.rambak` (local, Dropbox, Google Drive) |
 
 ---
 
-## 2. Risques techniques (à traiter en priorité)
-
-| # | Risque | Impact | Mitigation |
-|---|---|---|---|
-| **R1** | **Merach R50** : protocole BLE inconnu (FTMS standard `0x1826` **ou** propriétaire). | 🔴 Bloquant : sans lecture, pas de métriques rameur. | **Lot 0** : spike de découverte des services BLE avant tout dev. |
-| R2 | Web Bluetooth exige HTTPS + un geste utilisateur pour appairer. | 🟠 | Bouton « Connecter » explicite ; app servie en HTTPS (même en local). |
-| R3 | Reconnexion BLE après perte de signal / écran verrouillé. | 🟠 | **Wake Lock API** (écran allumé) + logique de reconnexion auto. |
-| R4 | Pas d'accès fichier direct sur Chrome Android (pas de File System Access API). | 🟡 | Export via **Web Share API** ; import via `<input type="file">`. |
-| R5 | Polar Verity Sense — capteur standard HR. | 🟢 Faible | Service `0x180D` / caractéristique `0x2A37`, bien documenté. |
-
----
-
-## 3. Architecture (modules)
+## 2. Architecture
 
 ```
 ram/
-├─ index.html
-├─ manifest.webmanifest
-├─ sw.js                     # service worker (offline)
-├─ src/
-│  ├─ main.js                # bootstrap + routeur simple
-│  ├─ data/
-│  │  ├─ session-parser.js   # Markdown → objet Session
-│  │  ├─ store.js            # IndexedDB (définitions + historique + profil)
-│  │  ├─ profile.js          # profil utilisateur (âge, FCmax, FCrepos)
-│  │  └─ export.js           # export .md/.json via Web Share API, import fichier
-│  ├─ ble/
-│  │  ├─ heart.js            # Polar — BLE Heart Rate standard (0x180D)
-│  │  ├─ rower.js            # Merach R50 — FTMS (0x1826) ou driver dédié
-│  │  ├─ normalizer.js       # événements normalisés (hr, spm, power, dist, pace…)
-│  │  └─ simulator.js        # source factice (mode démo / récup)
-│  ├─ engine/
-│  │  ├─ session-engine.js   # machine à états (idle/running/paused) + chrono + cible hr
-│  │  └─ recorder.js         # échantillonnage timeline (métriques + FC) + HRR
-│  ├─ stats/
-│  │  ├─ aggregate.js        # stats globales à partir de l'historique JSON
-│  │  └─ summary.js          # résumé post-séance + calcul HRR
-│  ├─ ui/
-│  │  ├─ screen-home.js      # listing séances + stats globales
-│  │  ├─ screen-detail.js    # aperçu d'une séance avant lancement
-│  │  ├─ screen-live.js      # écran séance en cours (+ mode récup)
-│  │  ├─ screen-summary.js   # résumé post-séance (+ bloc HRR)
-│  │  └─ screen-profile.js   # profil utilisateur (âge, FCmax, FCrepos)
-│  └─ styles/
-│     ├─ main.scss
-│     └─ _*.scss             # BEM, kebab-case
-└─ sessions/                 # plans de séance en Markdown (édités à la main)
-   └─ 2026-07-06-pyramide.md
+├─ index.html · manifest.webmanifest · sw.js     # PWA shell + offline
+├─ public/                  # icônes, fonts, manifest
+├─ sessions/                # séances d'exemple livrées (semées au 1er lancement)
+└─ src/
+   ├─ main.js               # bootstrap + routeur
+   ├─ data/                 # persistance & parsing
+   │  ├─ session-parser.js  # texte → objet Session
+   │  ├─ session-format.js  # parse/format par champ (durée, distance, FC, zone)
+   │  ├─ display-modes.js   # source unique des modes d'affichage Live
+   │  ├─ store.js           # IndexedDB (definitions + history + profile + meta)
+   │  ├─ profile.js         # profil utilisateur (âge, FCmax, FCrepos)
+   │  ├─ export.js          # séance → .txt (Web Share API)
+   │  ├─ backup.js          # dump/restore chiffré (AES-256-GCM, PBKDF2)
+   │  └─ cloud/             # sync Dropbox / Google Drive (last-write-wins)
+   │     ├─ config.js · dropbox.js · gdrive.js · sync.js
+   │     ├─ pkce.js · oauth-popup.js · tokens.js · passphrase.js · index.js
+   ├─ ble/
+   │  ├─ heart.js · rower.js · normalizer.js · simulator.js
+   ├─ engine/
+   │  ├─ session-engine.js  # machine à états (idle/running/paused/finished)
+   │  └─ recorder.js        # sampling 1 Hz + HRR
+   ├─ stats/                # agrégats + résumé post-séance
+   ├─ ui/
+   │  ├─ screen-*.js        # un fichier par écran (home, sessions, detail, live,
+   │  │                     #   summary, profile, prefs, data, editor, history)
+   │  ├─ router.js · app-bar.js · menu.js · notify.js · modal.js
+   │  ├─ live/              # wake-lock.js, recovery.js (mode récup)
+   │  ├─ i18n/              # traductions FR/EN
+   │  └─ theme.js · icon.js · format.js · feedback.js
+   └─ styles/               # _tokens · _base · _detail · _home · _live · _summary
 ```
 
 ### Séparation des responsabilités
 - **`ble/`** ne connaît rien de l'UI : il émet des événements normalisés.
-- **`engine/`** est le cerveau : il ne sait pas d'où viennent les données ni comment elles s'affichent → **testable avec des données simulées** (indispensable pour bosser sans être sur le rameur).
+- **`engine/`** ne sait pas d'où viennent les données ni comment elles s'affichent → testable avec des données simulées.
 - **`ui/`** consomme l'engine et le store, ne fait aucun calcul métier.
 
 ---
 
-## 4. Format d'une séance (Markdown)
+## 3. Format d'une séance (`.txt`)
 
 Séance = frontmatter (métadonnées) + une liste de **sections** (échauffement, intervalles, récup…).
-Chaque section a une **cible de fin** : durée, distance, hr, ou manuelle.
+Chaque section a une **cible de fin** : durée, distance, FC, ou manuelle.
 
 ```markdown
 ---
-title: Pyramide 500m
-type: intervalles
-description: Échauffement + pyramide + retour au calme
-display: perf                 # perf | cardio | complet | zen — défaut: perf
+slug: rester-motiver
+title: Rester motivé
+display: zen                 # perf | cad | cardio | zen — défaut: perf
 ---
 
-## Échauffement            <!-- section -->
+## Échauffement
 - duree: 5:00
-- note: cadence libre, monter progressivement
+- note: monter progressivement
 
 ## Intervalle 1
 - distance: 500m
 - cadence: 24-26 spm
 - target_hr_zone: [130, 160]
-- note: allure tenue
-
-## Récup 1
-- duree: 2:00
-
-## Intervalle 2
-- distance: 750m
-- cadence: 24-26 spm
-- target_hr_zone: [130, 160]
 
 ## Retour au calme
-- cible_fc: max-40
-- duree: 5min
-- note: respire, 4s inspire / 6s expire
+- cible_fc: karvonen-50%     # descend sous la cible FC
+- duree: 5:00                # plafond de sécurité
 ```
 
-**Règles de parsing (simples et tolérantes) :**
-- Chaque `##` = une nouvelle section (le titre = nom affiché).
-- Clés reconnues : `duree` (`m:ss`), `distance` (`Nm`/`Nkm`), `cadence`, `note`, `cible_fc`, `target_hr_zone`.
-- `cible_fc` définit une cible `hr` (fin auto quand FC ≤ seuil). Syntaxes supportées :
-  - `max-40` → dynamique (FCmax séance − 40)
+**Règles de parsing (tolérantes) :**
+- Chaque `##` = une section (titre = nom affiché).
+- Frontmatter reconnu : `slug`, `title`, `description`, `display`, `target_hr_zone`.
+- Clés de section : `duree` (`m:ss`), `distance` (`Nm`/`Nkm`), `cadence`, `cible_fc`, `target_hr_zone`, `display`, `note`.
+- `cible_fc` définit une cible `hr` (fin auto quand FC ≤ seuil pendant 3 s). Syntaxes :
+  - `max-40` → dynamique (FCmax de la séance − 40)
   - `100` → fixe (100 bpm)
   - `55%` → pourcentage de FCmax (requiert profil)
   - `karvonen-50%` → pourcentage de la réserve Karvonen (requiert profil + FCrepos)
-- `duree` sur une section `hr` devient plafond de sécurité.
-- Sans `cible_fc`, `duree` **ou** `distance` définit la condition de fin ; sans les deux → section **manuelle**.
-- `target_hr_zone` (format `[lo, hi]`) est disponible **par section** et au niveau **séance** (frontmatter).
-  La section a priorité ; si absente, le fallback séance s'applique. Permet d'afficher le bandeau
-  de zone FC uniquement sur les sections où c'est pertinent (intervalles) et pas sur l'échauffement/récup.
+- `duree` sur une section `hr` = plafond de sécurité.
+- Sans `cible_fc`, `duree` ou `distance` définit la fin ; sinon section **manuelle**.
+- `target_hr_zone` (`[lo, hi]`) disponible **par section** et au niveau **séance**. La section a priorité ; fallback séance.
+- **Slug** : lu depuis le frontmatter à l'import (préserve l'identité de la séance), sinon dérivé du titre.
 
 ---
 
-## 5. Moteur de séance (machine à états)
+## 4. Moteur de séance
 
 États : `idle → running ⇄ paused → finished`
 
-Contrôles demandés :
 - **Pause / Reprise** : gèle le chrono global + chrono de section.
-- **Revenir en arrière** : `section précédente` (rejouer une section) et `section suivante`.
-- **Fin auto de section** : quand la cible (durée/distance/hr) est atteinte → passage auto (avec petit signal sonore/vibration).
-- **Cible hr** : fin quand FC ≤ seuil pendant 3 s continues (anti-rebond). Seuil figé à l'entrée dans la section. Plafond `duree` en sécurité.
-- **Profil** : le moteur accepte un profil utilisateur optionnel pour résoudre les cibles en % (FCmax, Karvonen).
+- **Section précédente / suivante** : rejouer ou sauter une section.
+- **Fin auto de section** : quand la cible (durée/distance/hr) est atteinte → passage auto avec signal sonore (3 bips courts + 1 long).
+- **Chrono à rebours** : quand la section se clôt au temps, décompte sur les dernières secondes.
+- **Cible hr** : fin quand FC ≤ seuil pendant 3 s (anti-rebond), seuil figé à l'entrée de section, plafond `duree` en sécurité.
+- **Profil** : optionnel pour résoudre les cibles `%` et `karvonen`.
 
-Le **recorder** échantillonne (ex. 1 Hz) : timestamp, section, FC, cadence (spm), puissance (W), distance, allure (/500m). Il enregistre aussi le timestamp d'entrée dans chaque section (pour le calcul HRR). Cette timeline est stockée avec le résumé de séance → permet un graphe post-séance et les stats.
+Le **recorder** échantillonne à 1 Hz (moyenne des paquets reçus dans la seconde) :
+timestamp, section, FC, cadence, puissance, distance, allure. Anti-stale : une métrique
+sans mise à jour depuis 3 s est enregistrée à `null`. Mémorise l'entrée dans chaque section
+pour le calcul HRR. La timeline est stockée avec le résumé.
 
 ---
 
-## 6. Écrans (UI)
+## 5. Écrans
 
-1. **Accueil** — liste des séances dispo (depuis `sessions/`) + **stats globales** (nb séances, distance totale, temps total, FC moy…). Bouton « Importer une séance ». Bouton ⚙ vers le profil.
-2. **Détail séance** — aperçu des sections, durée/distance estimée, bouton **« Démarrer »** (déclenche l'appairage BLE).
-3. **Live** — le cœur de l'app (voir §6.1 pour les modes d'affichage) :
-   - **1 métrique "héro"** en géant + **3-4 tuiles secondaires**.
-   - **Chrono** global + chrono/progression de la **section en cours**.
-   - Nom de la section + **la suivante**.
-   - Contrôles gros doigts : **Pause**, **◀ Précédent**, **Suivant ▶**.
-   - Indicateur de **zone FC** (couleur) si `target_hr_zone` défini sur la section (fallback séance).
-   - **Mode récup** automatique quand la section a une cible `hr` (voir §6.2).
-4. **Résumé post-séance** — totaux, FC moy/max, allure moy, **bloc HRR**, mini-graphe, boutons **« Exporter (.md + .json) »** → partage Proton.
-5. **Profil** — âge, FCmax (optionnel, prioritaire sur 220−âge), FCrepos (optionnel, débloque Karvonen). Stocké dans IndexedDB store `profile`.
+1. **Accueil** — séances favorites + dernières séances + stats globales (nb, distance, temps, FC moy). Menu ☰ → profil, séances, données, préférences.
+2. **Toutes les séances** (`/sessions`) — liste complète, import `.txt`, toggle favori ★, nouvelle séance.
+3. **Détail séance** (`/session/:slug`) — aperçu sections, durée/distance estimée, boutons Démarrer / Modifier / Partager / Supprimer, historique de la séance.
+4. **Live** (`/live/:slug`) — l'écran séance en cours (cf. §6).
+5. **Résumé** (`/summary/:id`) — totaux, FC moy/max, allure moy, **bloc HRR**, mini-graphe.
+6. **Éditeur** (`/edit`, `/edit/:slug`) — formulaire de création/édition de séance (sans écrire de texte).
+7. **Historique** (`/history`, `/history/:slug`) — listing complet, filtrable par séance.
+8. **Profil** (`/profile`) — âge, FCmax, FCrepos.
+9. **Préférences** (`/prefs`) — thème (système / clair / sombre), langue (FR / EN).
+10. **Données** (`/data`) — backup chiffré (export/import `.rambak`, sync cloud).
 
-**Contraintes UX rameur** (mains moites, effort, écran de loin) : grandes zones tactiles, gros chiffres, fort contraste, thème sombre par défaut, **Wake Lock** (écran ne s'éteint pas).
+**Contraintes UX rameur** (mains moites, effort, écran de loin) : grandes zones tactiles, gros chiffres, fort contraste, **Wake Lock** (écran allumé).
 
-### 6.1 Modes d'affichage de l'écran Live
+---
 
-Principe : **1 métrique "héro" en géant + 3-4 tuiles secondaires**. Le mode est choisi
-par séance via le champ `display` du frontmatter (défaut : `perf`), changeable à la volée
-pendant la séance.
+## 6. Écran Live
 
-| Mode | Héro (géant) | Tuiles secondaires | Usage |
-|---|---|---|---|
-| **`perf`** *(défaut)* | **Allure /500m** | Cadence (spm) · FC · Distance section | Intervalles, pyramides — l'allure est la référence rameur |
-| **`cardio`** | **FC** (+ zone couleur) | Allure · Cadence · Distance | Endurance, travail en zones FC |
-| **`complet`** | grille 6 tuiles égales | Allure · FC · Cadence · Puissance · Distance · Chrono section | Tout voir d'un coup |
-| **`zen`** | **Chrono section** | Allure · FC · Cadence | Séance libre, focus ressenti |
-| **`cad`** | **Cadence (spm)** | Puissance · FC · Chrono section | Travail de cadence ciblée |
+**1 métrique "héro" en géant + 3-4 tuiles secondaires** + chrono global / section. Mode
+choisi par séance via `display` (défaut `perf`), changeable à la volée. Menu bas : pill
+colorée pour le mode actif, icônes seules pour les autres.
 
-**Chrono section à rebours** : quand la section se clôt au **temps** (cible durée),
-le chrono de section s'affiche en **décompte** + signal sonore final (3 bips courts
-+ 1 bip long). Sinon (distance/hr/manuel) → chrono croissant.
+| Mode | Héro | Tuiles secondaires | Couleur | Usage |
+|---|---|---|---|---|
+| **`perf`** *(défaut)* | Allure /500m | Cadence · FC · Distance | 🔵 bleu | Intervalles, pyramides |
+| **`cardio`** | FC (+ zone) | Allure · Cadence · Distance | 🔴 rouge | Endurance, zones FC |
+| **`cad`** | Cadence (spm) | Puissance · FC · Chrono section | 🟠 orange | Travail de cadence |
+| **`zen`** | Chrono section | Allure · FC · Cadence | 🟢 vert | Séance libre, focus ressenti |
 
-**Fiabilité des métriques (priorité de confiance) :**
-1. **FC** — Polar Verity Sense dédié, standard BLE → toujours fiable.
-2. **Allure /500m · Cadence · Distance · Chrono** — dépendent du Merach (FTMS) → à valider Lot 0, mais standard.
-3. **Puissance (W)** — dépend de la courbe de résistance du Merach → potentiellement peu fiable, à confirmer Lot 0. Reléguée en secondaire.
-
-**Chrono toujours visible** quel que soit le mode (bandeau permanent : global + section).
-
-### 6.2 Mode récupération (section cible `hr`)
-
-Quand la section courante a `target.type === 'hr'`, l'écran Live bascule automatiquement :
-
-- **Hero + tuiles + sources + modes** → masqués.
-- **FC en géant** (rouge au-dessus du seuil, vert en dessous).
-- **Jauge FC** horizontale : remplissage rouge→vert, repère du seuil.
-- **Breath Pacer** : cercle CSS `@keyframes` (4 s inspire / 6 s expire), texte alterné via `data-recovery-phase`.
-- **Avertissement** si pas de ceinture FC connectée (« Connecte ta ceinture FC pour l'auto-fin »).
-- **Bouton « Terminer »** (skip manuel) toujours disponible.
-- Le simulateur bascule en mode récup (`setRecoveryMode`) : FC décroît, rameur à l'arrêt.
+**Mode récupération** (automatique quand `target.type === 'hr'`) : FC en géant (rouge/vert
+selon seuil), jauge FC horizontale, breath pacer (4 s inspire / 6 s expire), avertissement
+si pas de ceinture FC, bouton « Terminer ». Le simulateur bascule en mode récup.
 
 ---
 
 ## 7. Stockage & synchro
 
-- **Runtime** : IndexedDB
-  - `definitions` : séances importées (parsées depuis le .md).
-  - `history` : une entrée JSON par séance jouée (résumé + timeline + HRR).
-  - `profile` : profil utilisateur (âge, FCmax, FCrepos), clé unique `'me'`.
-- **Export** (bouton) : génère `.json` (résumé complet) + `.md` lisible (compte-rendu) → **Web Share API** → je choisis **Proton Drive** dans le menu Android.
-- **Import** : `<input type="file">` pour charger un `.md` de séance édité à la main (depuis Proton).
-- **Format historique JSON** (par séance) :
+**Runtime — IndexedDB** (`ram`, version 3) :
+- `definitions` — séances importées (clé `slug`).
+- `history` — une entrée JSON par séance jouée (clé `id`).
+- `profile` — profil utilisateur (clé `'me'`).
+- `meta` — clé-valeur (date de backup, thème, langue, tokens cloud, etc.).
+
+**Export séance** : `.txt` lisible via Web Share API (partage Proton Drive, etc.).
+
+**Backup chiffré** (`.rambak`) : dump complet d'IndexedDB (definitions + history + profile),
+chiffré AES-256-GCM, clé dérivée de la passphrase via PBKDF2 (600 000 itérations).
+Sorties : fichier local (File System Access API / Web Share / download) ou sync cloud.
+
+**Sync cloud** (Dropbox, Google Drive) :
+- Backup déposé sous le nom `ram-backup.rambak` dans le dossier d'app dédié
+  (Dropbox « App folder », Google Drive `drive.appdata`) — invisible depuis l'UI du fournisseur.
+- Auth OAuth2 **PKCE** (popup) + **refresh token** → reconnexion silencieuse durable.
+  Jetons stockés chiffrés dans le store `meta`.
+- Stratégie **last-write-wins** : à la connexion / au démarrage, on compare la date du
+  fichier distant à la date de backup locale. Distant plus récent → download + restore ;
+  local plus récent → upload.
+- Sync silencieuse au démarrage de l'app (re-rend l'écran courant si un download a modifié les données).
+
+**Format historique JSON** (par séance jouée) :
 
 ```json
 {
@@ -223,356 +199,29 @@ Quand la section courante a `target.type === 'hr'`, l'écran Live bascule automa
   "hr": { "avg": 142, "max": 168 },
   "pace_avg_500m": "2:21",
   "spm_avg": 25,
-  "sections": [ { "name": "Échauffement", "duration_s": 300, "distance_m": 780 } ],
-  "samples": [ { "t": 1, "hr": 110, "spm": 22, "w": 90, "dist": 4, "pace": 145 } ],
-  "hrr": { "hrStart": 168, "hrr60": 42, "hrr120": 56 }
+  "sections": [{ "name": "Échauffement", "duration_s": 300, "distance_m": 780 }],
+  "samples": [{ "t": 1, "hr": 110, "spm": 22, "w": 90, "dist": 4, "pace": 145 }],
+  "hrr": { "hrStart": 168, "hrr60": 42, "hrr120": 56, "significant": true }
 }
 ```
 
 ---
 
-## 8. Roadmap (lots)
+## 8. Heart Rate Recovery (HRR)
 
-- **Lot 0 — Spike Bluetooth (dé-risquage)** ✅
-- **Lot 1 — Squelette** ✅
-- **Lot 2 — Moteur + Live (données simulées)** ✅
-- **Lot 3 — Bluetooth réel** ✅
-- **Lot 4 — Historique & stats** ✅
-- **Lot 5 — Finitions** ✅
+Calculé dans le résumé post-séance (`stats/summary.js`) à partir de la 1re section `hr` :
 
----
-
-## 9. Suggestions d'amélioration (optionnel, à trancher plus tard)
-
-- **Annonces vocales** (Web Speech / TTS) : « 250 m restants », « section suivante ».
-- **Auto-lap** par section : stats détaillées par intervalle.
-- **Export .FIT ou .TCX** plus tard, pour pousser vers Strava/Garmin si envie (sans compromettre la privacy : export manuel).
-- **Comparaison** d'une même séance dans le temps (progression allure/FC).
+- **FC de départ** = FC à l'entrée de la section de récup (mémorisée par le recorder).
+- **HRR₁ / HRR₂** = Δ FC à +60 s et +120 s après l'entrée (`hrr60`, `hrr120`).
+- **Interprétation** : excellent ≥ 40, bon ≥ 25, moyen ≥ 12, faible < 12 (bpm).
+- **Seuil de pertinence** : le HRR n'est interprété que si la FC à l'entrée atteint
+  ≥ 70 % de la FCmax de la séance (`HRR_MIN_INTENSITY`). En dessous, la chute de FC
+  n'est pas significative → bloc HRR affiché sans interprétation (`significant: false`).
 
 ---
 
-## 10. État des décisions
-- ✅ Format Markdown de séance : validé (ajustable au fil de l'eau).
-- ✅ Fin de section par **temps, distance ou hr** : validé.
-- ✅ Écran Live : **métrique héro + secondaires**, 4 modes + mode récup auto.
-- ✅ **Lot 0–5** : tous implémentés.
-- ✅ **Lot C — Seuil personnalisé** : profil optionnel (âge/FCmax/FCrepos) → cibles `55%` et `karvonen-50%`.
-- ✅ **Lot D — HRR dans le résumé** : HRR₁ (+60s) et HRR₂ (+120s) calculés et affichés.
+## 9. Tests
 
----
-
-## 11. Fonctionnalité « Retour au calme » (cohérence cardiaque)
-
-> Section de fin de séance : le rameur s'arrête, l'écran passe en mode
-> récup et guide un exercice de respiration pour **faire redescendre la FC sous un
-> seuil cible**. Objectif physio : expiration plus longue que l'inspiration →
-> active le parasympathique → chute rapide du rythme cardiaque.
-
-### Décisions actées (2026-07-10)
-- ✅ **Nouveau type de cible de section : `hr`** (finit quand FC < seuil). S'ajoute
-  à `duration` / `distance` / `manual` dans `session-engine.js` (`checkSectionEnd`).
-- ✅ **Seuil = dynamique `max-40`** : FC max atteinte dans la séance − 40 bpm.
-  Aucun profil utilisateur requis, s'adapte à l'intensité réelle.
-  (Le parser gère aussi `cible_fc: 100` fixe — gratuit, non prioritaire.)
-- ✅ **Définie dans le Markdown** : une section `##` avec `cible_fc:`, cohérent
-  avec le modèle « séance = suite de sections ». Ajoutable à n'importe quelle séance.
-- ✅ **`duree` sur une section `hr` = plafond de sécurité** (auto-fin au plus tôt :
-  FC atteinte *ou* temps écoulé), pas la cible principale.
-
-### Syntaxe Markdown
-```markdown
-## Retour au calme
-- cible_fc: max-40      # descend sous (FC max de la séance − 40)
-- duree: 5min           # plafond de sécurité (filet si la FC ne descend pas)
-- note: respire, 4s inspire / 6s expire
-```
-→ `target = { type: 'hr', mode: 'dynamic', delta: 40, cap: 300 }`
-
-### Implémentation
-
-- **Lot A — Moteur** ✅
-  - `session-parser.js` : `cible_fc:` → cible `hr` (dynamique `max-N`, fixe, `%`, `karvonen-N%`).
-    `duree` → `cap` quand la cible est `hr`.
-  - `session-engine.js` : `pushHr()`, tracking `maxHr`/`currentHr`, cible `hr`
-    dans `checkSectionEnd`, anti-rebond 3 s, seuil figé à l'entrée de section.
-    Accepte un `profile` pour résoudre les cibles `%` et `karvonen`.
-  - `simulator.js` : `setRecoveryMode()` — FC décroît, rameur à l'arrêt.
-
-- **Lot B — Écran récup** ✅
-  - `screen-live.js` : bascule UI via `data-recovery` sur `.live`.
-  - `_live.scss` : bloc `.recovery` (FC géante, jauge, breath pacer, skip).
-  - Breath pacer : `@keyframes breath` (4s/6s), phase texte via `data-recovery-phase`.
-  - Mode dégradé sans ceinture FC : avertissement affiché, plafond durée + skip.
-
-- **Lot C — Seuil personnalisé** ✅
-  - `data/profile.js` : store IndexedDB `profile` (clé `'me'`), helpers `hrMax()`,
-    `karvonenBase()`.
-  - `session-parser.js` : `cible_fc: 55%` → `{ mode: 'pct', pct: 55 }`,
-    `cible_fc: karvonen-50%` → `{ mode: 'karvonen', pct: 50 }`.
-  - `session-engine.js` : `resolveHrThreshold()` résout `%` via FCmax et
-    `karvonen` via la réserve (FCmax − FCrepos). Retourne `null` si profil
-    incomplet → seul le plafond durée s'applique.
-  - `ui/screen-profile.js` : formulaire âge / FCmax / FCrepos, route `/profile`.
-  - Lien ⚙ sur l'accueil vers le profil.
-  - `store.js` : DB_VERSION → 2, ajout store `profile`.
-
-- **Lot D — Heart Rate Recovery** ✅
-  - `recorder.js` : `markSectionEntry(index, globalMs)` appelé au démarrage
-    et à chaque changement de section.
-  - `summary.js` : `computeHRR()` — identifie la 1re section `hr`, prend FC
-    à l'entrée, calcule Δ FC à +60s (HRR₁) et +120s (HRR₂).
-  - `screen-summary.js` : bloc `.hrr` avec HRR 1 min, HRR 2 min, FC début
-    récup, et interprétation (excellent ≥ 40, bon ≥ 25, moyen ≥ 12, faible < 12).
-  - Format JSON étendu : champ `hrr: { hrStart, hrr60, hrr120 }`.
-
----
-
-## 12. Évolutions v2 — navigation, favoris & modes Live
-
-> Lot d'améliorations UX post-roadmap. Objectif : mieux ranger les séances quand
-> le catalogue grandit (favoris + listings dédiés), lier proprement historique et
-> séances, et enrichir l'écran Live (nouveau mode cadence, zen enrichi, chrono à
-> rebours sonore).
-
-### Points de vigilance actés
-- ⚠️ **Clé stable `slug`** : introduire un identifiant stable par séance (dérivé du
-  nom de fichier `.md`, ex. `2026-07-06-pyramide`) porté par la **définition**, le
-  **favori** et chaque entrée d'**historique**. Remplace le lien fragile par
-  `session_title` (renommer une séance ne doit pas perdre favoris + historique).
-  → **À valider avant Lot E.**
-- ✅ **Cadence cible numérique** (Lot H-bis) : **les deux syntaxes gérées**.
-  - `cadence: 24-26 spm` → plage : centre de l'échelle = **milieu arrondi** (`25`).
-  - `cadence_cible: 23` → **valeur précise** : centre de l'échelle = `23`.
-  - `cadence_cible` **prioritaire** sur `cadence` si les deux présents.
-  - Absence des deux → pas de guide de cadence (échelle masquée).
-
-### Lot E — Favoris & page « Toutes les séances »
-- Accueil : section « Séances » → **« Séances favorites »**. Bouton « Importer »
-  → remplacé par **« Ajouter »** qui mène à la page complète.
-- Nouvel écran **« Toutes les séances »** (`screen-sessions.js`, route `/sessions`) :
-  liste l'intégralité des séances dispo, **bouton « Importer » déplacé ici**, et
-  pour chaque séance un **toggle ★ favori** (ajouter/retirer).
-- `store.js` : flag favori + `slug` sur les définitions.
-- Fichiers : `store.js`, `screen-home.js`, `screen-sessions.js` (nouveau), `main.js`.
-
-### Lot F — Historique étendu
-- Accueil : sous « Dernières séances », si **> 5** entrées → bouton
-  **« Voir toutes les séances passées »** → listing complet.
-- Nouvel écran **historique complet** (`screen-history.js`, route `/history`),
-  filtrable par séance (via `slug`).
-- Détail séance : bloc **« Historique de cette séance »** en bas + bouton
-  **« Voir tout l'historique »** si **> 5** entrées.
-- Fichiers : `screen-history.js` (nouveau), `aggregate.js` (filtre par slug),
-  `screen-home.js`, `screen-detail.js`, `main.js`.
-
-### Lot G — Ajustements modes Live
-- **Mode `zen`** : tuiles secondaires = **allure /500 + FC + spm** (au lieu d'allure seule).
-- **Chrono section à rebours** : quand la section est clôturée par le **temps**
-  (`target.type === 'duration'`), afficher le chrono de section en **décompte**.
-  Sinon (distance/hr/manuel) → chrono croissant inchangé.
-- **Signal sonore de fin** : **3 bips courts + 1 bip long** sur les dernières
-  secondes. Nouvel util `engine/beeper.js` (Web Audio API, amorcé au geste de
-  démarrage). Vérifier l'infra son existante avant d'en créer une.
-- Fichiers : `screen-live.js`, `_live.scss`, `engine/beeper.js` (nouveau).
-
-### Lot H — Mode cadence (`cad`)
-- Nouveau mode d'affichage **`cad`** dans le sélecteur de modes Live.
-- **Héro (géant) : cadence (spm)**. Tuiles secondaires : **puissance (W) + FC +
-  chrono section**.
-- Ajout de la ligne dans le tableau §6.1 des modes.
-- Fichiers : `screen-live.js`, `_live.scss`.
-
-### Lot H-bis — Guide de cadence (expérimental, à valider en test réel)
-> Sous la métrique spm géante (mode `cad` uniquement) : une **échelle de 5 valeurs**
-> centrée sur la cible (ex. cible 23 → `21 22 23 24 25`) avec une **flèche** qui se
-> déplace sous la valeur courante pour guider l'ajustement.
-- Flèche bornée : si la cadence courante sort de l'échelle (ex. 18 pour cible 23),
-  la flèche reste **bloquée à l'extrémité + légèrement grisée**.
-- Centre de l'échelle : `cadence_cible: N` si présent, sinon milieu arrondi de la
-  plage `cadence: A-B spm`, sinon échelle masquée (voir décision cadence cible).
-- **Retirable sans impact** si non concluant après tests.
-- Fichiers : `session-parser.js` (parse `cadence` plage + `cadence_cible`),
-  `screen-live.js`, `_live.scss`.
-
-### État des décisions (v2)
-- ✅ **Lot E** — Favoris + page « Toutes les séances » : implémenté (v0.5.0).
-  - `store.setFavorite`, flag `favorite` sur la définition (clé `slug`).
-  - Accueil : « Séances favorites » + bouton « + Ajouter » → `/sessions`.
-  - `screen-sessions.js` : liste complète, import déplacé ici, toggle ★.
-- ✅ **Lot F** — Historique étendu : implémenté (v0.5.0).
-  - `history-list.js` : rendu + câblage partagés (accueil, historique, détail).
-  - `screen-history.js` : `/history` (tout) et `/history/:slug` (par séance).
-  - Accueil : « Voir toutes les séances passées » si > 5.
-  - Détail : bloc « Historique de cette séance » + « Voir tout » si > 5.
-  - Filtrage par `session_slug` (repli titre pour anciennes entrées).
-- ✅ **Lot G** — Modes Live : implémenté (v0.5.0).
-  - `zen` : tuiles allure + FC + cadence.
-  - Chrono section à rebours si cible durée (`sectionClock`).
-  - `feedback.js` : `beepShort()` / `beepLong()` — 3 bips + 1 long au décompte.
-- ✅ **Lot H** — Mode `cad` : implémenté (v0.5.0). Héro spm + puissance/FC/chrono.
-  `display: cad` accepté par le parser.
-- ❌ **Lot H-bis** — Guide de cadence (échelle + flèche) : **retiré après test**
-  (v0.5.1), jugé non utile. Le parsing `cadence_cible` / `spmTarget` a été retiré
-  avec (le champ `cadence` texte reste affiché en détail de séance).
-- ✅ `slug` stable par séance : validé (fondation favoris + historique).
-
-### Qualité de mesure (v0.5.1)
-- `recorder.js` : chaque échantillon 1 Hz = **moyenne des paquets reçus dans la
-  seconde** (fc/spm/puissance/allure) au lieu d'un snapshot instantané → lisse le
-  bruit et exploite les sources > 1 Hz. Distance (cumulée) = dernière valeur.
-- **Anti-stale** : une métrique sans mise à jour depuis 3 s est enregistrée à
-  `null` (plus de valeur « figée » quand le rameur est à l'arrêt / BLE perdu).
-- Coût perf négligeable (accumulation légère par paquet, sampling toujours 1 Hz).
-
----
-
-## 13. v3 — Refonte visuelle, modes Live & thèmes (planifié)
-
-> Lot de refonte UX/UI post-v0.9. Objectif : identité visuelle (fonts + icônes),
-> système de notifications cohérent, simplification des modes Live (4 modes
-> colorés + icônes), dark/light mode, et correction de deux bugs Live.
-> **Statut : planifié — non implémenté.** Réf. visuelles : moodboards Pinterest
-> (notifications, menu bas Live).
-
-### 13.1 — Typographie (fonts)
-- **Titres : League Spartan** · **Texte : Manrope**.
-- **Self-host obligatoire** (privacy + offline-first : pas de Google Fonts CDN).
-  Fichiers `.woff2` locaux dans `public/fonts/`, `@font-face` dédiés.
-- Tokens : `--font-title` (League Spartan) / `--font-body` (Manrope) dans
-  `_tokens.scss`. Titres (`app-bar__title`, `section-head__title`, `hero`) →
-  `--font-title` ; corps → `--font-body`.
-- Fichiers : `public/fonts/`, `_tokens.scss`, `_base.scss`.
-
-### 13.2 — Librairie d'icônes → **recommandation : Lucide**
-- **Choix recommandé : Lucide** (fork maintenu de Feather). MIT, ~1500 icônes,
-  trait fin cohérent avec l'esthétique minimale de l'app, SVG.
-- **Intégration : sprite SVG local** (`<symbol>` + `<use>`), pas de dépendance JS
-  runtime → payload minimal, 100 % offline. On n'embarque que les icônes utilisées.
-- Alternative si besoin de glyphes sport/santé plus spécifiques : **Tabler Icons**
-  (4000+, MIT, même style trait).
-- Helper `icon(name)` → `<svg><use href="#icon-name"/></svg>`.
-- Fichiers : `public/icons.svg` (sprite), `ui/icon.js` (helper), usages divers.
-
-### 13.3 — Système de notifications internes (5 types)
-> Réf. visuelle : `notifs.jpg`. Chaque notif = **carte arrondie à fond teinté
-> clair**, **icône dans un carré blanc arrondi** à gauche, **titre en gras +
-> description** (ligne secondaire), **bouton × de fermeture** à droite.
-
-- Remplace le `toast()` actuel + les `alert()` par un util typé
-  `notify(type, title, description?)`.
-- **5 types** (calés sur la réf) :
-
-| Type | Fond | Icône (Lucide) | Usage |
-|---|---|---|---|
-| `neutral` | gris clair | `info` (ⓘ) | état par défaut / générique |
-| `info` | bleu clair | `bell` | info secondaire |
-| `success` | vert clair | `check-check` (✓✓) | backup exporté/restauré, séance importée |
-| `warning` | orange clair | `alert-triangle` (⚠) | pas de ceinture FC, rappel de sauvegarde |
-| `error` | rouge clair | `ban` (🚫) | export/import échoué, connexion BLE échouée |
-
-- **Comportement** : auto-dismiss après ~3 s **+** × pour fermer manuellement ;
-  empilables (stack). Réutilise le mécanisme `flash` existant pour les notifs
-  post-navigation (ex. « backup restauré » à l'arrivée sur l'accueil).
-- Remplacer les `alert(...)` de `screen-data.js`, `screen-home.js`,
-  `screen-sessions.js`, `screen-live.js` par `notify('error'|'success', …)`.
-- Fichiers : `ui/notify.js` (nouveau, absorbe `toast`/`flash` de `format.js`),
-  `_base.scss` (styles `.notification--{type}`).
-
-### 13.4 — Modes Live : passer de 5 à **4 modes** (couleurs + icônes)
-- **Décision : retirer le mode `complet`** (grille 6 tuiles). Raisons : contraire au
-  principe « 1 métrique héro » + illisible de loin pendant l'effort (contrainte UX
-  rameur) + source du bug 13.6-b. Les 4 modes focalisés couvrent les archétypes.
-- **4 modes retenus** (héro / couleur / icône Lucide / usage) :
-
-| Mode | Héro | Couleur | Icône | Type de séance couvert |
-|---|---|---|---|---|
-| **Cardio** | FC (+ zone) | 🔴 rouge | `heart` | Endurance, travail en zones FC |
-| **Perf** | Allure /500m | 🔵 bleu | `gauge` / `zap` | Intervalles, pyramides (allure = réf rameur) |
-| **Cadence** | Cadence (spm) | 🟠 orange/ambre | `activity` / `waves` | Travail de cadence ciblée |
-| **Zen** | Chrono section | 🟢 vert | `leaf` / `wind` | Séance libre, récup, focus ressenti |
-
-- **Couleur `zen` : vert recommandé** (cohérent avec le vert récup/respiration déjà
-  utilisé `--c-accent`). Le bleu est réservé à `perf` (technique/allure, ton froid).
-- **Menu bas du Live** (réf. `menu-modes.jpg`) : barre horizontale arrondie (fond
-  panel, marche en dark/light). Le mode **actif** = **pill teintée** de sa couleur
-  (fond translucide + icône colorée + **label texte**) ; les modes **inactifs** =
-  **icône seule atténuée**, sans label. Un seul label visible à la fois → compact +
-  code couleur clair.
-- Impact données : `display: complet` dans d'anciennes séances → repli sur `perf`.
-- Fichiers : `screen-live.js` (`MODES`, `LAYOUT`, rendu menu), `_live.scss`,
-  `session-parser.js` (fallback `complet`→`perf`).
-
-### 13.5 — Dark / Light mode
-- **Défaut : config utilisateur système** (`prefers-color-scheme`), **surchargé**
-  via **Menu → Préférences** (nouvelle entrée + nouvel écran/section).
-- Mécanique : `data-theme="dark|light|auto"` sur `<html>`, palette claire en
-  parallèle des tokens sombres actuels (`_tokens.scss`). Préférence persistée
-  (IndexedDB store `meta`, clé `theme`, ou `localStorage`).
-- Ajouter l'entrée **Préférences** dans l'overlay menu (`menu.js`) + écran
-  `screen-prefs.js` (route `/prefs`).
-- Fichiers : `_tokens.scss` (palette light), `main.js` (application du thème au
-  boot), `menu.js`, `screen-prefs.js` (nouveau), `main.js` (route).
-
-### 13.6 — Corrections écran Live (bugs identifiés)
-- **13.6-a — Flèches ◀/▶ inopérantes (▶ mort).** Collision d'attribut : le label
-  « → suivante » (`<span data-next>`) et le bouton ▶ (`<button data-next>`) partagent
-  `data-next`. `querySelector('[data-next]')` retourne le span → `engine.next()`
-  câblé sur le label, pas le bouton. **Fix** : renommer le label (`data-next-label`)
-  pour que `[data-next]` = le bouton.
-  **Pertinence (avis)** : garder ◀/▶ — utiles pour sauter un échauffement, rejouer
-  un intervalle, avancer une section manuelle. Clarifier : ◀ = section précédente
-  (rejouer), ▶ = section suivante (skip). Option : désactiver ◀ sur la 1re section.
-- **13.6-b — FC affichée en double / incohérente en mode `complet`.** `els.hero.hidden
-  = true` est neutralisé par `.hero { display: flex }` (classe > `[hidden]`), donc le
-  héro reste visible avec sa **dernière valeur figée** (FC héritée d'un mode
-  précédent) pendant que la tuile FC se met à jour. **Fix** : `.hero[hidden] {
-  display: none; }` (ou toggler une classe). Devient sans objet si `complet` est
-  retiré (13.4), mais le fix `[hidden]` reste sain pour tout héro masqué.
-- Fichiers : `screen-live.js`, `_live.scss`.
-
-### Décisions à confirmer (v3)
-- ⏳ **Fonts** League Spartan / Manrope — self-host validé, à intégrer.
-- ✅ **Icônes : Lucide** (sprite SVG local) — recommandé.
-- ✅ **Notifications** : 5 types (neutral / info / success / warning / error),
-  visuel calé sur `notifs.jpg` (fond teinté + icône + titre/desc + ×).
-- ✅ **Modes Live** : retirer `complet`, garder Cardio/Perf/Cadence/Zen ;
-  **zen = vert**, perf = bleu, cardio = rouge, cadence = orange.
-- ⏳ **Dark/Light** : défaut système + override Menu → Préférences.
-- 🐛 **Bugs Live** 13.6-a (flèches) & 13.6-b (héro `[hidden]`) — à corriger.
-
----
-
-## 14. Audit code (v0.16.1) — dette restante
-
-Audit du 2026-07-16. Corrigé dans la foulée (v0.16.1) :
-- ✅ **Bug régression** : `seedSessions()` n'était plus appelé (chaîne de boot
-  rebranchée sur `initLang()` lors du commit i18n du 15/07) → séances d'exemple
-  non semées au 1er lancement. Rétabli via `Promise.all` avant `router.start()`.
-- ✅ **Perf Live** : le rendu n'est plus reconstruit à chaque paquet BLE ; en
-  course le tick 10 Hz suffit (rendu bus uniquement hors course).
-- ✅ **iOS/Safari** : mode démo exposé quand aucun BLE possible (`DEMO_AVAILABLE`),
-  l'écran Live n'est plus inutilisable sur ces plateformes.
-- ✅ **Round-trip export** : cap FC exporté en `mm:ss` (`fmtSec`) au lieu de
-  `fmtCap` qui arrondissait à la minute (90 s → « 1min »).
-
-### À faire une prochaine fois (non bloquant)
-- ✅ **Filet de tests** (prérequis) : Vitest + jsdom, script `test`. Tests de
-  caractérisation round-trip parse↔format (`test/session-format.test.js`) et
-  math pure de la jauge récup (`test/recovery.test.js`). (v0.18.0)
-- ✅ **Découper `screen-live.js`** en contrôleurs : `ui/live/wake-lock.js`
-  (Wake Lock + réacquisition au retour d'onglet) et `ui/live/recovery.js`
-  (breath pacer + jauge FC, `recoveryGauge` pure testable). Le screen devient
-  chef d'orchestre. (v0.18.0)
-  - ✅ **Appui long « Terminer » retiré** : bloc `startLongPress`/`cancelLongPress`/
-    `updateLongPressProgress` + listeners `pointer*`, garde `!longPressActive`,
-    `LONG_PRESS_MS`, icônes `Flag`/`FlagTriangleRight`, SCSS `.is-finishing` /
-    `--hold-pct`, clé i18n `live.finishing`. Sortie anticipée toujours couverte
-    par la croix (`data-quit`) avec confirmation.
-- ✅ **Factoriser format ↔ parse** : nouveau `data/session-format.js` — paire
-  parse↔format par champ (durée / distance / cible FC / zone). `session-parser`
-  importe les `parse*`, `export.js` les `format*`. Plus de double vérité. (v0.18.0)
-- ✅ **ESLint + Prettier** : flat config (`eslint.config.js`) + `.prettierrc`,
-  scripts `lint` / `format`. Corrigé au passage : clé i18n `editor.field.display`
-  dupliquée (valeur `'Affichage'`/`'Display'` morte), imports inutilisés. (v0.18.0)
-- ℹ️ `strokes` : métrique décodée (`rower.js`) et émise mais non affichée —
-  **volontairement conservée** dans le contrat du bus (ne pas retirer).
+Vitest + jsdom. Tests de caractérisation round-trip parse↔format
+(`test/session-format.test.js`) et math pure de la jauge récupération
+(`test/recovery.test.js`).

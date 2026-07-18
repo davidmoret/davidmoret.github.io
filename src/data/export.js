@@ -7,6 +7,7 @@ import { formatDuration, formatDistance, formatHrTarget, formatZone } from './se
 
 export function sessionToMarkdown(s) {
   const lines = ['---'];
+  lines.push(`slug: ${s.slug}`);
   lines.push(`title: ${s.title}`);
   if (s.description) lines.push(`description: ${s.description}`);
   if (s.targetHrZone) lines.push(`target_hr_zone: ${formatZone(s.targetHrZone)}`);

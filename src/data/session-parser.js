@@ -10,7 +10,7 @@ export function parseSession(md, slug = '') {
   const { data, body } = extractFrontmatter(md);
   const sections = parseSections(body);
   return {
-    slug: slug || slugify(data.title || 'seance'),
+    slug: slug || data.slug || slugify(data.title || 'seance'),
     title: data.title || 'Séance sans titre',
     description: data.description || '',
     targetHrZone: parseZone(data.target_hr_zone),

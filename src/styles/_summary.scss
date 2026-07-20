@@ -140,17 +140,12 @@
   &__title { font-weight: 600; }
   &__meta { color: var(--c-muted); font-size: 0.82rem; font-variant-numeric: tabular-nums; }
 
-  &__del {
-    flex: 0 0 auto;
-    display: inline-flex;
-    background: none;
-    border: 0;
+  &__go {
+    display: flex;
+    align-items: center;
     color: var(--c-accent);
-    padding: var(--sp-2);
-    cursor: pointer;
-    line-height: 1;
 
-    svg { width: 16px; height: 16px; }
+    svg { width: 20px; height: 20px; }
   }
 }
 
@@ -202,3 +197,8 @@ html[data-theme='auto'] .history__month-band {
     font-size: 0.85rem;
   }
 }
+
+// ── Variantes d'espacement (Préférences / Gestion des données) ────────
+.history__month-band.prefs-band { margin-bottom: 20px; }
+.history__month-band.prefs-band--lang { margin-top: 40px; }
+.history__month-band.history__month-band--cloud { margin-top: 30px; }

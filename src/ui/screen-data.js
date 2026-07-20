@@ -1,6 +1,6 @@
 // Écran Gestion des données : sauvegarde (export chiffré), restauration (import)
 // et synchronisation cloud (Dropbox / Google Drive) du backup global.
-import { exportBackup, importBackup, askPassphrase, getLastBackupDate, getLastImportDate } from '../data/backup.js';
+import { exportBackup, importBackup, askPassphrase, getLastBackupDate } from '../data/backup.js';
 import { PROVIDERS, getProvider } from '../data/cloud/index.js';
 import { syncProvider } from '../data/cloud/sync.js';
 import { notify, setFlash } from './notify.js';
@@ -36,9 +36,8 @@ function providerRow(s) {
 }
 
 export async function screenData(_params, outlet) {
-  const [lastBackup, lastImport, states] = await Promise.all([
+  const [lastBackup, states] = await Promise.all([
     getLastBackupDate(),
-    getLastImportDate(),
     cloudStates(),
   ]);
   const anyConnected = states.some((s) => s.connected);
@@ -46,9 +45,7 @@ export async function screenData(_params, outlet) {
   outlet.innerHTML = `
     ${appBar({ title: t('data.title') })}
     <main class="screen">
-      <div class="section-head">
-        <h2 class="section-head__title">${t('data.backup')}</h2>
-      </div>
+      <div class="history__month-band">${t('data.backup')}</div>
       <p class="lead">${lastBackup ? t('data.lastBackup', { date: fmtBackupDate(lastBackup) }) + ' ' + t('data.encrypted') : t('data.noBackup') + ' ' + t('data.encrypted')}</p>
       <div class="backup-actions">
         <button class="btn btn--block" data-export-backup>${iconHtml(Upload)} ${t('data.export')}</button>
@@ -57,11 +54,8 @@ export async function screenData(_params, outlet) {
           <input class="import-btn__input" type="file" accept=".rambak" data-import-backup>
         </label>
       </div>
-      ${lastImport ? `<p class="lead">${t('data.lastImport', { date: fmtBackupDate(lastImport) })}</p>` : ''}
 
-      <div class="section-head">
-        <h2 class="section-head__title">${t('cloud.title')}</h2>
-      </div>
+      <div class="history__month-band history__month-band--cloud">${t('cloud.title')}</div>
       <p class="lead">${t('cloud.intro')}</p>
       <div class="backup-actions">
         ${states.map(providerRow).join('')}

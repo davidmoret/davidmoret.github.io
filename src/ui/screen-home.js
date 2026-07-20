@@ -63,7 +63,7 @@ export async function screenHome(_params, outlet) {
   outlet.querySelectorAll('[data-slug]').forEach((el) => {
     el.addEventListener('click', () => go(`/session/${el.dataset.slug}`));
   });
-  bindHistoryList(outlet, () => screenHome(_params, outlet));
+  bindHistoryList(outlet);
 
   // Notif de confirmation après navigation (ex. restauration d'un backup).
   flushFlash();

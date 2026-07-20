@@ -68,7 +68,7 @@ export async function screenDetail({ slug }, outlet) {
   });
   const allBtn = outlet.querySelector('[data-all-history]');
   if (allBtn) allBtn.addEventListener('click', () => go(`/history/${slug}`));
-  bindHistoryList(outlet, () => screenDetail({ slug }, outlet));
+  bindHistoryList(outlet);
 }
 
 function stepHtml(x) {

@@ -26,5 +26,5 @@ export async function screenHistory({ slug }, outlet) {
     </main>`;
 
   // Bouton accueil géré globalement (data-home -> go('/')).
-  bindHistoryList(outlet, () => screenHistory({ slug }, outlet));
+  bindHistoryList(outlet);
 }

@@ -1,12 +1,10 @@
 // Rendu + câblage d'une liste d'entrées d'historique, partagé entre l'accueil,
 // l'écran historique complet et le détail d'une séance.
-import { Trash2 } from 'lucide';
+import { ChevronRight } from 'lucide';
 import { fmtDuration, fmtDist, escapeHtml } from './format.js';
-import { deleteHistory } from '../data/store.js';
-import { confirmDialog } from './modal.js';
 import { go } from './router.js';
 import { iconHtml } from './icon.js';
-import { t, getLang } from './i18n/index.js';
+import { getLang } from './i18n/index.js';
 
 // Filtre l'historique d'une séance (par slug, avec repli titre pour les
 // anciennes entrées sans session_slug).
@@ -23,7 +21,7 @@ export function historyItemHtml(h) {
       <span class="history__title">${escapeHtml(h.session_title)}</span>
       <span class="history__meta">${escapeHtml(date)} — ${escapeHtml(meta)}</span>
     </div>
-    <button class="history__del" data-history-delete="${escapeHtml(h.id)}" aria-label="${t('common.delete')}">${iconHtml(Trash2)}</button>
+    <span class="history__go" aria-hidden="true">${iconHtml(ChevronRight)}</span>
   </li>`;
 }
 
@@ -62,21 +60,9 @@ export function historyListGroupedHtml(entries) {
   return `<div class="history-grouped">${groupsHtml}</div>`;
 }
 
-// Câble ouverture (clic sur l'item) + suppression (clic sur ✕) pour tous les
-// items présents dans `outlet`. `onChange` est rappelé après une suppression.
-export function bindHistoryList(outlet, onChange) {
+// Câble l'ouverture (clic sur l'item) pour tous les items présents dans `outlet`.
+export function bindHistoryList(outlet) {
   outlet.querySelectorAll('[data-history]').forEach((el) => {
-    el.addEventListener('click', (e) => {
-      if (e.target.closest('[data-history-delete]')) return;
-      go(`/summary/${encodeURIComponent(el.dataset.history)}`);
-    });
-  });
-  outlet.querySelectorAll('[data-history-delete]').forEach((btn) => {
-    btn.addEventListener('click', async (e) => {
-      e.stopPropagation();
-      if (!await confirmDialog(t('history.deleteConfirm'), { confirmLabel: t('common.delete'), danger: true })) return;
-      await deleteHistory(btn.dataset.historyDelete);
-      if (onChange) onChange();
-    });
+    el.addEventListener('click', () => go(`/summary/${encodeURIComponent(el.dataset.history)}`));
   });
 }

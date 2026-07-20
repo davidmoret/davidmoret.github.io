@@ -75,6 +75,7 @@
 
 .editor__section {
   background: var(--c-panel);
+  border: 1px solid var(--c-icon);
   border-radius: var(--radius);
   padding: var(--sp-4);
   display: flex;

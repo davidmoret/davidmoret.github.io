@@ -5,6 +5,8 @@ import { fmtDuration, fmtDist, escapeHtml } from './format.js';
 import { go } from './router.js';
 import { confirmDialog } from './modal.js';
 import { appBar } from './app-bar.js';
+import { Trash } from 'lucide';
+import { iconHtml } from './icon.js';
 import { t, getLang } from './i18n/index.js';
 
 export async function screenSummary({ id }, outlet) {
@@ -45,7 +47,7 @@ export async function screenSummary({ id }, outlet) {
       </ul>
 
       <div class="summary-actions">
-        <button class="btn btn--ghost btn--block" data-delete>${t('summary.delete')}</button>
+        <button class="btn btn--ghost btn--block" data-delete>${iconHtml(Trash)} ${t('summary.delete')}</button>
       </div>
     </main>`;
 

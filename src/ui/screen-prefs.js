@@ -22,8 +22,8 @@ export async function screenPrefs(_params, outlet) {
   outlet.innerHTML = `
     ${appBar({ title: t('prefs.title') })}
     <main class="screen">
+      <div class="history__month-band prefs-band">${t("prefs.theme")}</div>
       <section class="prefs">
-        <h2 class="prefs__title">${t('prefs.theme')}</h2>
         <div class="prefs__options" data-theme-options>
           ${THEME_OPTIONS.map((o) => `
             <button class="prefs__opt ${o.value === currentTheme ? 'is-active' : ''}" data-theme="${o.value}">
@@ -33,8 +33,8 @@ export async function screenPrefs(_params, outlet) {
         </div>
       </section>
 
+      <div class="history__month-band prefs-band prefs-band--lang">${t("prefs.lang")}</div>
       <section class="prefs">
-        <h2 class="prefs__title">${t('prefs.lang')}</h2>
         <div class="prefs__options" data-lang-options>
           ${LANG_OPTIONS.map((o) => `
             <button class="prefs__opt ${o.value === currentLang ? 'is-active' : ''}" data-lang="${o.value}">

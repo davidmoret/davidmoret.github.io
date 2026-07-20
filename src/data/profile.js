@@ -13,9 +13,9 @@ export function hrMax(profile) {
 }
 
 // Karvonen : FC de réserve = FCmax − FCrepos.
-// Retourne { reserve, hrMax } ou null.
+// Retourne { reserve, hrMax, hrRest } ou null.
 export function karvonenBase(profile) {
   const max = hrMax(profile);
   if (!max || !profile.hrRest) return null;
-  return { reserve: max - profile.hrRest, hrMax: max };
+  return { reserve: max - profile.hrRest, hrMax: max, hrRest: profile.hrRest };
 }

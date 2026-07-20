@@ -5,13 +5,14 @@
 // Math pure de la jauge FC (testable, sans DOM) : positions en % + état.
 // gaugeMax = seuil + 40 (marge au-dessus du seuil) ; repli 180 si pas de seuil.
 export function recoveryGauge(hr, threshold) {
-  const gaugeMax = (threshold || 180) + 40;
+  const hasThreshold = Number.isFinite(threshold);
+  const gaugeMax = (hasThreshold ? threshold : 180) + 40;
   const clampPct = (v) => Math.min(100, Math.max(0, v));
   return {
     gaugeMax,
-    markPct: threshold != null ? clampPct((threshold / gaugeMax) * 100) : null,
+    markPct: hasThreshold ? clampPct((threshold / gaugeMax) * 100) : null,
     fillPct: hr != null ? clampPct((hr / gaugeMax) * 100) : 0,
-    below: hr != null && threshold != null && hr <= threshold,
+    below: hr != null && hasThreshold && hr <= threshold,
   };
 }
 
@@ -46,7 +47,9 @@ export function createRecovery({ root, els, bus, engine }) {
     els.recoveryHrVal.dataset.state = hasHr && g.below ? 'below' : 'above';
     els.recoveryNoHr.hidden = hasHr;
 
-    if (threshold != null) {
+    els.recoveryGaugeMark.hidden = g.markPct == null;
+    els.recoveryGaugeLabel.hidden = g.markPct == null;
+    if (g.markPct != null) {
       els.recoveryGaugeMark.style.left = `${g.markPct}%`;
       els.recoveryGaugeLabel.style.left = `${g.markPct}%`;
       els.recoveryGaugeLabel.textContent = threshold;

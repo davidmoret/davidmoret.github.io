@@ -23,6 +23,14 @@ describe('recoveryGauge', () => {
     expect(recoveryGauge(999, 120).fillPct).toBe(100);
   });
 
+  it('seuil NaN traité comme absent (pas de mark ni de repli parasite)', () => {
+    const g = recoveryGauge(150, NaN);
+    expect(g.gaugeMax).toBe(220); // repli 180 + 40
+    expect(g.markPct).toBeNull();
+    expect(g.below).toBe(false);
+    expect(Number.isNaN(g.fillPct)).toBe(false);
+  });
+
   it('positions cohérentes seuil vs FC sous le seuil', () => {
     const g = recoveryGauge(80, 120); // gaugeMax 160
     expect(g.markPct).toBeCloseTo(75, 5); // 120/160
